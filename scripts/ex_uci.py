@@ -9,6 +9,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from src.models import ForecastNN
 from src.attacks import fgsm_attack, pgd_attack
+from src.smooth import *
+from src.noises import *
 
 
 dataset_name_to_loader = {
@@ -36,6 +38,8 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
+    
+    noise = GaussianNoise(0.5, "cpu")
 
     data = dataset_name_to_loader[args.dataset]()
     X, y = data.iloc[:,:-1].values, data.iloc[:,-1].values[:,np.newaxis]
@@ -63,27 +67,31 @@ if __name__ == "__main__":
         if i % 100 == 0:
             logger.info(f"Iter: {i}\tLoss: {loss.data:.2f}")
     
-    X_adv = fgsm_attack(model, X_val, y_val, 0.05)
-    X_adv = pgd_attack(model, X_val, y_val, 0.05)
-    adv_loss = -model.forward(X_adv).log_prob(y_val).mean()
+    X_adv = pgd_attack(model, X_val, y_val, 0.1, steps=40, clamp=(-5, 5))
+    adv_loss = -model.forecast(model.forward(X_adv)).log_prob(y_val).mean()
 
     print(f"ORIG: {loss.data:.2f}")
     print(f"ADV: {adv_loss.data:.2f}")
 
     lower = y_train.mean() - 2.5 * y_train.std()
     upper = y_train.mean() + 2.5 * y_train.std()
-    axis = torch.tensor(np.linspace(lower, upper), dtype=torch.float)
-    pdf_adv = model.forward(X_adv).log_prob(axis)
-    pdf_val = model.forward(X_val).log_prob(axis)
+    axis = torch.tensor(np.linspace(lower, upper, 200), dtype=torch.float)
+    pdf_adv = model.forecast(model.forward(X_adv)).log_prob(axis)
+    pdf_val = model.forecast(model.forward(X_val)).log_prob(axis)
+    pdf_smooth = smooth_predict_soft(model, X_adv, noise, 256, clamp=(-5, 5)).log_prob(axis)
 
     plt.figure(figsize=(8, 8))
     for i in range(4):
         plt.subplot(2, 2, i + 1)
-        plt.plot(axis, torch.exp(pdf_adv[i,:]).data.numpy(), "-", 
-                 color="black", label="Adversarial")
-        plt.plot(axis, torch.exp(pdf_val[i,:]).data.numpy(), "--", 
+        plt.plot(axis, torch.exp(pdf_val[i,:]).data.numpy(), "-", 
                  color="black", label="Original")
+        plt.plot(axis, torch.exp(pdf_adv[i,:]).data.numpy(), "--", 
+                 color="red", label="Adversarial")
+        plt.plot(axis, torch.exp(pdf_smooth[i,:]).data.numpy(), "--", 
+                 color="blue", label="Smoothed")
+        plt.legend()
 
     plt.tight_layout()
-    plt.show()
+    plt.savefig("./ckpts/ex_uci.png")
+    #plt.show()
 
