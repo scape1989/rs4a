@@ -8,11 +8,11 @@ from statsmodels.stats.proportion import proportion_confint
 
 
 experiments = [
-    "cifar", "cifar_uniform", "cifar_laplace", "cifar_expinf"
+    "cifar", "cifar_laplace", "cifar_expinf", "cifar_uniform",
+#    "cifar_laplace_adv", "cifar_uniform_adv",
 ]
 
 if __name__ == "__main__":
-
 
     label_names = ["plane", "car", "bird", "cat", "deer", "dog", "frog",
                    "horse", "ship", "truck"]
@@ -25,12 +25,12 @@ if __name__ == "__main__":
         save_path = f"ckpts/{experiment_name}"
         results = {}
 
-        for k in ("preds", "preds_adv", "preds_smooth", "imgs", "imgs_adv", 
+        for k in ("preds", "preds_smooth", "imgs", 
                   "labels", "radius_smooth"):
             results[k] = np.load(f"{save_path}/{k}.npy")
 
         top_1_preds = np.argmax(results["preds"], axis=1)
-        top_1_preds_adv = np.argmax(results["preds_adv"], axis=1)
+#        top_1_preds_adv = np.argmax(results["preds_adv"], axis=1)
         top_1_preds_smooth = np.argmax(results["preds_smooth"], axis=1)
 
         lower, _ = proportion_confint(np.max(results["preds_smooth"], axis=1) * 
@@ -38,12 +38,12 @@ if __name__ == "__main__":
         top_1_preds_smooth[lower < 0.5] = -1
 
         top_1_acc = np.mean(top_1_preds == results["labels"])
-        top_1_acc_adv = np.mean(top_1_preds_adv == results["labels"])
+#        top_1_acc_adv = np.mean(top_1_preds_adv == results["labels"])
         top_1_acc_smooth = np.mean(top_1_preds_smooth == results["labels"])
 
         aggregated_results["experiment_name"].append(experiment_name)
         aggregated_results["top_1_acc"].append(top_1_acc)
-        aggregated_results["top_1_acc_adv"].append(top_1_acc_adv)
+#        aggregated_results["top_1_acc_adv"].append(top_1_acc_adv)
         aggregated_results["top_1_acc_smooth"].append(top_1_acc_smooth)
 
         accs = np.zeros_like(axis)
@@ -71,5 +71,4 @@ if __name__ == "__main__":
     plt.xlabel("$\ell_1$ radius")
     plt.tight_layout()
     plt.ylim((0, 1))
-    plt.savefig("./ckpts/curve.png")
-#    plt.show()
+    plt.show()

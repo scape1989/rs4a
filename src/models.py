@@ -39,6 +39,7 @@ class ResNet(nn.Module):
 class NormalizeLayer(nn.Module):
     """
     Normalizes across the first non-batch axis.
+
     Examples:
         (64, 3, 32, 32) [CIFAR] => normalizes across channels
         (64, 8) [UCI]  => normalizes across features

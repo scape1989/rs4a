@@ -34,8 +34,9 @@ def smooth_predict_hard(model, x, noise, sample_size=64, clamp=(0, 1)):
     samples = (samples + noise.sample(samples.shape)).clamp(*clamp)
     samples = samples.view(*[-1] + [*samples.shape][2:])
     logits = model.forward(samples).view(batch_size, sample_size, -1)
+    num_cats = logits.shape[-1]
     top_cats = torch.argmax(logits, dim=2)
-    counts = nn.functional.one_hot(top_cats).float().sum(dim=1)
+    counts = nn.functional.one_hot(top_cats, num_cats).float().sum(dim=1)
     return Categorical(probs=counts / counts.shape[1])
 
 def certify_smoothed(model, x, top_cats, alpha, noise, sample_size):

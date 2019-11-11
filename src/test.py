@@ -13,6 +13,10 @@ from src.noises import *
 from tqdm import tqdm
 
 
+def test_minibatch(x, y):
+    pass
+
+
 if __name__ == "__main__":
     
     argparser = ArgumentParser()
@@ -44,10 +48,10 @@ if __name__ == "__main__":
 
     results = {
         "preds": np.zeros((len(test_dataset), 10)),
-        "preds_adv": np.zeros((len(test_dataset), 10)),
+#        "preds_adv": np.zeros((len(test_dataset), 10)),
         "preds_smooth": np.zeros((len(test_dataset), 10)),
         "imgs": np.zeros((len(test_dataset), 3, 32, 32)),
-        "imgs_adv": np.zeros((len(test_dataset), 3, 32, 32)),
+#        "imgs_adv": np.zeros((len(test_dataset), 3, 32, 32)),
         "labels": np.zeros(len(test_dataset)),
         "radius_smooth": np.zeros(len(test_dataset)),
     }
@@ -56,12 +60,12 @@ if __name__ == "__main__":
 
         x, y = x.to(args.device), y.to(args.device)
         preds = model.forecast(model.forward(x))
-        if args.noise == "Clean":
-            x_adv = pgd_attack(model, x, y, args.eps, p=args.norm)
-        else:
-            x_adv = pgd_attack_smooth(model, x, y, args.eps, noise=noise, 
-                                      sample_size=4, p=args.norm)
-        preds_adv = model.forecast(model.forward(x_adv))
+#        if args.noise == "Clean":
+#            x_adv = pgd_attack(model, x, y, args.eps, p=args.norm)
+#        else:
+#            x_adv = pgd_attack_smooth(model, x, y, args.eps, noise=noise, 
+#                                      sample_size=4, p=args.norm)
+        #preds_adv = model.forecast(model.forward(x_adv))
         preds_smooth = smooth_predict_hard(model, x, noise, 
                                            sample_size=args.sample_size_pred)
         top_cats = preds_smooth.probs.argmax(dim=1)
@@ -70,11 +74,11 @@ if __name__ == "__main__":
 
         lower, upper = i * args.batch_size, (i + 1) * args.batch_size
         results["preds"][lower:upper,:] = preds.probs.data.cpu().numpy()
-        results["preds_adv"][lower:upper,:] = preds_adv.probs.data.cpu().numpy()
+#        results["preds_adv"][lower:upper,:] = preds_adv.probs.data.cpu().numpy()
         results["preds_smooth"][lower:upper,:] = preds_smooth.probs.data.cpu().numpy()
         results["labels"][lower:upper] = y.data.cpu().numpy()
         results["imgs"][lower:upper,:,:,:] = x.data.cpu().numpy()
-        results["imgs_adv"][lower:upper,:,:,:] = x_adv.data.cpu().numpy()
+#        results["imgs_adv"][lower:upper,:,:,:] = x_adv.data.cpu().numpy()
         results["radius_smooth"][lower:upper] = radii.cpu().numpy()
 
     save_path = f"ckpts/{args.experiment_name}"

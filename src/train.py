@@ -25,8 +25,9 @@ if __name__ == "__main__":
     argparser.add_argument("--experiment-name", default="cifar", type=str)
     argparser.add_argument("--noise", default="Clean", type=str)
     argparser.add_argument("--sigma", default=0.25, type=float)
-    argparser.add_argument("--eps", default=5.0, type=float)
+    argparser.add_argument("--eps", default=1.0, type=float)
     argparser.add_argument("--p", default=1, type=int)
+    argparser.add_argument("--k", default=1.0, type=float)
     argparser.add_argument("--adversarial", action="store_true")
     args = argparser.parse_args()
 
@@ -57,7 +58,7 @@ if __name__ == "__main__":
 
     loss_meter = meter.AverageValueMeter()
     time_meter = meter.TimeMeter(unit=False)
-    noise = eval(args.noise)(args.sigma, args.device)
+    noise = eval(args.noise)(**args.__dict__)
 
     for epoch in range(args.num_epochs):
 
@@ -67,7 +68,7 @@ if __name__ == "__main__":
 
             if args.adversarial and epoch > args.num_epochs // 2:
                 x = pgd_attack_smooth(model, x, y, args.eps, noise,     
-                                      sample_size=4, p=args.p)
+                                      sample_size=2, p=args.p)
             else:
                 x = x + noise.sample(x.shape)
 
@@ -81,7 +82,8 @@ if __name__ == "__main__":
                 logger.info(f"Epoch: {epoch}\t" + 
                             f"Itr: {i} / {len(train_loader)}\t" + 
                             f"Loss: {loss_meter.value()[0]:.2f}\t"
-                            f"Mins: {(time_meter.value() / 60):.2f}")
+                            f"Mins: {(time_meter.value() / 60):.2f}\t" + 
+                            f"Experiment: {args.experiment_name}")
                 loss_meter.reset()
 
         if epoch % 10 == 0:

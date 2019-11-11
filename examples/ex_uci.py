@@ -92,6 +92,5 @@ if __name__ == "__main__":
         plt.legend()
 
     plt.tight_layout()
-    plt.savefig("./ckpts/ex_uci.png")
-    #plt.show()
+    plt.show()
 

@@ -48,7 +48,6 @@ if __name__ == "__main__":
         results_grid_b[i,j] = smooth_predict_hard_binary(
                                   logreg, inputs, noise, clamp=(-3, 3)).probs
 
-    breakpoint()
     plt.figure(figsize=(8, 3))
     plt.subplot(1, 2, 1)
     plt.scatter(x[:100,0],x[:100,1])
@@ -61,6 +60,5 @@ if __name__ == "__main__":
     plt.contourf(x_grid, y_grid, results_grid_b, alpha=0.3)
     plt.colorbar()
     plt.tight_layout()
-    plt.savefig("./ckpts/ex_2d.png")
-#    plt.show()
+    plt.show()
 
