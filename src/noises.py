@@ -72,10 +72,10 @@ class ExpInfNoise(Noise):
         self.dim = dim
         self.k = k
         self.lambd = sigma / (np.exp(sp.special.loggamma((dim + 1) / k) - \
-                                     sp.special.loggamma(dim / k)))
+                                     sp.special.loggamma(dim / k))) * 3 ** 0.5
         self.gamma_dist = Gamma(
             concentration=torch.tensor(dim / k, device=device),
-            rate=torch.tensor((1/self.lambd) ** k, device=device))
+            rate=torch.tensor((1 / self.lambd) ** k, device=device))
         self.gamma_factor = np.exp(sp.special.loggamma((dim + k) / k) - \
                                    sp.special.loggamma((dim + k - 1) / k))
 

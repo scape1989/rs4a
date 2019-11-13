@@ -1,0 +1,7 @@
+*.pkl
+*.pyc
+*.torch
+*.npy
+*.swp
+data/
+ckpts/

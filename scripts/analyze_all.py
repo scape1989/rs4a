@@ -1,68 +1,63 @@
 import numpy as np
 import pandas as pd
+import pickle
 import matplotlib as mpl
 from argparse import ArgumentParser
 from collections import defaultdict
+from dfply import *
 from matplotlib import pyplot as plt
-from statsmodels.stats.proportion import proportion_confint
 
 
 experiments = [
     "cifar", "cifar_laplace", "cifar_expinf", "cifar_uniform",
-#    "cifar_laplace_adv", "cifar_uniform_adv",
 ]
 
 if __name__ == "__main__":
 
-    label_names = ["plane", "car", "bird", "cat", "deer", "dog", "frog",
-                   "horse", "ship", "truck"]
-
-    aggregated_results = defaultdict(list)
-    axis = np.linspace(0, 2.5, 50)
+    df = defaultdict(list)
+    eps_range = np.linspace(0, 2.5, 50)
 
     for experiment_name in experiments:
 
         save_path = f"ckpts/{experiment_name}"
+        args = pickle.load(open(f"ckpts/{experiment_name}/args.pkl", "rb"))
         results = {}
 
-        for k in ("preds", "preds_smooth", "imgs", 
-                  "labels", "radius_smooth"):
+        for k in  ("preds_smooth", "labels", "radius_smooth", "acc_train"):
             results[k] = np.load(f"{save_path}/{k}.npy")
 
-        top_1_preds = np.argmax(results["preds"], axis=1)
-#        top_1_preds_adv = np.argmax(results["preds_adv"], axis=1)
         top_1_preds_smooth = np.argmax(results["preds_smooth"], axis=1)
 
-        lower, _ = proportion_confint(np.max(results["preds_smooth"], axis=1) * 
-                                      1024, 1024, alpha=0.001, method="beta")
-        top_1_preds_smooth[lower < 0.5] = -1
+        for eps in eps_range:
 
-        top_1_acc = np.mean(top_1_preds == results["labels"])
-#        top_1_acc_adv = np.mean(top_1_preds_adv == results["labels"])
-        top_1_acc_smooth = np.mean(top_1_preds_smooth == results["labels"])
+            top_1_acc = ((results["radius_smooth"] >= eps) & \
+                         (top_1_preds_smooth == results["labels"])).mean()
+            df["experiment_name"].append(experiment_name)
+            df["sigma"].append(args.sigma)
+            df["noise"].append(args.noise)
+            df["acc_train"].append(results["acc_train"][0])
+            df["eps"].append(eps)
+            df["top_1_acc"].append(top_1_acc)
 
-        aggregated_results["experiment_name"].append(experiment_name)
-        aggregated_results["top_1_acc"].append(top_1_acc)
-#        aggregated_results["top_1_acc_adv"].append(top_1_acc_adv)
-        aggregated_results["top_1_acc_smooth"].append(top_1_acc_smooth)
-
-        accs = np.zeros_like(axis)
-        sel = results["radius_smooth"][:,np.newaxis] > axis[np.newaxis,:]
-        for i in range(len(axis)):
-            accs[i] = np.sum(top_1_preds[sel[:,i]] == results["labels"][sel[:,i]]) / 10000
-        aggregated_results["accs"].append(accs.tostring())
-
-    df = pd.DataFrame(aggregated_results)
-    print(df.drop(["accs"], axis=1))
+    df = pd.DataFrame(df)
+    df.to_csv("./ckpts/results.csv", index=False)
 
     plt.figure(figsize=(8, 3))
     mpl.style.use("seaborn-dark-palette")
 
-    for (i, row) in df.iterrows():
-        if i == 0:
+    grouped = df >> group_by(X.experiment_name) \
+                 >> summarize(experiment_name=first(X.experiment_name),
+                              sigma=first(X.sigma),
+                              acc_train=first(X.acc_train))
+
+    for experiment_name in experiments:
+
+        if experiment_name == "cifar":
             continue
-        plt.plot(axis, np.fromstring(row["accs"]),
-                 label=row["experiment_name"].replace("_", "\_"))
+
+        selected = df >> mask(X.experiment_name == experiment_name)
+        plt.plot(selected.eps, selected.top_1_acc,
+                 label=first(selected.experiment_name).replace("_", "_"))
 
     plt.axhline(df["top_1_acc"][0], label="clean", 
                 color="grey", linestyle="--")
@@ -72,3 +67,4 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.ylim((0, 1))
     plt.show()
+
