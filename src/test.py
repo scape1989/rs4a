@@ -21,15 +21,14 @@ if __name__ == "__main__":
     argparser.add_argument("--num-workers", default=os.cpu_count(), type=int)
     argparser.add_argument("--sample-size-pred", default=64, type=int)
     argparser.add_argument("--sample-size-cert", default=1024, type=int)
-    argparser.add_argument("--sigma", default=0.25, type=float)
+    argparser.add_argument("--sigma", default=0.0, type=float)
     argparser.add_argument("--noise", default="Clean", type=str)
+    argparser.add_argument("--k", default=100, type=int)
     argparser.add_argument("--experiment-name", default="cifar", type=str)
-    argparser.add_argument('--output-dir', type=str, 
-                           default=os.getenv("PT_OUTPUT_DIR"))
+    argparser.add_argument('--output-dir', type=str, default=os.getenv("PT_OUTPUT_DIR"))
     args = argparser.parse_args()
 
-    test_dataset = datasets.CIFAR10("./data/cifar_10", train=False,
-                                    download=True, 
+    test_dataset = datasets.CIFAR10("./data/cifar_10", train=False, download=True, 
                                     transform=transforms.ToTensor())
 
     test_loader = DataLoader(test_dataset, shuffle=False, 
@@ -54,11 +53,9 @@ if __name__ == "__main__":
 
         x, y = x.to(args.device), y.to(args.device)
         preds = model.forecast(model.forward(x))
-        preds_smooth = smooth_predict_hard(model, x, noise, 
-                                           sample_size=args.sample_size_pred)
+        preds_smooth = smooth_predict_hard(model, x, noise, args.sample_size_pred)
         top_cats = preds_smooth.probs.argmax(dim=1)
-        radii = certify_smoothed(model, x, top_cats, alpha=0.001, noise=noise, 
-                                 sample_size=args.sample_size_cert)
+        radii = certify_smoothed(model, x, top_cats, 0.001, noise, args.sample_size_cert)
 
         lower, upper = i * args.batch_size, (i + 1) * args.batch_size
         results["preds"][lower:upper,:] = preds.probs.data.cpu().numpy()

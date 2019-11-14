@@ -9,8 +9,9 @@ from argparse import ArgumentParser
 from torchnet import meter
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-from src.models import ResNet
+from src.models import *
 from src.noises import *
+from src.smooth import *
 from src.attacks import pgd_attack_smooth
 
 
@@ -19,28 +20,26 @@ if __name__ == "__main__":
     argparser = ArgumentParser()
     argparser.add_argument("--device", default="cuda:0", type=str)
     argparser.add_argument("--lr", default=0.1, type=float)
-    argparser.add_argument("--batch-size", default=128, type=int)
+    argparser.add_argument("--batch-size", default=64, type=int)
     argparser.add_argument("--num-workers", default=os.cpu_count(), type=int)
-    argparser.add_argument("--num-epochs", default=90, type=int)
+    argparser.add_argument("--num-epochs", default=120, type=int)
     argparser.add_argument("--print-every", default=20, type=int)
     argparser.add_argument("--save-every", default=50, type=int)
     argparser.add_argument("--experiment-name", default="cifar", type=str)
     argparser.add_argument("--noise", default="Clean", type=str)
-    argparser.add_argument("--sigma", default=0.25, type=float)
+    argparser.add_argument("--sigma", default=0.0, type=float)
     argparser.add_argument("--eps", default=1.0, type=float)
     argparser.add_argument("--p", default=1, type=int)
     argparser.add_argument("--k", default=1.0, type=float)
+    argparser.add_argument("--model", default=ResNet, type=str)
     argparser.add_argument("--adversarial", action="store_true")
-    argparser.add_argument('--output-dir', type=str, 
-                           default=os.getenv("PT_OUTPUT_DIR"))
+    argparser.add_argument('--output-dir', type=str, default=os.getenv("PT_OUTPUT_DIR"))
     args = argparser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
 
-    train_dataset = datasets.CIFAR10("./data/cifar_10", 
-                                     train=True, 
-                                     download=True, 
+    train_dataset = datasets.CIFAR10("./data/cifar_10", train=True, download=True,
                                      transform=transforms.Compose([
                                          transforms.RandomCrop(32, padding=4),
                                          transforms.RandomHorizontalFlip(),
@@ -72,8 +71,7 @@ if __name__ == "__main__":
             x, y = x.to(args.device), y.to(args.device)
 
             if args.adversarial and epoch > args.num_epochs // 2:
-                x = pgd_attack_smooth(model, x, y, args.eps, noise,     
-                                      sample_size=2, p=args.p)
+                x = pgd_attack_smooth(model, x, y, args.eps, noise, sample_size=2, p=args.p)
             else:
                 x = x + noise.sample(x.shape)
 
@@ -109,8 +107,9 @@ if __name__ == "__main__":
     for x, y in train_loader:
 
          x, y = x.to(args.device), y.to(args.device)
-         top_1_pred = torch.max(model.forward(x), dim=1).indices
-         acc_meter.add(torch.sum(top_1_pred == y).cpu().data.numpy(), n=len(x))
+         preds_smooth = smooth_predict_hard(model, x, noise, sample_size=32)
+         top_cats = preds_smooth.probs.argmax(dim=1)
+         acc_meter.add(torch.sum(top_cats == y).cpu().data.numpy(), n=len(x))
          
     print("Training accuracy: ", acc_meter.value())
     save_path = f"{args.output_dir}/{args.experiment_name}/acc_train.npy"

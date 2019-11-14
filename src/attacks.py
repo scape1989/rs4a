@@ -18,15 +18,13 @@ def project_onto_ball(x, eps, p="inf"):
         x = x.renorm(p=2, dim=0, maxnorm=eps)
     elif p == 1:
         mask = (torch.norm(x, p=1, dim=1) < eps).float().unsqueeze(1)
-        sgns = torch.sign(x)
         mu, _ = torch.sort(torch.abs(x), dim=1, descending=True)
         cumsum = torch.cumsum(mu, dim=1)
         arange = torch.arange(1, x.shape[1] + 1, device=x.device)
         rho, _ = torch.max((mu * arange > (cumsum - eps)) * arange, dim=1)
-        rho_cpu = rho.cpu()
-        theta = (cumsum[torch.arange(x.shape[0]), rho_cpu] - eps) / rho
+        theta = (cumsum[torch.arange(x.shape[0]), rho.cpu()] - eps) / rho
         proj = (x - theta.unsqueeze(1)).clamp(min=0)
-        x = mask * x + (1 - mask) * proj * sgns
+        x = mask * x + (1 - mask) * proj * torch.sign(x)
     else:
         raise ValueError("Can only project onto 1,2,inf norm balls.")
     return x.view(original_shape)
@@ -53,8 +51,7 @@ def pgd_attack(model, x, y, eps, steps=20, p="inf", clamp=(0, 1)):
     x.requires_grad = False
     return x
 
-def pgd_attack_smooth(model, x, y, eps, noise, sample_size, steps=20,  
-                      p="inf", clamp=(0, 1)):
+def pgd_attack_smooth(model, x, y, eps, noise, sample_size, steps=20, p="inf", clamp=(0, 1)):
     step_size = 2 * eps / steps
     x.requires_grad = True
     x_orig = x.clone().detach()

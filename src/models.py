@@ -36,6 +36,31 @@ class ResNet(nn.Module):
         return -forecast.log_prob(y)
 
 
+class LinearModel(nn.Module):
+
+    def __init__(self, dataset, device):
+        super().__init__()
+        self.device = device
+        if dataset == "cifar":
+            self.model = nn.Sequential(
+                NormalizeLayer((3, 1, 1), device, CIFAR_10_MU, CIFAR_10_SIG),
+                nn.Linear(3 * 32 * 32, 10))
+        elif dataset == "cifar":
+            pass
+        else:
+            raise ValueError
+        self.model.to(device)
+
+    def forecast(self, theta):
+        return Categorical(logits=theta)
+
+    def forward(self, x):
+        return self.model(x)
+
+    def loss(self, x, y):
+        forecast = self.forecast(self.forward(x))
+        return -forecast.log_prob(y)
+
 class NormalizeLayer(nn.Module):
     """
     Normalizes across the first non-batch axis.
