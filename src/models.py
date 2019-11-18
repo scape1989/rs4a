@@ -7,7 +7,10 @@ from src.wide_resnet import WideResNet
 
 
 CIFAR_10_MU = [0.4914, 0.4822, 0.4465]
-CIFAR_10_SIG = [0.2023, 0.1994, 0.2010]
+CIFAR_10_SIGMA = [0.2023, 0.1994, 0.2010]
+
+MNIST_MU = [0.1307,]
+MNIST_SIGMA = [0.3081,]
 
 
 class ResNet(nn.Module):
@@ -17,7 +20,7 @@ class ResNet(nn.Module):
         self.device = device
         if dataset == "cifar":
             self.model = nn.Sequential(
-                NormalizeLayer((3, 1, 1), device, CIFAR_10_MU, CIFAR_10_SIG),
+                NormalizeLayer((3, 1, 1), device, CIFAR_10_MU, CIFAR_10_SIGMA),
                 WideResNet(depth=40, num_classes=10, widen_factor=2))
         elif dataset == "imagenet":
             pass
@@ -35,6 +38,8 @@ class ResNet(nn.Module):
         forecast = self.forecast(self.forward(x))
         return -forecast.log_prob(y)
 
+    def hard_loss(self, x, y):
+        forecast = self.forecast(self.forward(x))
 
 class LinearModel(nn.Module):
 
@@ -42,11 +47,11 @@ class LinearModel(nn.Module):
         super().__init__()
         self.device = device
         if dataset == "cifar":
-            self.model = nn.Sequential(
-                NormalizeLayer((3, 1, 1), device, CIFAR_10_MU, CIFAR_10_SIG),
-                nn.Linear(3 * 32 * 32, 10))
-        elif dataset == "cifar":
-            pass
+            self.norm = NormalizeLayer((3, 1, 1), device, CIFAR_10_MU, CIFAR_10_SIGMA)
+            self.model = nn.Linear(3 * 32 * 32, 10)
+        elif dataset == "mnist":
+            self.norm = NormalizeLayer((1, 1, 1), device, MNIST_MU, MNIST_SIGMA)
+            self.model = nn.Linear(28 * 28, 10)
         else:
             raise ValueError
         self.model.to(device)
@@ -55,6 +60,7 @@ class LinearModel(nn.Module):
         return Categorical(logits=theta)
 
     def forward(self, x):
+        x = self.norm(x).view(x.shape[0], -1)
         return self.model(x)
 
     def loss(self, x, y):

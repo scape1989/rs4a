@@ -21,34 +21,35 @@ data:
 
 jobs:
 # ================================================================================================
-- name: cifar_exp1_015
+
+- name: cifar_expinf_015
   sku: G1
   command:
-  - python3 -m src.train --experiment-name=cifar_exp1_015 --noise=Exp1Noise --sigma=0.15 --k=100
-  - python3 -m src.test --experiment-name=cifar_exp1_015 --noise=Exp1Noise --sigma=0.15 --k=100
+  - python3 -m src.train --experiment-name=cifar_expinf_015 --noise=ExpInfNoise --sigma=0.15 --k=2
+  - python3 -m src.test --experiment-name=cifar_expinf_015 --noise=ExpInfNoise --sigma=0.15 --k=2
 
 # ================================================================================================
 
-- name: cifar_exp1_035
+- name: cifar_expinf_035
   sku: G1
   command:
-  - python3 -m src.train --experiment-name=cifar_exp1_035 --noise=Exp1Noise --sigma=0.35 --k=100
-  - python3 -m src.test --experiment-name=cifar_exp1_035 --noise=Exp1Noise --sigma=0.35 --k=100
+  - python3 -m src.train --experiment-name=cifar_expinf_035 --noise=ExpInfNoise --sigma=0.35 --k=2
+  - python3 -m src.test --experiment-name=cifar_expinf_035 --noise=ExpInfNoise --sigma=0.35 --k=2
 
 # ================================================================================================
 
-- name: cifar_exp1_025
+- name: cifar_expinf_025
   sku: G1
   command:
-  - python3 -m src.train --experiment-name=cifar_exp1_025 --noise=Exp1Noise --sigma=0.25 --k=100
-  - python3 -m src.test --experiment-name=cifar_exp1_025 --noise=Exp1Noise --sigma=0.25 --k=100
+  - python3 -m src.train --experiment-name=cifar_expinf_025 --noise=ExpInfNoise --sigma=0.25 --k=2
+  - python3 -m src.test --experiment-name=cifar_expinf_025 --noise=ExpInfNoise --sigma=0.25 --k=2
 
 # ================================================================================================
 
-- name: cifar_exp1_05
+- name: cifar_expinf_05
   sku: G1
   command:
-  - python3 -m src.train --experiment-name=cifar_exp1_05 --noise=Exp1Noise --sigma=0.5 --k=100
-  - python3 -m src.test --experiment-name=cifar_exp1_05 --noise=Exp1Noise --sigma=0.5 --k=100
+  - python3 -m src.train --experiment-name=cifar_expinf_05 --noise=ExpInfNoise --sigma=0.5 --k=2
+  - python3 -m src.test --experiment-name=cifar_expinf_05 --noise=ExpInfNoise --sigma=0.5 --k=2
 
 # ================================================================================================

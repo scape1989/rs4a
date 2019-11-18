@@ -1,0 +1,112 @@
+description: Training MNIST Robustness
+
+target:
+  vc: msrlabs
+  cluster: eu1
+
+environment:
+  image: microsoft_pytorch:v1.2.0_gpu_cuda9.0_py36_release_gpuenv_hvd0.16.2
+  registry: phillyregistry.azurecr.io
+  setup:
+  - pip install torchnet --user
+  - pip install statsmodels --user
+  - pip install tqdm --user
+
+code:
+  local_dir: $CONFIG_DIR/../
+
+data:
+  local_dir: $CONFIG_DIR/../data/
+  remote_dir: datasets/
+
+jobs:
+
+# ================================================================================================
+
+- name: mnist_clean
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=mnist_clean --dataset=mnist --noise=Clean --sigma=0.0 --model=LinearModel --lr=0.01
+  - python3 -m src.test --experiment-name=mnist_clean --dataset=mnist --noise=Clean --sigma=0.0 --model=LinearModel
+
+# ================================================================================================
+
+- name: mnist_gaussian_015
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=mnist_gaussian_015 --dataset=mnist --noise=GaussianNoise --sigma=0.15 --model=LinearModel --lr=0.01
+  - python3 -m src.test --experiment-name=mnist_gaussian_015 --dataset=mnist --noise=GaussianNoise --sigma=0.15 --model=LinearModel
+
+- name: mnist_uniform_015
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=mnist_uniform_015 --dataset=mnist --noise=UniformNoise --sigma=0.15 --model=LinearModel --lr=0.01
+  - python3 -m src.test --experiment-name=mnist_uniform_015 --dataset=mnist --noise=UniformNoise --sigma=0.15 --model=LinearModel
+
+- name: mnist_laplace_015
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=mnist_laplace_015 --noise=LaplaceNoise --sigma=0.15 --dataset=mnist --model=LinearModel --lr=0.01
+  - python3 -m src.test --experiment-name=mnist_laplace_015 --noise=LaplaceNoise --sigma=0.15 --dataset=mnist --model=LinearModel
+
+# ================================================================================================
+
+- name: mnist_gaussian_035
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=mnist_gaussian_035 --noise=GaussianNoise --sigma=0.35 --dataset=mnist --model=LinearModel --lr=0.01
+  - python3 -m src.test --experiment-name=mnist_gaussian_035 --noise=GaussianNoise --sigma=0.35 --dataset=mnist --model=LinearModel
+
+- name: mnist_uniform_035
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=mnist_uniform_035 --noise=UniformNoise --sigma=0.35 --dataset=mnist --model=LinearModel --lr=0.01
+  - python3 -m src.test --experiment-name=mnist_uniform_035 --noise=UniformNoise --sigma=0.35 --dataset=mnist --model=LinearModel
+
+- name: mnist_laplace_035
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=mnist_laplace_035 --noise=LaplaceNoise --sigma=0.35 --dataset=mnist --model=LinearModel --lr=0.01
+  - python3 -m src.test --experiment-name=mnist_laplace_035 --noise=LaplaceNoise --sigma=0.35 --dataset=mnist --model=LinearModel
+
+# ================================================================================================
+
+- name: mnist_gaussian_025
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=mnist_gaussian_025 --noise=GaussianNoise --sigma=0.25 --dataset=mnist --model=LinearModel --lr=0.01
+  - python3 -m src.test --experiment-name=mnist_gaussian_025 --noise=GaussianNoise --sigma=0.25 --dataset=mnist --model=LinearModel
+
+- name: mnist_uniform_025
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=mnist_uniform_025 --noise=UniformNoise --sigma=0.25 --dataset=mnist --model=LinearModel --lr=0.01
+  - python3 -m src.test --experiment-name=mnist_uniform_025 --noise=UniformNoise --sigma=0.25 --dataset=mnist --model=LinearModel
+
+- name: mnist_laplace_025
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=mnist_laplace_025 --noise=LaplaceNoise --sigma=0.25 --dataset=mnist --model=LinearModel --lr=0.01
+  - python3 -m src.test --experiment-name=mnist_laplace_025 --noise=LaplaceNoise --sigma=0.25 --dataset=mnist --model=LinearModel
+
+# ================================================================================================
+
+- name: mnist_gaussian_05
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=mnist_gaussian_05 --noise=GaussianNoise --sigma=0.5 --dataset=mnist --model=LinearModel --lr=0.01
+  - python3 -m src.test --experiment-name=mnist_gaussian_05 --noise=GaussianNoise --sigma=0.5 --dataset=mnist --model=LinearModel
+
+- name: mnist_uniform_05
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=mnist_uniform_05 --noise=UniformNoise --sigma=0.5 --dataset=mnist --model=LinearModel --lr=0.01
+  - python3 -m src.test --experiment-name=mnist_uniform_05 --noise=UniformNoise --sigma=0.5 --dataset=mnist --model=LinearModel
+
+- name: mnist_laplace_05
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=mnist_laplace_05 --noise=LaplaceNoise --sigma=0.5 --dataset=mnist --model=LinearModel --lr=0.01
+  - python3 -m src.test --experiment-name=mnist_laplace_05 --noise=LaplaceNoise --sigma=0.5 --dataset=mnist --model=LinearModel
+
+# ================================================================================================

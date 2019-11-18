@@ -6,15 +6,13 @@ from argparse import ArgumentParser
 from matplotlib import pyplot as plt
 
 
-def pdf(x, sigma=1., k=1.):
-    return np.exp(-(np.linalg.norm(x, ord=np.inf) / sigma) ** k)
+def pdf_laplace(x, sigma=1., k=1.):
+    sigma = sigma / 2 ** 0.5
+    return np.exp(-(np.linalg.norm(x, ord=1) / sigma) ** k)
 
-def sample(n, sigma=1., k=1., dim=2):
-    radius = sp.stats.gamma.rvs(size=(n, 1), a=(dim / k), scale=(1 / sigma) ** k) ** (1 / k)
-    x = (2 * np.random.rand(n, 2) - 1) * radius
-    idxs = np.random.choice(2, n)
-    x[np.arange(n), idxs] = np.random.choice((-1, 1), n) * radius[:,0]
-    return x
+def pdf_gaussian(x, sigma=1., k=2.):
+    return np.exp(-(np.linalg.norm(x, ord=2) / sigma) ** k)
+
 
 if __name__ == "__main__":
 
@@ -28,18 +26,18 @@ if __name__ == "__main__":
     y = np.linspace(-2, 2, 50)
     x_grid, y_grid = np.meshgrid(x, y)
     z_grid = np.zeros((50, 50))
+    z_grid_gaussian = np.zeros((50, 50))
 
     for i, j in itertools.product(range(50), range(50)):
-        z_grid[i, j] = pdf([x[i], y[j]], args.sigma, args.k)
-
-    x = sample(args.n_samples, args.sigma, args.k)
+        z_grid[i, j] = pdf_laplace([x[i], y[j]], args.sigma, args.k)
+        z_grid_gaussian[i, j] = pdf_gaussian([x[i], y[j]])
 
     plt.figure(figsize=(8, 3))
     plt.subplot(1, 2, 1)
     plt.contourf(x_grid, y_grid, z_grid)
     plt.colorbar()
     plt.subplot(1, 2, 2)
-    plt.hist2d(x[:,0], x[:,1], range=((-2, 2), (-2, 2)), density=True, bins=20)
+    plt.contourf(x_grid, y_grid, z_grid_gaussian)
     plt.colorbar()
     plt.show()
 

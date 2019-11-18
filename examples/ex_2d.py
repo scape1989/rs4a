@@ -19,7 +19,7 @@ def sim_data(n=100):
 if __name__ == "__main__":
     
     x, y = sim_data()
-    noise = GaussianNoise(0.1, "cpu")
+    noise = GaussianNoise(0.1, "cpu", p=2)
 
     x = torch.tensor(x, dtype=torch.float)
     y = torch.tensor(y, dtype=torch.float)

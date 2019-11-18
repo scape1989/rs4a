@@ -8,11 +8,11 @@ import torch.optim as optim
 from argparse import ArgumentParser
 from torchnet import meter
 from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
 from src.models import *
 from src.noises import *
 from src.smooth import *
 from src.attacks import pgd_attack_smooth
+from src.datasets import get_dataset
 
 
 if __name__ == "__main__":
@@ -31,7 +31,8 @@ if __name__ == "__main__":
     argparser.add_argument("--eps", default=1.0, type=float)
     argparser.add_argument("--p", default=1, type=int)
     argparser.add_argument("--k", default=1.0, type=float)
-    argparser.add_argument("--model", default=ResNet, type=str)
+    argparser.add_argument("--model", default="ResNet", type=str)
+    argparser.add_argument("--dataset", default="cifar", type=str)
     argparser.add_argument("--adversarial", action="store_true")
     argparser.add_argument('--output-dir', type=str, default=os.getenv("PT_OUTPUT_DIR"))
     args = argparser.parse_args()
@@ -39,17 +40,10 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
 
-    train_dataset = datasets.CIFAR10("./data/cifar_10", train=True, download=True,
-                                     transform=transforms.Compose([
-                                         transforms.RandomCrop(32, padding=4),
-                                         transforms.RandomHorizontalFlip(),
-                                         transforms.ToTensor()
-                                      ]))
-
-    model = ResNet(dataset="cifar", device=args.device)
+    model = eval(args.model)(dataset=args.dataset, device=args.device)
     model.train()
     
-    train_loader = DataLoader(train_dataset, shuffle=True, 
+    train_loader = DataLoader(get_dataset(args.dataset, "train"), shuffle=True, 
                               batch_size=args.batch_size, 
                               num_workers=args.num_workers)
 
@@ -74,6 +68,13 @@ if __name__ == "__main__":
                 x = pgd_attack_smooth(model, x, y, args.eps, noise, sample_size=2, p=args.p)
             else:
                 x = x + noise.sample(x.shape)
+                
+                # random rotation matrix
+#                W, _ = sp.linalg.qr(np.random.randn(784, 784))
+#                delta = noise.sample(x.shape)
+#                delta = delta.reshape(x.shape[0], -1)
+#                delta = delta @ torch.tensor(W, device=args.device, dtype=torch.float)
+#                x = x + delta.view(x.shape)
 
             optimizer.zero_grad()
             loss = model.loss(x, y).mean()

@@ -10,16 +10,36 @@ from matplotlib import pyplot as plt
 
 
 experiments = [
-    "cifar", "cifar_laplace_025", "cifar_expinf_025", "cifar_uniform_025",
-    "cifar_laplace_05", "cifar_expinf_05", "cifar_uniform_05",
-    "cifar_laplace_075", "cifar_expinf_075", "cifar_uniform_075",
-    "cifar_laplace_015", "cifar_expinf_015", "cifar_uniform_015",
-    "cifar_laplace_1", "cifar_expinf_1", "cifar_uniform_1",
-    "cifar_gaussian_025", "cifar_gaussian_05", "cifar_gaussian_075",
-    "cifar_gaussian_015", "cifar_gaussian_1",
-    "cifar_gaussian_035", "cifar_expinf_035", "cifar_laplace_035", "cifar_uniform_035"
+    "mnist_clean",
+    "mnist_gaussian_015",
+    "mnist_gaussian_025",
+    "mnist_gaussian_035", 
+    "mnist_gaussian_05",
+    "mnist_laplace_015",
+    "mnist_laplace_025", 
+    "mnist_laplace_035",
+    "mnist_laplace_05", 
+    "mnist_uniform_015",
+    "mnist_uniform_025", 
+    "mnist_uniform_035", 
+    "mnist_uniform_05",
+    "mnist_lomax_015", 
+    "mnist_lomax_025", 
+    "mnist_lomax_035",
+    "mnist_lomax_05", 
 ]
 
+#experiments = [
+#    "cifar", "cifar_laplace_025", "cifar_expinf_025", "cifar_uniform_025",
+#    "cifar_laplace_05", "cifar_expinf_05", "cifar_uniform_05",
+#    "cifar_laplace_015", "cifar_expinf_015", "cifar_uniform_015",
+#    "cifar_exp1_025", "cifar_exp1_015", "cifar_exp1_035", "cifar_exp1_05", 
+#    "cifar_expinf_015", "cifar_uniform_015",
+#    "cifar_gaussian_025", "cifar_gaussian_05",
+#    "cifar_gaussian_015", 
+#    "cifar_gaussian_035", "cifar_expinf_035", "cifar_laplace_035", "cifar_uniform_035"
+#]
+#
 if __name__ == "__main__":
 
     sns.set_style("white")
@@ -38,6 +58,9 @@ if __name__ == "__main__":
             results[k] = np.load(f"{save_path}/{k}.npy")
 
         top_1_preds_smooth = np.argmax(results["preds_smooth"], axis=1)
+
+#        if args.noise == "LaplaceNoise":
+#            results["radius_smooth"] /= 784 ** 0.5
 
         for eps in eps_range:
 
@@ -78,16 +101,18 @@ if __name__ == "__main__":
     plt.ylim((0, 1))
     plt.tight_layout()
     plt.show()
-
-    selected = df >> mask(X.noise != "Clean") 
-    sns.relplot(x="eps", y="top_1_acc_cert", hue="noise", kind="line", col="sigma",
-                col_wrap=2, data=selected, height=2, aspect=1.5)
-    plt.ylim((0, 1))
-    plt.show()
-
-    selected = df >> mask(X.noise != "Clean")
-    sns.relplot(x="sigma", y="eps", hue="top_1_acc_cert", kind="scatter", row="noise", 
-                data=selected, height=3, aspect=1.5, legend=False, sizes=(5,), palette="viridis")
-    plt.tight_layout()
-    plt.show()
+#
+#    selected = df >> mask(X.noise != "Clean") 
+#    sns.relplot(x="eps", y="top_1_acc_cert", hue="noise", kind="line", col="sigma",
+#                col_wrap=2, data=selected, height=2, aspect=1.5)
+#    plt.ylim((0, 1))
+#    plt.show()
+#
+#    selected = df >> mask(X.noise != "Clean")
+#    sns.relplot(x="sigma", y="eps", hue="top_1_acc_cert", kind="scatter", col="noise", col_wrap=2,
+#                data=selected, height=4, aspect=1.5, legend=False, sizes=(5,), palette="viridis")
+#    plt.tight_layout()
+#    plt.show()
+#
+#    sns.heatmap((selected >> mask(X.noise == "LaplaceNoise")).pivot("eps", "sigma", "top_1_acc_cert"), yticklabels=8, cbar=True)
 
