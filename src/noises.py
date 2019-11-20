@@ -6,6 +6,10 @@ import torch
 from torch.distributions import Normal, Uniform, Laplace, Gamma, Dirichlet, Pareto
 
 
+def atanh(x):
+    return 0.5 * np.log((1 + x) / (1 - x))
+
+
 class Noise(object):
 
     def __init__(self, sigma, device):
@@ -74,6 +78,31 @@ class LaplaceNoise(Noise):
         return torch.max(a, b) 
 
 
+class LomaxNoise(Noise):
+   
+    def __init__(self, sigma, device, p,  k=3, **kwargs):
+        super().__init__(sigma, device)
+        self.k = k
+        self.lambd = (k - 1) * sigma if p == 1 else math.sqrt(0.5 * (k - 1) * (k - 2)) * sigma 
+        self.pareto_dist = Pareto(scale=torch.tensor(self.lambd, device=device, dtype=torch.float),
+                                  alpha=torch.tensor(self.k, device=device, dtype=torch.float))
+
+    def sample(self, shape):
+        samples = self.pareto_dist.sample(shape) - self.lambd
+        signs = torch.sign(torch.rand(shape, device=self.device) - 0.5)
+        return samples * signs
+
+    def certify(self, prob_lower_bound):
+        r = (1 - 2 * (1 - prob_lower_bound.numpy())) ** (-1 / self.k) - 1
+        r = r.astype(np.complex64)
+        if self.k == 1:
+            radius = 0.5 * np.log((2 + r) / r)
+        if self.k == 3:
+            radius = 0.25 * (2 * np.arctan(r + 1) + \
+                             np.conj(2 * np.arctanh(r + 1)) + np.pi * (-1 + 1j))
+        return torch.tensor(np.real(radius) * self.lambd, dtype=torch.float)
+
+
 class ExpInfNoise(Noise):
 
     def __init__(self, sigma, device, p, dim=3*32*32, k=1.0, **kwargs):
@@ -104,7 +133,8 @@ class Exp1Noise(Noise):
         super().__init__(sigma, device)
         self.dim = dim
         self.k = k
-        self.lambd = sigma / (math.exp(math.lgamma((dim + 1) / k) - math.lgamma(dim / k))) * dim
+        self.lambd = sigma / (math.exp(math.lgamma((dim + 1) / k) - math.lgamma(dim / k))) 
+        self.lambd *= dim if p == 1 else math.sqrt(0.5 * dim * (dim + 1))
         self.gamma_factor = math.exp(math.lgamma(dim / k) - math.lgamma((dim + k - 1) / k))
         self.dirichlet_dist = Dirichlet(concentration=torch.ones(dim, device=device))
         self.gamma_dist = Gamma(concentration=torch.tensor(dim / k, device=device),
@@ -127,20 +157,27 @@ class Exp1Noise(Noise):
         return 2 * self.lambd * self.gamma_factor / self.k * integral
 
 
-class LomaxNoise(Noise):
-   
-    def __init__(self, sigma, device, p,  k=3, **kwargs):
+class Exp2Noise(Noise):
+
+    def __init__(self, sigma, device, p, dim=3*32*32, k=1, **kwargs):
         super().__init__(sigma, device)
+        self.dim = dim
         self.k = k
-        self.lambd = (k - 1) * sigma if p == 1 else math.sqrt(0.5 * (k - 1) * (k - 2)) * sigma 
-        self.pareto_dist = Pareto(scale=torch.tensor(self.lambd, device=device, dtype=torch.float),
-                                  alpha=torch.tensor(self.k, device=device, dtype=torch.float))
+        self.lambd = math.sqrt(0.5 * math.pi * dim) * sigma if p == 1 else math.sqrt(dim) * sigma
+        self.lambd = self.lambd / math.exp(math.lgamma((dim + 1) / k) - math.lgamma(dim / k)) 
+        self.beta_dist = sp.stats.beta(0.5 * (self.dim - 1), 0.5 * (self.dim - 1))
+        self.gamma_dist = Gamma(concentration=torch.tensor(dim / k, device=device),
+                                rate=torch.tensor((1 / self.lambd) ** k, device=device))
 
     def sample(self, shape):
-        samples = self.pareto_dist.sample(shape) - self.lambd
-        signs = torch.sign(torch.rand(shape, device=self.device) - 0.5)
-        return samples * signs
+        n_samples = int(np.prod(list(shape)) / self.dim)
+        radius = (self.gamma_dist.sample((n_samples, 1))) ** (1 / self.k)
+        noises = torch.randn(shape, device=self.device).view(n_samples, -1)
+        noises = noises / (noises ** 2).sum(dim=1).unsqueeze(1) ** 0.5
+        return (noises * radius).reshape(shape)
 
     def certify(self, prob_lower_bound):
-        return torch.zeros_like(prob_lower_bound)
+        radius =  self.lambd * (self.dim - 1) * \
+                  atanh(1 - 2 * self.beta_dist.ppf(1 - prob_lower_bound.numpy()))
+        return torch.tensor(radius, dtype=torch.float)
 

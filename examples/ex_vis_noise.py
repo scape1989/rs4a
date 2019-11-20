@@ -31,7 +31,7 @@ if __name__ == "__main__":
     
     for i in range(args.n_samples):
 
-        noise = LaplaceNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=2)
+        noise = LaplaceNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=1)
         sample = (x + noise.sample(x.shape)).clamp(0, 1)
         plt.subplot(4, args.n_samples, i + 1)
         plot_image(sample, args.dataset)
@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     for i in range(args.n_samples):
 
-        noise = GaussianNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=2)
+        noise = GaussianNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=1)
         sample = (x + noise.sample(x.shape)).clamp(0, 1)
         plt.subplot(4, args.n_samples, i + 1 + args.n_samples)
         plot_image(sample, args.dataset)
@@ -49,16 +49,16 @@ if __name__ == "__main__":
 
     for i in range(args.n_samples):
 
-        noise = LomaxNoise(sigma=args.sigma + 0.1 * i, device="cpu", k=3, p=2)
+        noise = Exp2Noise(sigma=args.sigma + 0.1 * i, device="cpu", k=1, p=1)
         sample = (x + noise.sample(x.shape)).clamp(0, 1)
         plt.subplot(4, args.n_samples, i + 1 + args.n_samples * 2)
         plot_image(sample, args.dataset)
         plt.axis("off")
-        plt.title(f"Lomax {args.sigma + 0.1 * i:.1f}")
+        plt.title(f"Exp2 {args.sigma + 0.1 * i:.1f}")
 
     for i in range(args.n_samples):
 
-        noise = UniformNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=2)
+        noise = UniformNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=1)
         sample = (x + noise.sample(x.shape)).clamp(0, 1)
         plt.subplot(4, args.n_samples, i + 1 + args.n_samples * 3)
         plot_image(sample, args.dataset)

@@ -46,7 +46,8 @@ def smooth_predict_hard_binary(model, x, noise, sample_size=64, clamp=(0, 1)):
 #    counts = nn.functional.one_hot(top_cats, num_cats).float().sum(dim=1)
 #    return Categorical(probs=counts / counts.shape[1])
 #
-def smooth_predict_hard(model, x, noise, sample_size=64, clamp=(0, 1)):
+#def smooth_predict_hard(model, x, noise, sample_size=64, clamp=(0, 1)):
+def smooth_predict_hard(model, x, noise, sample_size=64, clamp=(-float("Inf"), float("Inf"))):
     samples_shape = [1, sample_size] + ([1] * (len(x.shape) - 1))
     samples = x.unsqueeze(1).repeat(samples_shape)
     samples = (samples + noise.sample(samples.shape)).clamp(*clamp)

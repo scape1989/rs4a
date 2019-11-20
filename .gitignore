@@ -2,5 +2,6 @@
 *.pyc
 *.torch
 *.npy
+*.csv
 *.swp
 data/
