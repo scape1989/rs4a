@@ -20,7 +20,7 @@ if __name__ == "__main__":
     argparser.add_argument("--batch-size", default=2, type=int)
     argparser.add_argument("--num-workers", default=os.cpu_count(), type=int)
     argparser.add_argument("--sample-size-pred", default=64, type=int)
-    argparser.add_argument("--sample-size-cert", default=1024, type=int)
+    argparser.add_argument("--sample-size-cert", default=100000, type=int)
     argparser.add_argument("--sigma", default=0.0, type=float)
     argparser.add_argument("--noise", default="Clean", type=str)
     argparser.add_argument("--k", default=1, type=int)
@@ -43,7 +43,6 @@ if __name__ == "__main__":
     noise = eval(args.noise)(**args.__dict__)
 
     results = {
-        "preds": np.zeros((len(test_dataset), 10)),
         "preds_smooth": np.zeros((len(test_dataset), 10)),
         "labels": np.zeros(len(test_dataset)),
         "radius_smooth": np.zeros(len(test_dataset)),
@@ -58,7 +57,6 @@ if __name__ == "__main__":
         radii = certify_smoothed(model, x, top_cats, 0.001, noise, args.sample_size_cert)
 
         lower, upper = i * args.batch_size, (i + 1) * args.batch_size
-        results["preds"][lower:upper,:] = preds.probs.data.cpu().numpy()
         results["preds_smooth"][lower:upper,:] = preds_smooth.probs.data.cpu().numpy()
         results["labels"][lower:upper] = y.data.cpu().numpy()
         results["radius_smooth"][lower:upper] = radii.cpu().numpy()

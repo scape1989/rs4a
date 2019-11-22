@@ -22,7 +22,7 @@ if __name__ == "__main__":
     argparser.add_argument("--dataset", type=str, default="cifar")
     args = argparser.parse_args()
     
-    dataset = get_dataset(args.dataset, "train")
+    dataset = get_dataset(args.dataset, "test")
 
     plt.figure(figsize=(3 * args.n_samples, 9))
 
@@ -31,7 +31,7 @@ if __name__ == "__main__":
     
     for i in range(args.n_samples):
 
-        noise = LaplaceNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=1)
+        noise = LaplaceNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=2)
         sample = (x + noise.sample(x.shape)).clamp(0, 1)
         plt.subplot(4, args.n_samples, i + 1)
         plot_image(sample, args.dataset)
@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     for i in range(args.n_samples):
 
-        noise = GaussianNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=1)
+        noise = GaussianNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=2)
         sample = (x + noise.sample(x.shape)).clamp(0, 1)
         plt.subplot(4, args.n_samples, i + 1 + args.n_samples)
         plot_image(sample, args.dataset)
@@ -49,16 +49,16 @@ if __name__ == "__main__":
 
     for i in range(args.n_samples):
 
-        noise = Exp2Noise(sigma=args.sigma + 0.1 * i, device="cpu", k=1, p=1)
+        noise = ExpInfNoise(sigma=args.sigma + 0.1 * i, device="cpu", k=1, p=2)
         sample = (x + noise.sample(x.shape)).clamp(0, 1)
         plt.subplot(4, args.n_samples, i + 1 + args.n_samples * 2)
         plot_image(sample, args.dataset)
         plt.axis("off")
-        plt.title(f"Exp2 {args.sigma + 0.1 * i:.1f}")
+        plt.title(f"ExpInf {args.sigma + 0.1 * i:.1f}")
 
     for i in range(args.n_samples):
 
-        noise = UniformNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=1)
+        noise = UniformNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=2)
         sample = (x + noise.sample(x.shape)).clamp(0, 1)
         plt.subplot(4, args.n_samples, i + 1 + args.n_samples * 3)
         plot_image(sample, args.dataset)

@@ -13,21 +13,22 @@ from matplotlib import pyplot as plt
 if __name__ == "__main__":
 
     argparser = ArgumentParser()
-    argparser.add_argument("--prefix", default="cifar", type=str)
+    argparser.add_argument("--dataset", default="cifar", type=str)
+    argparser.add_argument("--dir", default="./ckpts", type=str)
     args = argparser.parse_args()
 
-    experiment_names = list(filter(lambda x: x.startswith(args.prefix), os.listdir("./ckpts")))
+    experiment_names = list(filter(lambda x: x.startswith(args.dataset), os.listdir(args.dir)))
 
     sns.set_style("white")
     sns.set_palette("husl")
 
     df = defaultdict(list)
-    eps_range = np.linspace(0, 1.5, 50)
+    eps_range = np.linspace(0, 2.5, 50)
 
     for experiment_name in experiment_names:
 
-        save_path = f"ckpts/{experiment_name}"
-        args = pickle.load(open(f"ckpts/{experiment_name}/args.pkl", "rb"))
+        save_path = f"{args.dir}/{experiment_name}"
+        experiment_args = pickle.load(open(f"{args.dir}/{experiment_name}/args.pkl", "rb"))
         results = {}
 
         for k in  ("preds_smooth", "labels", "radius_smooth", "acc_train"):
@@ -41,8 +42,8 @@ if __name__ == "__main__":
                               (top_1_preds_smooth == results["labels"])).mean()
             top_1_acc_pred = (top_1_preds_smooth == results["labels"]).mean()
             df["experiment_name"].append(experiment_name)
-            df["sigma"].append(args.sigma)
-            df["noise"].append(args.noise)
+            df["sigma"].append(experiment_args.sigma)
+            df["noise"].append(experiment_args.noise)
             df["eps"].append(eps)
             df["top_1_acc_train"].append(results["acc_train"][0])
             df["top_1_acc_cert"].append(top_1_acc_cert)
@@ -50,7 +51,7 @@ if __name__ == "__main__":
 
     # save the experiment results
     df = pd.DataFrame(df)
-    df.to_csv("./ckpts/results.csv", index=False)
+    df.to_csv(f"{args.dir}/results_{args.dataset}.csv", index=False)
 
     # plot clean training and testing accuracy
     grouped = df >> mask(X.noise != "Clean") \
@@ -63,17 +64,17 @@ if __name__ == "__main__":
 
     plt.figure(figsize=(8, 6))
     plt.subplot(2, 1, 1)
-    sns.lineplot(x="sigma", y="top_1_acc_train", hue="noise", markers=True, 
-                 dashes=False, style="noise", data=grouped, alpha=1)
+    sns.lineplot(x="sigma", y="top_1_acc_train", hue="noise", markers=True, dashes=False, 
+                 style="noise", data=grouped, alpha=1)
     plt.xlabel("$\sigma$")
     plt.ylabel("Top-1 training accuracy")
-    plt.ylim((0.5, 1))
+    plt.ylim((0, 1))
     plt.subplot(2, 1, 2)
-    sns.lineplot(x="sigma", y="top_1_acc_pred", hue="noise", markers=True, 
-                 dashes=False, style="noise", data=grouped, alpha=1)
+    sns.lineplot(x="sigma", y="top_1_acc_pred", hue="noise", markers=True, dashes=False,
+                 style="noise", data=grouped, alpha=1)
     plt.xlabel("$\sigma$")
     plt.ylabel("Top-1 testing accuracy")
-    plt.ylim((0.5, 1))
+    plt.ylim((0, 1))
     plt.tight_layout()
     plt.show()
 
@@ -93,5 +94,15 @@ if __name__ == "__main__":
     sns.relplot(x="eps", y="top_1_acc_cert", hue="experiment_name", data=grouped, kind="scatter",
                 height=3, aspect=1.5)
     plt.ylim((0, 1))
+    plt.show()
+
+    # plot top certified accuracy per epsilon, per type of noise
+    grouped = df >> mask(X.noise != "Clean") \
+                 >> group_by(X.eps, X.noise) \
+                 >> arrange(X.top_1_acc_cert, ascending=False) \
+                 >> summarize(top_1_acc_cert=first(X.top_1_acc_cert),
+                              noise=first(X.noise)) 
+
+    sns.lineplot(x="eps", y="top_1_acc_cert", data=grouped, hue="noise")
     plt.show()
 

@@ -46,17 +46,35 @@ def smooth_predict_hard_binary(model, x, noise, sample_size=64, clamp=(0, 1)):
 #    counts = nn.functional.one_hot(top_cats, num_cats).float().sum(dim=1)
 #    return Categorical(probs=counts / counts.shape[1])
 #
-#def smooth_predict_hard(model, x, noise, sample_size=64, clamp=(0, 1)):
-def smooth_predict_hard(model, x, noise, sample_size=64, clamp=(-float("Inf"), float("Inf"))):
-    samples_shape = [1, sample_size] + ([1] * (len(x.shape) - 1))
-    samples = x.unsqueeze(1).repeat(samples_shape)
-    samples = (samples + noise.sample(samples.shape)).clamp(*clamp)
-    samples = samples.view(*[-1] + [*samples.shape][2:])
-    logits = model.forward(samples).view(x.shape[0], sample_size, -1)
-    num_cats = logits.shape[-1]
-    top_cats = torch.argmax(logits, dim=2)
-    counts = nn.functional.one_hot(top_cats, num_cats).float().sum(dim=1)
-    return Categorical(probs=counts / counts.shape[1])
+#def smooth_predict_hard(model, x, noise, sample_size=64, clamp=(-float("Inf"), float("Inf"))):
+#    samples_shape = [1, sample_size] + ([1] * (len(x.shape) - 1))
+#    samples = x.unsqueeze(1).repeat(samples_shape)
+#    samples = (samples + noise.sample(samples.shape)).clamp(*clamp)
+#    samples = samples.view(*[-1] + [*samples.shape][2:])
+#    logits = model.forward(samples).view(x.shape[0], sample_size, -1)
+#    num_cats = logits.shape[-1]
+#    top_cats = torch.argmax(logits, dim=2)
+#    counts = nn.functional.one_hot(top_cats, num_cats).float().sum(dim=1)
+#    return Categorical(probs=counts / counts.shape[1])
+#
+def smooth_predict_hard(model, x, noise, sample_size=64, noise_batch_size=512, num_cats=10,
+                        clamp=(-float("Inf"), float("Inf"))):
+
+    counts = torch.zeros(x.shape[0], num_cats, dtype=torch.float, device=x.device)
+    num_samples_left = sample_size
+
+    while num_samples_left > 0:
+
+        shape = torch.Size([x.shape[0], min(num_samples_left, noise_batch_size)]) + x.shape[1:]
+        samples = x.unsqueeze(1).expand(shape)
+        samples = (samples + noise.sample(samples.shape)).clamp(*clamp)
+        samples = samples.reshape(torch.Size([-1]) + samples.shape[2:])
+        logits = model.forward(samples).view(shape[:2] + torch.Size([-1]))
+        top_cats = torch.argmax(logits, dim=2)
+        counts += nn.functional.one_hot(top_cats, num_cats).float().sum(dim=1)
+        num_samples_left -= noise_batch_size
+
+    return Categorical(probs=counts)
 
 def certify_smoothed(model, x, top_cats, alpha, noise, sample_size):
     preds = smooth_predict_hard(model, x, noise, sample_size)

@@ -52,7 +52,7 @@ class GaussianNoise(Noise):
         super().__init__(sigma, device)
         self.lambd = sigma if p == 2 else sigma * math.sqrt(math.pi / 2)
         self.norm_dist = Normal(loc=torch.tensor(0., device=device),
-                                 scale=torch.tensor(self.lambd, device=device))
+                                scale=torch.tensor(self.lambd, device=device))
 
     def sample(self, shape):
         return self.norm_dist.sample(shape)
@@ -105,7 +105,7 @@ class LomaxNoise(Noise):
 
 class ExpInfNoise(Noise):
 
-    def __init__(self, sigma, device, p, dim=3*32*32, k=1.0, **kwargs):
+    def __init__(self, sigma, device, p, dim=3*32*32, k=1, **kwargs):
         super().__init__(sigma, device)
         self.dim = dim
         self.k = k

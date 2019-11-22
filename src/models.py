@@ -67,6 +67,43 @@ class LinearModel(nn.Module):
         forecast = self.forecast(self.forward(x))
         return -forecast.log_prob(y)
 
+class MLP(nn.Module):
+
+    def __init__(self, dataset, device):
+        super().__init__()
+        self.device = device
+        if dataset == "cifar":
+            self.norm = NormalizeLayer((3, 1, 1), device, CIFAR_10_MU, CIFAR_10_SIGMA)
+            self.model = nn.Sequential(
+                nn.Linear(3 * 32 * 32, 2048),
+                nn.ReLU(),
+                nn.Linear(2048, 512),
+                nn.ReLU(),
+                nn.Linear(512, 10))
+        elif dataset == "mnist":
+            self.norm = NormalizeLayer((1, 1, 1), device, MNIST_MU, MNIST_SIGMA)
+            self.model = nn.Sequential(
+                nn.Linear(28 * 28, 512),
+                nn.ReLU(),
+                nn.Linear(512, 512),
+                nn.ReLU(),
+                nn.Linear(512, 10))
+        else:
+            raise ValueError
+        self.model.to(device)
+
+    def forecast(self, theta):
+        return Categorical(logits=theta)
+
+    def forward(self, x):
+        x = self.norm(x).view(x.shape[0], -1)
+        return self.model(x)
+
+    def loss(self, x, y):
+        forecast = self.forecast(self.forward(x))
+        return -forecast.log_prob(y)
+
+
 class NormalizeLayer(nn.Module):
     """
     Normalizes across the first non-batch axis.
