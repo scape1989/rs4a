@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import scipy as sp
+import scipy.special
 import scipy.stats
 import torch
 from torch.distributions import Normal, Uniform, Laplace, Gamma, Dirichlet, Pareto
@@ -93,14 +94,11 @@ class LomaxNoise(Noise):
         return samples * signs
 
     def certify(self, prob_lower_bound):
-        r = (1 - 2 * (1 - prob_lower_bound.numpy())) ** (-1 / self.k) - 1
-        r = r.astype(np.complex64)
-        if self.k == 1:
-            radius = 0.5 * np.log((2 + r) / r)
-        if self.k == 3:
-            radius = 0.25 * (2 * np.arctan(r + 1) + \
-                             np.conj(2 * np.arctanh(r + 1)) + np.pi * (-1 + 1j))
-        return torch.tensor(np.real(radius) * self.lambd, dtype=torch.float)
+        prob_lower_bound = prob_lower_bound.numpy()
+        radius = sp.special.hyp2f1(1, self.k / (self.k + 1), self.k / (self.k + 1) + 1,
+                                 (2 * prob_lower_bound - 1) ** (1 + 1 / self.k)) * \
+                 self.lambd * (2 * prob_lower_bound - 1) / self.k
+        return torch.tensor(radius, dtype=torch.float)
 
 
 class ExpInfNoise(Noise):
