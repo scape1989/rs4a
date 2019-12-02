@@ -44,7 +44,7 @@ class UniformNoise(Noise):
         return (torch.rand(shape, device=self.device) - 0.5) * 2 * self.lambd
 
     def certify(self, prob_lower_bound):
-        return self.lambd * (prob_lower_bound - 0.5)
+        return 2 * self.lambd * (prob_lower_bound - 0.5)
 
 class GaussianNoise(Noise):
 

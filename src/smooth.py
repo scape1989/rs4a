@@ -8,15 +8,13 @@ from statsmodels.stats.proportion import proportion_confint
 
 
 
-def smooth_predict_soft(model, x, noise, sample_size=64, clamp=(0, 1)):
-    # todo: support mixture distributions
-    batch_size = x.shape[0]
+def smooth_predict_soft(model, x, noise, sample_size=64, clamp=(-float("Inf"), float("Inf"))):
     samples_shape = [1, sample_size] + ([1] * (len(x.shape) - 1))
     samples = x.unsqueeze(1).repeat(samples_shape)
     samples = (samples + noise.sample(samples.shape)).clamp(*clamp)
-    samples = samples.view(*[-1] + [*samples.shape][2:])
-    thetas = model.forward(samples).view(batch_size, sample_size, -1)
-    return model.forecast(thetas.mean(dim=1))
+    samples = samples.view(torch.Size([-1]) + samples.shape[2:])
+    thetas = model.forward(samples).view(x.shape[0], sample_size, -1)
+    return Categorical(probs=model.forecast(thetas).probs.mean(dim=1))
 
 def smooth_predict_hard_binary(model, x, noise, sample_size=64, clamp=(0, 1)):
     batch_size = x.shape[0]

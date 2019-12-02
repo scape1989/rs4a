@@ -2,6 +2,7 @@ import logging
 import pathlib
 import pickle
 import os
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -34,6 +35,7 @@ if __name__ == "__main__":
     argparser.add_argument("--model", default="ResNet", type=str)
     argparser.add_argument("--dataset", default="cifar", type=str)
     argparser.add_argument("--adversarial", action="store_true")
+    argparser.add_argument("--direct", action="store_true")
     argparser.add_argument('--output-dir', type=str, default=os.getenv("PT_OUTPUT_DIR"))
     args = argparser.parse_args()
 
@@ -58,6 +60,8 @@ if __name__ == "__main__":
     time_meter = meter.TimeMeter(unit=False)
     noise = eval(args.noise)(**args.__dict__)
 
+    train_losses = []
+
     for epoch in range(args.num_epochs):
 
         for i, (x, y) in enumerate(train_loader):
@@ -66,9 +70,9 @@ if __name__ == "__main__":
 
             if args.adversarial and epoch > args.num_epochs // 2:
                 x = pgd_attack_smooth(model, x, y, args.eps, noise, sample_size=2, p=args.p)
-            else:
+            elif not args.direct:
                 x = x + noise.sample(x.shape)
-                
+
                 # random rotation matrix
 #                W, _ = sp.linalg.qr(np.random.randn(784, 784))
 #                delta = noise.sample(x.shape)
@@ -77,10 +81,13 @@ if __name__ == "__main__":
 #                x = x + delta.view(x.shape)
 
             optimizer.zero_grad()
-            loss = model.loss(x, y).mean()
+            if args.direct:
+                loss = -smooth_predict_soft(model, x, noise, sample_size=32).log_prob(y).mean()
+            else:
+                loss = model.loss(x, y).mean()
             loss.backward()
             optimizer.step()
-            loss_meter.add(loss.cpu().data, n=1)
+            loss_meter.add(loss.cpu().data.numpy(), n=1)
 
             if i % args.print_every == 0:
                 logger.info(f"Epoch: {epoch}\t" + 
@@ -88,6 +95,7 @@ if __name__ == "__main__":
                             f"Loss: {loss_meter.value()[0]:.2f}\t"
                             f"Mins: {(time_meter.value() / 60):.2f}\t" + 
                             f"Experiment: {args.experiment_name}")
+                train_losses.append(loss_meter.value()[0])
                 loss_meter.reset()
 
         if epoch % args.save_every == 0:
@@ -116,4 +124,6 @@ if __name__ == "__main__":
     save_path = f"{args.output_dir}/{args.experiment_name}/acc_train.npy"
     np.save(save_path,  acc_meter.value())
 
+    save_path = f"{args.output_dir}/{args.experiment_name}/losses_train.npy"
+    np.save(save_path, np.array(train_losses))
     

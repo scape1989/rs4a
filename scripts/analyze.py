@@ -15,6 +15,7 @@ if __name__ == "__main__":
     argparser = ArgumentParser()
     argparser.add_argument("--dataset", default="cifar", type=str)
     argparser.add_argument("--dir", default="./ckpts", type=str)
+    argparser.add_argument("--debug", action="store_true")
     args = argparser.parse_args()
 
     experiment_names = list(filter(lambda x: x.startswith(args.dataset), os.listdir(args.dir)))
@@ -23,7 +24,7 @@ if __name__ == "__main__":
     sns.set_palette("husl")
 
     df = defaultdict(list)
-    eps_range = np.linspace(0, 2.5, 50)
+    eps_range = np.linspace(0, 4, 50)
 
     for experiment_name in experiment_names:
 
@@ -50,8 +51,11 @@ if __name__ == "__main__":
             df["top_1_acc_pred"].append(top_1_acc_pred)
 
     # save the experiment results
-    df = pd.DataFrame(df)
+    df = pd.DataFrame(df) 
     df.to_csv(f"{args.dir}/results_{args.dataset}.csv", index=False)
+
+    if args.debug:
+        breakpoint()
 
     # plot clean training and testing accuracy
     grouped = df >> mask(X.noise != "Clean") \
@@ -76,6 +80,7 @@ if __name__ == "__main__":
     plt.ylabel("Top-1 testing accuracy")
     plt.ylim((0, 1))
     plt.tight_layout()
+    plt.title(args.dir)
     plt.show()
 
     # plot certified accuracies
@@ -83,6 +88,8 @@ if __name__ == "__main__":
     sns.relplot(x="eps", y="top_1_acc_cert", hue="noise", kind="line", col="sigma",
                 col_wrap=2, data=selected, height=2, aspect=1.5)
     plt.ylim((0, 1))
+    plt.title(args.dir)
+    plt.tight_layout()
     plt.show()
 
     # plot top certified accuracy per epsilon
@@ -94,6 +101,8 @@ if __name__ == "__main__":
     sns.relplot(x="eps", y="top_1_acc_cert", hue="experiment_name", data=grouped, kind="scatter",
                 height=3, aspect=1.5)
     plt.ylim((0, 1))
+    plt.title(args.dir)
+    plt.tight_layout()
     plt.show()
 
     # plot top certified accuracy per epsilon, per type of noise
@@ -104,5 +113,7 @@ if __name__ == "__main__":
                               noise=first(X.noise)) 
 
     sns.lineplot(x="eps", y="top_1_acc_cert", data=grouped, hue="noise")
+    plt.title(args.dir)
+    plt.tight_layout()
     plt.show()
 
