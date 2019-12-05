@@ -1,0 +1,40 @@
+description: Training ImageNet Robustness [L2 matched]
+
+target:
+  vc: msrlabs
+  cluster: eu1
+
+environment:
+  image: microsoft_pytorch:v1.2.0_gpu_cuda9.0_py36_release_gpuenv_hvd0.16.2
+  registry: phillyregistry.azurecr.io
+  setup:
+  - pip install torchnet --user
+  - pip install statsmodels --user
+  - pip install tqdm --user
+
+code:
+  local_dir: $CONFIG_DIR/../
+
+data:
+  local_dir: $CONFIG_DIR/../data/
+  remote_dir: datasets/
+
+search:
+  job_template:
+    name: imagenet_{noise:s}_{sigma:.1f}
+    sku: G1
+    command:
+    - python3 -m src.train
+      --experiment-name=imagenet_{noise:s}_{sigma:.2f}
+      --noise={noise:s}
+      --sigma={sigma:.2f}
+      --dataset=imagenet
+  type: grid
+  max_trials: 20
+  params:
+    - name: noise
+      spec: discrete
+      values: ["GaussianNoise", "UniformNoise", "LaplaceNoise", "LomaxNoise"]
+    - name: sigma
+      spec: discrete
+      values: [0.25, 0.5, 0.75, 1.0, 1.25]

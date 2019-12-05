@@ -17,7 +17,7 @@ from src.datasets import get_dataset
 
 
 if __name__ == "__main__":
-    
+
     argparser = ArgumentParser()
     argparser.add_argument("--device", default="cuda:0", type=str)
     argparser.add_argument("--lr", default=0.1, type=float)
@@ -44,13 +44,13 @@ if __name__ == "__main__":
 
     model = eval(args.model)(dataset=args.dataset, device=args.device)
     model.train()
-    
-    train_loader = DataLoader(get_dataset(args.dataset, "train"), shuffle=True, 
-                              batch_size=args.batch_size, 
+
+    train_loader = DataLoader(get_dataset(args.dataset, "train"), shuffle=True,
+                              batch_size=args.batch_size,
                               num_workers=args.num_workers)
 
-    optimizer = optim.SGD(model.parameters(), 
-                          lr=args.lr, 
+    optimizer = optim.SGD(model.parameters(),
+                          lr=args.lr,
                           momentum=0.9,
                           weight_decay=1e-4,
                           nesterov=True)
@@ -90,10 +90,10 @@ if __name__ == "__main__":
             loss_meter.add(loss.cpu().data.numpy(), n=1)
 
             if i % args.print_every == 0:
-                logger.info(f"Epoch: {epoch}\t" + 
-                            f"Itr: {i} / {len(train_loader)}\t" + 
+                logger.info(f"Epoch: {epoch}\t" +
+                            f"Itr: {i} / {len(train_loader)}\t" +
                             f"Loss: {loss_meter.value()[0]:.2f}\t"
-                            f"Mins: {(time_meter.value() / 60):.2f}\t" + 
+                            f"Mins: {(time_meter.value() / 60):.2f}\t" +
                             f"Experiment: {args.experiment_name}")
                 train_losses.append(loss_meter.value()[0])
                 loss_meter.reset()
@@ -119,11 +119,11 @@ if __name__ == "__main__":
          preds_smooth = smooth_predict_hard(model, x, noise, sample_size=32)
          top_cats = preds_smooth.probs.argmax(dim=1)
          acc_meter.add(torch.sum(top_cats == y).cpu().data.numpy(), n=len(x))
-         
+
     print("Training accuracy: ", acc_meter.value())
     save_path = f"{args.output_dir}/{args.experiment_name}/acc_train.npy"
     np.save(save_path,  acc_meter.value())
 
     save_path = f"{args.output_dir}/{args.experiment_name}/losses_train.npy"
     np.save(save_path, np.array(train_losses))
-    
+

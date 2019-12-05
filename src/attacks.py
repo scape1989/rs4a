@@ -7,11 +7,12 @@ from src.smooth import *
 def project_onto_ball(x, eps, p="inf"):
     """
     Note that projection onto inf-norm and 2-norm take O(d) time, and
-    projection onto 1-norm takes O(dlogd) using the sorting-based algorithm 
+    projection onto 1-norm takes O(dlogd) using the sorting-based algorithm
     given in [Duchi et al. 2008].
     """
     original_shape = x.shape
     x = x.view(x.shape[0], -1)
+    assert not torch.isnan(x).any()
     if p == "inf":
         x = x.clamp(-eps, eps)
     elif p == 2:
@@ -22,8 +23,8 @@ def project_onto_ball(x, eps, p="inf"):
         cumsum = torch.cumsum(mu, dim=1)
         arange = torch.arange(1, x.shape[1] + 1, device=x.device)
         rho, _ = torch.max((mu * arange > (cumsum - eps)) * arange, dim=1)
-        theta = (cumsum[torch.arange(x.shape[0]), rho.cpu()] - eps) / rho
-        proj = (x - theta.unsqueeze(1)).clamp(min=0)
+        theta = (cumsum[torch.arange(x.shape[0]), rho.cpu() - 1] - eps) / rho
+        proj = (torch.abs(x) - theta.unsqueeze(1)).clamp(min=0)
         x = mask * x + (1 - mask) * proj * torch.sign(x)
     else:
         raise ValueError("Can only project onto 1,2,inf norm balls.")
@@ -32,7 +33,7 @@ def project_onto_ball(x, eps, p="inf"):
 def fgsm_attack(model, x, y, eps):
     x.requires_grad = True
     grads = grad(model.loss(x, y).mean(), x)[0]
-    x = x + eps * torch.sign(grads) 
+    x = x + eps * torch.sign(grads)
     return x.detach()
 
 def pgd_attack(model, x, y, eps, steps=20, p="inf", clamp=(0, 1)):
@@ -40,15 +41,18 @@ def pgd_attack(model, x, y, eps, steps=20, p="inf", clamp=(0, 1)):
     x.requires_grad = True
     x_orig = x.clone().detach()
     for _ in range(steps):
-        grads = grad(model.loss(x, y).mean(), x)[0]
+        loss = model.loss(x, y).mean()
+        grads = grad(loss, x)[0]
         grads_norm = torch.norm(grads.view(x.shape[0], -1), dim=1, p=2)
         shape = (x.shape[0],) + (len(grads.shape) - 1) * (1,)
-        grads = grads / grads_norm.view(shape)
+        grads = grads / (grads_norm.view(shape) + 1e-4)
         diff = (x + step_size * grads).clamp(*clamp) - x_orig
         diff = project_onto_ball(diff, eps, p)
         x = x_orig + diff
+        print(loss)
     x = x.detach()
     x.requires_grad = False
+    breakpoint()
     return x
 
 def pgd_attack_smooth(model, x, y, eps, noise, sample_size, steps=20, p="inf", clamp=(0, 1)):
@@ -61,9 +65,11 @@ def pgd_attack_smooth(model, x, y, eps, noise, sample_size, steps=20, p="inf", c
         grads = grad(loss, x)[0]
         grads_norm = torch.norm(grads.view(x.shape[0], -1), dim=1, p=2)
         shape = (x.shape[0],) + (len(grads.shape) - 1) * (1,)
-        grads = grads / grads_norm.view(shape)
+        grads = grads / (grads_norm.view(shape) + 1e-8)
         diff = (x + step_size * grads).clamp(*clamp) - x_orig
         diff = project_onto_ball(diff, eps, p)
         x = x_orig + diff
-    return x.detach()
+    x = x.detach()
+    x.requires_grad = False
+    return x
 

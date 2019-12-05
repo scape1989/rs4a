@@ -135,3 +135,29 @@ jobs:
 
 # ================================================================================================
 
+- name: mnist_gaussian_50
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=mnist_gaussian_50 --noise=GaussianNoise --sigma=5.0 --dataset=mnist --model=MLP --lr=0.01 --p=2
+  - python3 -m src.test --experiment-name=mnist_gaussian_50 --noise=GaussianNoise --sigma=5.0 --dataset=mnist --model=MLP --p=2
+
+- name: mnist_uniform_50
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=mnist_uniform_50 --noise=UniformNoise --sigma=5.0 --dataset=mnist --model=MLP --lr=0.01 --p=2
+  - python3 -m src.test --experiment-name=mnist_uniform_50 --noise=UniformNoise --sigma=5.0 --dataset=mnist --model=MLP --p=2
+
+- name: mnist_laplace_50
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=mnist_laplace_50 --noise=LaplaceNoise --sigma=5.0 --dataset=mnist --model=MLP --lr=0.01 --p=2
+  - python3 -m src.test --experiment-name=mnist_laplace_50 --noise=LaplaceNoise --sigma=5.0 --dataset=mnist --model=MLP --p=2
+
+- name: mnist_lomax_50
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=mnist_lomax_50 --noise=LomaxNoise --sigma=5.0 --dataset=mnist --model=MLP --lr=0.01 --p=2 --k=3
+  - python3 -m src.test --experiment-name=mnist_lomax_50 --noise=LomaxNoise --sigma=5.0 --dataset=mnist --model=MLP --p=2 --k=3
+
+# ================================================================================================
+

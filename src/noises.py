@@ -35,6 +35,7 @@ class Clean(Noise):
     def certify(self, prob_lower_bound):
         return torch.zeros_like(prob_lower_bound)
 
+
 class UniformNoise(Noise):
 
     def __init__(self, sigma, device, p, **kwargs):
@@ -59,32 +60,32 @@ class GaussianNoise(Noise):
         return self.norm_dist.sample(shape)
 
     def certify(self, prob_lower_bound):
-        return self.norm_dist.icdf(prob_lower_bound) 
+        return self.norm_dist.icdf(prob_lower_bound)
 
- 
+
 class LaplaceNoise(Noise):
 
     def __init__(self, sigma, device, p, **kwargs):
         super().__init__(sigma, device)
         self.lambd = sigma if p == 1 else sigma * 2 ** (-0.5)
-        self.laplace_dist = Laplace(loc=torch.tensor(0.0, device=device), 
+        self.laplace_dist = Laplace(loc=torch.tensor(0.0, device=device),
                                     scale=torch.tensor(self.lambd, device=device))
 
     def sample(self, shape):
         return self.laplace_dist.sample(shape)
-        
+
     def certify(self, prob_lower_bound):
         a = 0.5 * self.lambd *  torch.log(prob_lower_bound / (1 - prob_lower_bound))
         b = -self.lambd * (torch.log(2 * (1 - prob_lower_bound)))
-        return torch.max(a, b) 
+        return torch.max(a, b)
 
 
 class LomaxNoise(Noise):
-   
+
     def __init__(self, sigma, device, p,  k=3, **kwargs):
         super().__init__(sigma, device)
         self.k = k
-        self.lambd = (k - 1) * sigma if p == 1 else math.sqrt(0.5 * (k - 1) * (k - 2)) * sigma 
+        self.lambd = (k - 1) * sigma if p == 1 else math.sqrt(0.5 * (k - 1) * (k - 2)) * sigma
         self.pareto_dist = Pareto(scale=torch.tensor(self.lambd, device=device, dtype=torch.float),
                                   alpha=torch.tensor(self.k, device=device, dtype=torch.float))
 
@@ -118,7 +119,7 @@ class ExpInfNoise(Noise):
         noises = (2 * torch.rand(shape, device=self.device) - 1).reshape((shape[0], -1))
         sel_dims = torch.randint(noises.shape[1], size=(noises.shape[0],))
         idxs = torch.arange(0, noises.shape[0], dtype=torch.long)
-        noises[idxs, sel_dims] = torch.sign(torch.rand(noises.shape[0], device=self.device) - 0.5) 
+        noises[idxs, sel_dims] = torch.sign(torch.rand(noises.shape[0], device=self.device) - 0.5)
         return (noises * radius).reshape(shape)
 
     def certify(self, prob_lower_bound, d=3*32*32):
@@ -131,7 +132,7 @@ class Exp1Noise(Noise):
         super().__init__(sigma, device)
         self.dim = dim
         self.k = k
-        self.lambd = sigma / (math.exp(math.lgamma((dim + 1) / k) - math.lgamma(dim / k))) 
+        self.lambd = sigma / (math.exp(math.lgamma((dim + 1) / k) - math.lgamma(dim / k)))
         self.lambd *= dim if p == 1 else math.sqrt(0.5 * dim * (dim + 1))
         self.gamma_factor = math.exp(math.lgamma(dim / k) - math.lgamma((dim + k - 1) / k))
         self.dirichlet_dist = Dirichlet(concentration=torch.ones(dim, device=device))
@@ -141,7 +142,7 @@ class Exp1Noise(Noise):
     def sample(self, shape):
         n_samples = int(np.prod(list(shape)) / self.dim)
         radius = (self.gamma_dist.sample((n_samples, 1))) ** (1 / self.k)
-        noises = self.dirichlet_dist.sample((n_samples,)) 
+        noises = self.dirichlet_dist.sample((n_samples,))
         signs = torch.sign(torch.rand_like(noises) - 0.5)
         return (noises * signs * radius).reshape(shape)
 
@@ -162,7 +163,7 @@ class Exp2Noise(Noise):
         self.dim = dim
         self.k = k
         self.lambd = math.sqrt(0.5 * math.pi * dim) * sigma if p == 1 else math.sqrt(dim) * sigma
-        self.lambd = self.lambd / math.exp(math.lgamma((dim + 1) / k) - math.lgamma(dim / k)) 
+        self.lambd = self.lambd / math.exp(math.lgamma((dim + 1) / k) - math.lgamma(dim / k))
         self.beta_dist = sp.stats.beta(0.5 * (self.dim - 1), 0.5 * (self.dim - 1))
         self.gamma_dist = Gamma(concentration=torch.tensor(dim / k, device=device),
                                 rate=torch.tensor((1 / self.lambd) ** k, device=device))
@@ -175,7 +176,22 @@ class Exp2Noise(Noise):
         return (noises * radius).reshape(shape)
 
     def certify(self, prob_lower_bound):
-        radius =  self.lambd * (self.dim - 1) * \
-                  atanh(1 - 2 * self.beta_dist.ppf(1 - prob_lower_bound.numpy()))
+        radius = self.lambd * (self.dim - 1) * \
+                 atanh(1 - 2 * self.beta_dist.ppf(1 - prob_lower_bound.numpy()))
         return torch.tensor(radius, dtype=torch.float)
 
+
+class MaskNoise(Noise):
+
+    def __init__(self, sigma, device, p, dim=3*32*32, **kwargs):
+        super().__init__(sigma, device)
+        self.dim = dim
+        self.lambd = 1 - dim * sigma ** 2 / 750 if p == 2 else 1 - dim * sigma / 125
+
+    def sample(self, shape, x):
+        noises = torch.rand(shape, device=self.device)
+        mask = (noises < self.lambd).to(torch.float)
+        return mask * torch.zeros_like(x) - (1 - mask) * x
+
+    def certify(self, prob_lower_bound):
+        return (prob_lower_bound - 0.5) / self.lambd
