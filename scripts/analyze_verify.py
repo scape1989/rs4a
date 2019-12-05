@@ -22,7 +22,7 @@ if __name__ == "__main__":
     sns.set_palette("husl")
 
     df = defaultdict(list)
-    eps_range = (0.1, 0.4, 0.7, 1.0, 1.5)
+    eps_range = (8.0, 6.0, 4.0, 2.0, 1.0)
 
     save_path = f"{args.dir}/{args.experiment_name}"
     experiment_args = pickle.load(open(f"{args.dir}/{args.experiment_name}/args.pkl", "rb"))
@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
     for k in ["preds_smooth", "radius_smooth", "labels"] + \
              [f"preds_adv_{eps}" for eps in eps_range]:
-        results[k] = np.load(f"{save_path}/{k}.npy")
+        results[k] = np.load(f"{save_path}/{k}.npy")[:200]
 
     top_1_preds_smooth = np.argmax(results["preds_smooth"], axis=1)
 

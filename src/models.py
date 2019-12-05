@@ -80,28 +80,30 @@ class AlexNet(nn.Module):
         self.norm = NormalizeLayer((3, 1, 1), device, CIFAR_10_MU, CIFAR_10_SIGMA)
         self.features = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=3, stride=2, padding=1),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.MaxPool2d(kernel_size=2),
             nn.Conv2d(64, 192, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.MaxPool2d(kernel_size=2),
             nn.Conv2d(192, 384, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Conv2d(384, 256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Conv2d(256, 256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.MaxPool2d(kernel_size=2),
         )
         self.classifier = nn.Sequential(
             nn.Dropout(),
             nn.Linear(256 * 2 * 2, 4096),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Dropout(),
             nn.Linear(4096, 4096),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Linear(4096, 10),
         )
+        self.features.to(device)
+        self.classifier.to(device)
 
     def forecast(self, theta):
         return Categorical(logits=theta)
