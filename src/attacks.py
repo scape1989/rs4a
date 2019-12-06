@@ -52,23 +52,50 @@ def pgd_attack(model, x, y, eps, steps=20, p="inf", clamp=(0, 1)):
         print(loss)
     x = x.detach()
     x.requires_grad = False
-    breakpoint()
     return x
-
+#
+#def pgd_attack_smooth(model, x, y, eps, noise, sample_size, steps=20, p="inf", clamp=(0, 1)):
+#    step_size = 2 * eps / steps
+#    x.requires_grad = True
+#    x_orig = x.clone().detach()
+#    for _ in range(steps):
+#        forecast = smooth_predict_soft(model, x, noise, sample_size)
+#        loss = -forecast.log_prob(y).mean()
+#        grads = grad(loss, x)[0]
+#        grads_norm = torch.norm(grads.view(x.shape[0], -1), dim=1, p=2)
+#        shape = (x.shape[0],) + (len(grads.shape) - 1) * (1,)
+#        grads = grads / (grads_norm.view(shape) + 1e-8)
+#        diff = (x + step_size * grads).clamp(*clamp) - x_orig
+#        diff = project_onto_ball(diff, eps, p)
+#        x = x_orig + diff
+#    x = x.detach()
+#    x.requires_grad = False
+#    return x
+#
 def pgd_attack_smooth(model, x, y, eps, noise, sample_size, steps=20, p="inf", clamp=(0, 1)):
-    step_size = 2 * eps / steps
+    step_size = 2 * eps / steps * 20
     x.requires_grad = True
     x_orig = x.clone().detach()
     for _ in range(steps):
         forecast = smooth_predict_soft(model, x, noise, sample_size)
         loss = -forecast.log_prob(y).mean()
-        grads = grad(loss, x)[0]
-        grads_norm = torch.norm(grads.view(x.shape[0], -1), dim=1, p=2)
-        shape = (x.shape[0],) + (len(grads.shape) - 1) * (1,)
-        grads = grads / (grads_norm.view(shape) + 1e-8)
-        diff = (x + step_size * grads).clamp(*clamp) - x_orig
+        grads = grad(loss, x)[0].reshape(x.shape[0], -1)
+        if p == 1:
+            keep_vals = torch.kthvalue(grads.abs(), k=grads.shape[1] // 4, dim=1).values
+#            keep_vals = torch.kthvalue(grads.abs(), k=1, dim=1).values
+            grads[torch.abs(grads) < keep_vals.unsqueeze(1)] = 0
+            grads_norm = torch.norm(grads, dim=1, p=1)
+            grads = grads / (grads_norm.unsqueeze(1) + 1e-8)
+        elif p == 2:
+            grads_norm = torch.norm(grads, dim=1, p=2)
+            grads = grads / (grads_norm.unsqueeze(1) + 1e-8)
+        else:
+            raise ValueError
+        diff = x + step_size * grads.reshape(x.shape) - x_orig
         diff = project_onto_ball(diff, eps, p)
-        x = x_orig + diff
+        x = (x_orig + diff).clamp(*clamp)
+        forecast = smooth_predict_hard(model, x, noise, sample_size).probs
+        print(_, (torch.argmax(forecast, dim=1) == y).sum() / float(x.shape[0]))
     x = x.detach()
     x.requires_grad = False
     return x

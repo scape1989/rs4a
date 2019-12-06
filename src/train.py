@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
             optimizer.zero_grad()
             if args.direct:
-                loss = -smooth_predict_soft(model, x, noise, sample_size=32).log_prob(y).mean()
+                loss = -smooth_predict_soft(model, x, noise, sample_size=16).log_prob(y).mean()
             else:
                 loss = model.loss(x, y).mean()
             loss.backward()

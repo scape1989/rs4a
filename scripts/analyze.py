@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     experiment_names = list(filter(lambda x: x.startswith(args.dataset), os.listdir(args.dir)))
 
-    sns.set_style("white")
+    sns.set_style("whitegrid")
     sns.set_palette("husl")
 
     df = defaultdict(list)
@@ -51,7 +51,7 @@ if __name__ == "__main__":
             df["top_1_acc_pred"].append(top_1_acc_pred)
 
     # save the experiment results
-    df = pd.DataFrame(df) 
+    df = pd.DataFrame(df)
     df.to_csv(f"{args.dir}/results_{args.dataset}.csv", index=False)
 
     if args.debug:
@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
     plt.figure(figsize=(8, 6))
     plt.subplot(2, 1, 1)
-    sns.lineplot(x="sigma", y="top_1_acc_train", hue="noise", markers=True, dashes=False, 
+    sns.lineplot(x="sigma", y="top_1_acc_train", hue="noise", markers=True, dashes=False,
                  style="noise", data=grouped, alpha=1)
     plt.xlabel("$\sigma$")
     plt.ylabel("Top-1 training accuracy")
@@ -84,11 +84,10 @@ if __name__ == "__main__":
     plt.show()
 
     # plot certified accuracies
-    selected = df >> mask(X.noise != "Clean") 
+    selected = df >> mask(X.noise != "Clean")
     sns.relplot(x="eps", y="top_1_acc_cert", hue="noise", kind="line", col="sigma",
                 col_wrap=2, data=selected, height=2, aspect=1.5)
     plt.ylim((0, 1))
-    plt.title(args.dir)
     plt.tight_layout()
     plt.show()
 
@@ -101,7 +100,6 @@ if __name__ == "__main__":
     sns.relplot(x="eps", y="top_1_acc_cert", hue="experiment_name", data=grouped, kind="scatter",
                 height=3, aspect=1.5)
     plt.ylim((0, 1))
-    plt.title(args.dir)
     plt.tight_layout()
     plt.show()
 
@@ -110,7 +108,7 @@ if __name__ == "__main__":
                  >> group_by(X.eps, X.noise) \
                  >> arrange(X.top_1_acc_cert, ascending=False) \
                  >> summarize(top_1_acc_cert=first(X.top_1_acc_cert),
-                              noise=first(X.noise)) 
+                              noise=first(X.noise))
 
     sns.lineplot(x="eps", y="top_1_acc_cert", data=grouped, hue="noise")
     plt.title(args.dir)

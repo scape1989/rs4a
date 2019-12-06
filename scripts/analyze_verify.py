@@ -22,7 +22,7 @@ if __name__ == "__main__":
     sns.set_palette("husl")
 
     df = defaultdict(list)
-    eps_range = (8.0, 6.0, 4.0, 2.0, 1.0)
+    eps_range = (0.25, 0.5, 0.75, 1.0, 1.25)
 
     save_path = f"{args.dir}/{args.experiment_name}"
     experiment_args = pickle.load(open(f"{args.dir}/{args.experiment_name}/args.pkl", "rb"))
@@ -39,6 +39,7 @@ if __name__ == "__main__":
         top_1_preds_adv = np.argmax(results[f"preds_adv_{eps}"], axis=1)
         top_1_acc_cert = ((results["radius_smooth"] >= eps) & \
                           (top_1_preds_smooth == results["labels"])).mean()
+        breakpoint()
         top_1_acc_adv = (top_1_preds_adv == results["labels"]).mean()
         df["eps"].append(eps)
         df["top_1_acc_cert"].append(top_1_acc_cert)

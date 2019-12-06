@@ -236,5 +236,5 @@ jobs:
   sku: G1
   command:
   - python3 -m src.train --experiment-name=cifar_laplace_010 --noise=LaplaceNoise --sigma=0.10 --p=2 --direct
-  - python3 -m src.test --experiment-name=cifar_laplace_010 --noise=LaplaceNoise --sigma=0.10 --p=2 --sample-size-cert=1024 
+  - python3 -m src.test --experiment-name=cifar_laplace_010 --noise=LaplaceNoise --sigma=0.10 --p=2 --sample-size-cert=1024
 
