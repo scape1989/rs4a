@@ -58,7 +58,11 @@ if __name__ == "__main__":
 
     loss_meter = meter.AverageValueMeter()
     time_meter = meter.TimeMeter(unit=False)
-    noise = eval(args.noise)(**args.__dict__)
+
+    if args.noise[-1].isdigit():
+        noise = eval(args.noise[:-1])(**args.__dict__)
+    else:
+        noise = eval(args.noise)(**args.__dict__)
 
     train_losses = []
 
@@ -82,7 +86,7 @@ if __name__ == "__main__":
 
             optimizer.zero_grad()
             if args.direct:
-                loss = -smooth_predict_soft(model, x, noise, sample_size=16).log_prob(y).mean()
+                loss = -direct_train_log_lik(model, x, y, noise, sample_size=16).mean()
             else:
                 loss = model.loss(x, y).mean()
             loss.backward()

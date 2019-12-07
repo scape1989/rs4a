@@ -3,10 +3,20 @@ import scipy as sp
 import scipy.stats
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.distributions import Categorical, Normal, Bernoulli
 from statsmodels.stats.proportion import proportion_confint
 
 
+def direct_train_log_lik(model, x, y, noise, sample_size=16):
+    samples_shape = torch.Size([x.shape[0], sample_size]) + x.shape[1:]
+    samples = x.unsqueeze(1).expand(samples_shape)
+    samples = (samples + noise.sample(samples.shape))
+    samples = samples.reshape(torch.Size([-1]) + samples.shape[2:])
+    thetas = model.forward(samples).view(x.shape[0], sample_size, -1)
+    return torch.logsumexp(thetas[torch.arange(x.shape[0]), :, y] - \
+                           torch.logsumexp(thetas, dim=2), dim=1) - \
+           torch.log(torch.tensor(sample_size, dtype=torch.float, device=x.device))
 
 def smooth_predict_soft(model, x, noise, sample_size=64):
     samples_shape = torch.Size([x.shape[0], sample_size]) + x.shape[1:]
@@ -68,7 +78,7 @@ def smooth_predict_hard(model, x, noise, sample_size=64, noise_batch_size=512, n
         samples = samples.reshape(torch.Size([-1]) + samples.shape[2:])
         logits = model.forward(samples).view(shape[:2] + torch.Size([-1]))
         top_cats = torch.argmax(logits, dim=2)
-        counts += nn.functional.one_hot(top_cats, num_cats).float().sum(dim=1)
+        counts += F.one_hot(top_cats, num_cats).float().sum(dim=1)
         num_samples_left -= noise_batch_size
 
     return Categorical(probs=counts)

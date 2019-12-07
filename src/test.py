@@ -32,8 +32,7 @@ if __name__ == "__main__":
     args = argparser.parse_args()
 
     test_dataset = get_dataset(args.dataset, "test")
-    test_loader = DataLoader(test_dataset, shuffle=False,
-                             batch_size=args.batch_size,
+    test_loader = DataLoader(test_dataset, shuffle=False, batch_size=args.batch_size,
                              num_workers=args.num_workers)
 
     save_path = f"{args.output_dir}/{args.experiment_name}/model_ckpt.torch"
@@ -46,6 +45,7 @@ if __name__ == "__main__":
         "preds_smooth": np.zeros((len(test_dataset), 10)),
         "labels": np.zeros(len(test_dataset)),
         "radius_smooth": np.zeros(len(test_dataset)),
+        "preds_nll": np.zeros(len(test_dataset))
     }
 
     for i, (x, y) in tqdm(enumerate(test_loader), total=len(test_loader)):
@@ -60,6 +60,7 @@ if __name__ == "__main__":
         results["preds_smooth"][lower:upper, :] = preds_smooth.probs.data.cpu().numpy()
         results["labels"][lower:upper] = y.data.cpu().numpy()
         results["radius_smooth"][lower:upper] = radii.cpu().numpy()
+        results["preds_nll"][lower:upper] = -preds_smooth.log_prob(y).cpu().numpy()
 
     save_path = f"{args.output_dir}/{args.experiment_name}"
     for k, v in results.items():

@@ -68,14 +68,14 @@ if __name__ == "__main__":
 
     plt.figure(figsize=(8, 6))
     plt.subplot(2, 1, 1)
-    sns.lineplot(x="sigma", y="top_1_acc_train", hue="noise", markers=True, dashes=False,
-                 style="noise", data=grouped, alpha=1)
+    sns.lineplot(x="sigma", y="top_1_acc_train", hue="experiment_name", markers=True, dashes=False,
+                 style="experiment_name", data=grouped, alpha=1)
     plt.xlabel("$\sigma$")
     plt.ylabel("Top-1 training accuracy")
     plt.ylim((0, 1))
     plt.subplot(2, 1, 2)
-    sns.lineplot(x="sigma", y="top_1_acc_pred", hue="noise", markers=True, dashes=False,
-                 style="noise", data=grouped, alpha=1)
+    sns.lineplot(x="sigma", y="top_1_acc_pred", hue="experiment_name", markers=True, dashes=False,
+                 style="experiment_name", data=grouped, alpha=1)
     plt.xlabel("$\sigma$")
     plt.ylabel("Top-1 testing accuracy")
     plt.ylim((0, 1))
@@ -85,20 +85,8 @@ if __name__ == "__main__":
 
     # plot certified accuracies
     selected = df >> mask(X.noise != "Clean")
-    sns.relplot(x="eps", y="top_1_acc_cert", hue="noise", kind="line", col="sigma",
+    sns.relplot(x="eps", y="top_1_acc_cert", hue="experiment_name", kind="line", col="sigma",
                 col_wrap=2, data=selected, height=2, aspect=1.5)
-    plt.ylim((0, 1))
-    plt.tight_layout()
-    plt.show()
-
-    # plot top certified accuracy per epsilon
-    grouped = df >> group_by(X.eps) \
-                 >> arrange(X.top_1_acc_cert, ascending=False) \
-                 >> summarize(experiment_name=first(X.experiment_name),
-                              top_1_acc_cert=first(X.top_1_acc_cert))
-
-    sns.relplot(x="eps", y="top_1_acc_cert", hue="experiment_name", data=grouped, kind="scatter",
-                height=3, aspect=1.5)
     plt.ylim((0, 1))
     plt.tight_layout()
     plt.show()

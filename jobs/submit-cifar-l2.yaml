@@ -39,25 +39,25 @@ jobs:
   command:
   - python3 -m src.train --experiment-name=cifar_laplace_015 --noise=LaplaceNoise --sigma=0.15 --k=1 --p=2
   - python3 -m src.test --experiment-name=cifar_laplace_015 --noise=LaplaceNoise --sigma=0.15 --k=1 --p=2
-
-- name: cifar_expinf_015
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_expinf_015 --noise=ExpInfNoise --sigma=0.15 --k=1 --p=2
-  - python3 -m src.test --experiment-name=cifar_expinf_015 --noise=ExpInfNoise --sigma=0.15 --k=1 --p=2
-
-- name: cifar_exp1_015
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_exp1_015 --noise=Exp1Noise --sigma=0.15 --k=2 --p=2
-  - python3 -m src.test --experiment-name=cifar_exp1_015 --noise=Exp1Noise --sigma=0.15 --k=2 --p=2
-
-- name: cifar_exp2_015
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_exp2_015 --noise=Exp2Noise --sigma=0.15 --k=1 --p=2
-  - python3 -m src.test --experiment-name=cifar_exp2_015 --noise=Exp2Noise --sigma=0.15 --k=1 --p=2
-
+#
+#- name: cifar_expinf_015
+#  sku: G1
+#  command:
+#  - python3 -m src.train --experiment-name=cifar_expinf_015 --noise=ExpInfNoise --sigma=0.15 --k=1 --p=2
+#  - python3 -m src.test --experiment-name=cifar_expinf_015 --noise=ExpInfNoise --sigma=0.15 --k=1 --p=2
+#
+#- name: cifar_exp1_015
+#  sku: G1
+#  command:
+#  - python3 -m src.train --experiment-name=cifar_exp1_015 --noise=Exp1Noise --sigma=0.15 --k=2 --p=2
+#  - python3 -m src.test --experiment-name=cifar_exp1_015 --noise=Exp1Noise --sigma=0.15 --k=2 --p=2
+#
+#- name: cifar_exp2_015
+#  sku: G1
+#  command:
+#  - python3 -m src.train --experiment-name=cifar_exp2_015 --noise=Exp2Noise --sigma=0.15 --k=1 --p=2
+#  - python3 -m src.test --experiment-name=cifar_exp2_015 --noise=Exp2Noise --sigma=0.15 --k=1 --p=2
+#
 - name: cifar_lomax_015
   sku: G1
   command:
@@ -83,25 +83,25 @@ jobs:
   command:
   - python3 -m src.train --experiment-name=cifar_laplace_025 --noise=LaplaceNoise --sigma=0.25 --p=2
   - python3 -m src.test --experiment-name=cifar_laplace_025 --noise=LaplaceNoise --sigma=0.25 --p=2
-
-- name: cifar_expinf_025
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_expinf_025 --noise=ExpInfNoise --sigma=0.25 --p=2
-  - python3 -m src.test --experiment-name=cifar_expinf_025 --noise=ExpInfNoise --sigma=0.25 --p=2
-
-- name: cifar_exp1_025
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_exp1_025 --noise=Exp1Noise --sigma=0.25 --k=2 --p=2
-  - python3 -m src.test --experiment-name=cifar_exp1_025 --noise=Exp1Noise --sigma=0.25 --k=2 --p=2
-
-- name: cifar_exp2_025
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_exp2_025 --noise=Exp2Noise --sigma=0.25 --k=1 --p=2
-  - python3 -m src.test --experiment-name=cifar_exp2_025 --noise=Exp2Noise --sigma=0.25 --k=1 --p=2
-
+#
+#- name: cifar_expinf_025
+#  sku: G1
+#  command:
+#  - python3 -m src.train --experiment-name=cifar_expinf_025 --noise=ExpInfNoise --sigma=0.25 --p=2
+#  - python3 -m src.test --experiment-name=cifar_expinf_025 --noise=ExpInfNoise --sigma=0.25 --p=2
+#
+#- name: cifar_exp1_025
+#  sku: G1
+#  command:
+#  - python3 -m src.train --experiment-name=cifar_exp1_025 --noise=Exp1Noise --sigma=0.25 --k=2 --p=2
+#  - python3 -m src.test --experiment-name=cifar_exp1_025 --noise=Exp1Noise --sigma=0.25 --k=2 --p=2
+#
+#- name: cifar_exp2_025
+#  sku: G1
+#  command:
+#  - python3 -m src.train --experiment-name=cifar_exp2_025 --noise=Exp2Noise --sigma=0.25 --k=1 --p=2
+#  - python3 -m src.test --experiment-name=cifar_exp2_025 --noise=Exp2Noise --sigma=0.25 --k=1 --p=2
+#
 - name: cifar_lomax_025
   sku: G1
   command:
@@ -127,25 +127,25 @@ jobs:
   command:
   - python3 -m src.train --experiment-name=cifar_laplace_125 --noise=LaplaceNoise --sigma=1.25 --p=2
   - python3 -m src.test --experiment-name=cifar_laplace_125 --noise=LaplaceNoise --sigma=1.25 --p=2
-
-- name: cifar_expinf_125
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_expinf_125 --noise=ExpInfNoise --sigma=1.25 --k=1 --p=2
-  - python3 -m src.test --experiment-name=cifar_expinf_125 --noise=ExpInfNoise --sigma=1.25 --k=1 --p=2
-
-- name: cifar_exp1_125
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_exp1_125 --noise=Exp1Noise --sigma=1.25 --k=2 --p=2
-  - python3 -m src.test --experiment-name=cifar_exp1_125 --noise=Exp1Noise --sigma=1.25 --k=2 --p=2
-
-- name: cifar_exp2_125
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_exp2_125 --noise=Exp2Noise --sigma=1.25 --k=1 --p=2
-  - python3 -m src.test --experiment-name=cifar_exp2_125 --noise=Exp2Noise --sigma=1.25 --k=1 --p=2
-
+#
+#- name: cifar_expinf_125
+#  sku: G1
+#  command:
+#  - python3 -m src.train --experiment-name=cifar_expinf_125 --noise=ExpInfNoise --sigma=1.25 --k=1 --p=2
+#  - python3 -m src.test --experiment-name=cifar_expinf_125 --noise=ExpInfNoise --sigma=1.25 --k=1 --p=2
+#
+#- name: cifar_exp1_125
+#  sku: G1
+#  command:
+#  - python3 -m src.train --experiment-name=cifar_exp1_125 --noise=Exp1Noise --sigma=1.25 --k=2 --p=2
+#  - python3 -m src.test --experiment-name=cifar_exp1_125 --noise=Exp1Noise --sigma=1.25 --k=2 --p=2
+#
+#- name: cifar_exp2_125
+#  sku: G1
+#  command:
+#  - python3 -m src.train --experiment-name=cifar_exp2_125 --noise=Exp2Noise --sigma=1.25 --k=1 --p=2
+#  - python3 -m src.test --experiment-name=cifar_exp2_125 --noise=Exp2Noise --sigma=1.25 --k=1 --p=2
+#
 - name: cifar_lomax_125
   sku: G1
   command:
@@ -171,25 +171,25 @@ jobs:
   command:
   - python3 -m src.train --experiment-name=cifar_laplace_05 --noise=LaplaceNoise --sigma=0.5 --p=2
   - python3 -m src.test --experiment-name=cifar_laplace_05 --noise=LaplaceNoise --sigma=0.5 --p=2
-
-- name: cifar_expinf_05
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_expinf_05 --noise=ExpInfNoise --sigma=0.5 --p=2
-  - python3 -m src.test --experiment-name=cifar_expinf_05 --noise=ExpInfNoise --sigma=0.5 --p=2
-
-- name: cifar_exp1_05
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_exp1_05 --noise=Exp1Noise --sigma=0.5 --k=2 --p=2
-  - python3 -m src.test --experiment-name=cifar_exp1_05 --noise=Exp1Noise --sigma=0.5 --k=2 --p=2
-
-- name: cifar_exp2_05
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_exp2_05 --noise=Exp2Noise --sigma=0.5 --k=1 --p=2
-  - python3 -m src.test --experiment-name=cifar_exp2_05 --noise=Exp2Noise --sigma=0.5 --k=1 --p=2
-
+#
+#- name: cifar_expinf_05
+#  sku: G1
+#  command:
+#  - python3 -m src.train --experiment-name=cifar_expinf_05 --noise=ExpInfNoise --sigma=0.5 --p=2
+#  - python3 -m src.test --experiment-name=cifar_expinf_05 --noise=ExpInfNoise --sigma=0.5 --p=2
+#
+#- name: cifar_exp1_05
+#  sku: G1
+#  command:
+#  - python3 -m src.train --experiment-name=cifar_exp1_05 --noise=Exp1Noise --sigma=0.5 --k=2 --p=2
+#  - python3 -m src.test --experiment-name=cifar_exp1_05 --noise=Exp1Noise --sigma=0.5 --k=2 --p=2
+#
+#- name: cifar_exp2_05
+#  sku: G1
+#  command:
+#  - python3 -m src.train --experiment-name=cifar_exp2_05 --noise=Exp2Noise --sigma=0.5 --k=1 --p=2
+#  - python3 -m src.test --experiment-name=cifar_exp2_05 --noise=Exp2Noise --sigma=0.5 --k=1 --p=2
+#
 - name: cifar_lomax_05
   sku: G1
   command:
@@ -215,25 +215,25 @@ jobs:
   command:
   - python3 -m src.train --experiment-name=cifar_laplace_10 --noise=LaplaceNoise --sigma=1.0 --p=2
   - python3 -m src.test --experiment-name=cifar_laplace_10 --noise=LaplaceNoise --sigma=1.0 --p=2
-
-- name: cifar_expinf_10
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_expinf_10 --noise=ExpInfNoise --sigma=1.0 --k=1 --p=2
-  - python3 -m src.test --experiment-name=cifar_expinf_10 --noise=ExpInfNoise --sigma=1.0 --k=1 --p=2
-
-- name: cifar_exp1_10
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_exp1_10 --noise=Exp1Noise --sigma=1.0 --k=2 --p=2
-  - python3 -m src.test --experiment-name=cifar_exp1_10 --noise=Exp1Noise --sigma=1.0 --k=2 --p=2
-
-- name: cifar_exp2_10
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_exp2_10 --noise=Exp2Noise --sigma=1.0 --k=1 --p=2
-  - python3 -m src.test --experiment-name=cifar_exp2_10 --noise=Exp2Noise --sigma=1.0 --k=1 --p=2
-
+#
+#- name: cifar_expinf_10
+#  sku: G1
+#  command:
+#  - python3 -m src.train --experiment-name=cifar_expinf_10 --noise=ExpInfNoise --sigma=1.0 --k=1 --p=2
+#  - python3 -m src.test --experiment-name=cifar_expinf_10 --noise=ExpInfNoise --sigma=1.0 --k=1 --p=2
+#
+#- name: cifar_exp1_10
+#  sku: G1
+#  command:
+#  - python3 -m src.train --experiment-name=cifar_exp1_10 --noise=Exp1Noise --sigma=1.0 --k=2 --p=2
+#  - python3 -m src.test --experiment-name=cifar_exp1_10 --noise=Exp1Noise --sigma=1.0 --k=2 --p=2
+#
+#- name: cifar_exp2_10
+#  sku: G1
+#  command:
+#  - python3 -m src.train --experiment-name=cifar_exp2_10 --noise=Exp2Noise --sigma=1.0 --k=1 --p=2
+#  - python3 -m src.test --experiment-name=cifar_exp2_10 --noise=Exp2Noise --sigma=1.0 --k=1 --p=2
+#
 - name: cifar_lomax_10
   sku: G1
   command:
@@ -259,25 +259,25 @@ jobs:
   command:
   - python3 -m src.train --experiment-name=cifar_laplace_075 --noise=LaplaceNoise --sigma=0.75 --p=2
   - python3 -m src.test --experiment-name=cifar_laplace_075 --noise=LaplaceNoise --sigma=0.75 --p=2
-
-- name: cifar_expinf_075
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_expinf_075 --noise=ExpInfNoise --sigma=0.75 --k=1 --p=2
-  - python3 -m src.test --experiment-name=cifar_expinf_075 --noise=ExpInfNoise --sigma=0.75 --k=1 --p=2
-
-- name: cifar_exp1_075
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_exp1_075 --noise=Exp1Noise --sigma=0.75 --k=2 --p=2
-  - python3 -m src.test --experiment-name=cifar_exp1_075 --noise=Exp1Noise --sigma=0.75 --k=2 --p=2
-
-- name: cifar_exp2_075
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_exp2_075 --noise=Exp2Noise --sigma=0.75 --k=1 --p=2
-  - python3 -m src.test --experiment-name=cifar_exp2_075 --noise=Exp2Noise --sigma=0.75 --k=1 --p=2
-
+#
+#- name: cifar_expinf_075
+#  sku: G1
+#  command:
+#  - python3 -m src.train --experiment-name=cifar_expinf_075 --noise=ExpInfNoise --sigma=0.75 --k=1 --p=2
+#  - python3 -m src.test --experiment-name=cifar_expinf_075 --noise=ExpInfNoise --sigma=0.75 --k=1 --p=2
+#
+#- name: cifar_exp1_075
+#  sku: G1
+#  command:
+#  - python3 -m src.train --experiment-name=cifar_exp1_075 --noise=Exp1Noise --sigma=0.75 --k=2 --p=2
+#  - python3 -m src.test --experiment-name=cifar_exp1_075 --noise=Exp1Noise --sigma=0.75 --k=2 --p=2
+#
+#- name: cifar_exp2_075
+#  sku: G1
+#  command:
+#  - python3 -m src.train --experiment-name=cifar_exp2_075 --noise=Exp2Noise --sigma=0.75 --k=1 --p=2
+#  - python3 -m src.test --experiment-name=cifar_exp2_075 --noise=Exp2Noise --sigma=0.75 --k=1 --p=2
+#
 - name: cifar_lomax_075
   sku: G1
   command:

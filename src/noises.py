@@ -85,7 +85,10 @@ class LomaxNoise(Noise):
     def __init__(self, sigma, device, p,  k=3, **kwargs):
         super().__init__(sigma, device)
         self.k = k
-        self.lambd = (k - 1) * sigma if p == 1 else math.sqrt(0.5 * (k - 1) * (k - 2)) * sigma
+        if k > 2:
+            self.lambd = (k - 1) * sigma if p == 1 else math.sqrt(0.5 * (k - 1) * (k - 2)) * sigma
+        else:
+            self.lambd = 0.01 * sigma # heuristic
         self.pareto_dist = Pareto(scale=torch.tensor(self.lambd, device=device, dtype=torch.float),
                                   alpha=torch.tensor(self.k, device=device, dtype=torch.float))
 
@@ -195,3 +198,8 @@ class MaskNoise(Noise):
 
     def certify(self, prob_lower_bound):
         return (prob_lower_bound - 0.5) / self.lambd
+
+
+class TransformedGamma1(Noise):
+
+    pass

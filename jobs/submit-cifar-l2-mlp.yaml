@@ -1,4 +1,4 @@
-description: Training CIFAR-10 Robustness [L2 matched]
+description: Training CIFAR-10 Robustness [L2 matched, MLP]
 
 target:
   vc: msrlabs
@@ -40,24 +40,6 @@ jobs:
   - python3 -m src.train --experiment-name=cifar_laplace_025 --noise=LaplaceNoise --sigma=0.25 --p=2 --model=MLP
   - python3 -m src.test --experiment-name=cifar_laplace_025 --noise=LaplaceNoise --sigma=0.25 --p=2 --model=MLP
 
-- name: cifar_expinf_025
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_expinf_025 --noise=ExpInfNoise --sigma=0.25 --p=2 --model=MLP
-  - python3 -m src.test --experiment-name=cifar_expinf_025 --noise=ExpInfNoise --sigma=0.25 --p=2 --model=MLP
-
-- name: cifar_exp1_025
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_exp1_025 --noise=Exp1Noise --sigma=0.25 --k=2 --p=2 --model=MLP
-  - python3 -m src.test --experiment-name=cifar_exp1_025 --noise=Exp1Noise --sigma=0.25 --k=2 --p=2 --model=MLP
-
-- name: cifar_exp2_025
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_exp2_025 --noise=Exp2Noise --sigma=0.25 --k=1 --p=2 --model=MLP
-  - python3 -m src.test --experiment-name=cifar_exp2_025 --noise=Exp2Noise --sigma=0.25 --k=1 --p=2 --model=MLP
-
 - name: cifar_lomax_025
   sku: G1
   command:
@@ -83,24 +65,6 @@ jobs:
   command:
   - python3 -m src.train --experiment-name=cifar_laplace_10 --noise=LaplaceNoise --sigma=1.0 --p=2 --model=MLP
   - python3 -m src.test --experiment-name=cifar_laplace_10 --noise=LaplaceNoise --sigma=1.0 --p=2 --model=MLP
-
-- name: cifar_expinf_10
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_expinf_10 --noise=ExpInfNoise --sigma=1.0 --k=1 --p=2 --model=MLP
-  - python3 -m src.test --experiment-name=cifar_expinf_10 --noise=ExpInfNoise --sigma=1.0 --k=1 --p=2 --model=MLP
-
-- name: cifar_exp1_10
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_exp1_10 --noise=Exp1Noise --sigma=1.0 --k=2 --p=2 --model=MLP
-  - python3 -m src.test --experiment-name=cifar_exp1_10 --noise=Exp1Noise --sigma=1.0 --k=2 --p=2 --model=MLP
-
-- name: cifar_exp2_10
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_exp2_10 --noise=Exp2Noise --sigma=1.0 --k=1 --p=2 --model=MLP
-  - python3 -m src.test --experiment-name=cifar_exp2_10 --noise=Exp2Noise --sigma=1.0 --k=1 --p=2 --model=MLP
 
 - name: cifar_lomax_10
   sku: G1
@@ -128,24 +92,6 @@ jobs:
   - python3 -m src.train --experiment-name=cifar_laplace_05 --noise=LaplaceNoise --sigma=0.5 --p=2 --model=MLP
   - python3 -m src.test --experiment-name=cifar_laplace_05 --noise=LaplaceNoise --sigma=0.5 --p=2 --model=MLP
 
-- name: cifar_expinf_05
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_expinf_05 --noise=ExpInfNoise --sigma=0.5 --p=2 --model=MLP
-  - python3 -m src.test --experiment-name=cifar_expinf_05 --noise=ExpInfNoise --sigma=0.5 --p=2 --model=MLP
-
-- name: cifar_exp1_05
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_exp1_05 --noise=Exp1Noise --sigma=0.5 --k=2 --p=2 --model=MLP
-  - python3 -m src.test --experiment-name=cifar_exp1_05 --noise=Exp1Noise --sigma=0.5 --k=2 --p=2 --model=MLP
-
-- name: cifar_exp2_05
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_exp2_05 --noise=Exp2Noise --sigma=0.5 --k=1 --p=2 --model=MLP
-  - python3 -m src.test --experiment-name=cifar_exp2_05 --noise=Exp2Noise --sigma=0.5 --k=1 --p=2 --model=MLP
-
 - name: cifar_lomax_05
   sku: G1
   command:
@@ -171,24 +117,6 @@ jobs:
   command:
   - python3 -m src.train --experiment-name=cifar_laplace_075 --noise=LaplaceNoise --sigma=0.75 --p=2 --model=MLP
   - python3 -m src.test --experiment-name=cifar_laplace_075 --noise=LaplaceNoise --sigma=0.75 --p=2 --model=MLP
-
-- name: cifar_expinf_075
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_expinf_075 --noise=ExpInfNoise --sigma=0.75 --k=1 --p=2 --model=MLP
-  - python3 -m src.test --experiment-name=cifar_expinf_075 --noise=ExpInfNoise --sigma=0.75 --k=1 --p=2 --model=MLP
-
-- name: cifar_exp1_075
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_exp1_075 --noise=Exp1Noise --sigma=0.75 --k=2 --p=2 --model=MLP
-  - python3 -m src.test --experiment-name=cifar_exp1_075 --noise=Exp1Noise --sigma=0.75 --k=2 --p=2 --model=MLP
-
-- name: cifar_exp2_075
-  sku: G1
-  command:
-  - python3 -m src.train --experiment-name=cifar_exp2_075 --noise=Exp2Noise --sigma=0.75 --k=1 --p=2 --model=MLP
-  - python3 -m src.test --experiment-name=cifar_exp2_075 --noise=Exp2Noise --sigma=0.75 --k=1 --p=2 --model=MLP
 
 - name: cifar_lomax_075
   sku: G1

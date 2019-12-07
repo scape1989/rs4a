@@ -72,17 +72,41 @@ def pgd_attack(model, x, y, eps, steps=20, p="inf", clamp=(0, 1)):
 #    x.requires_grad = False
 #    return x
 #
+
 def pgd_attack_smooth(model, x, y, eps, noise, sample_size, steps=20, p="inf", clamp=(0, 1)):
     step_size = 2 * eps / steps * 20
     x.requires_grad = True
     x_orig = x.clone().detach()
+#
+#    dim = x.view(x.shape[0], -1).shape[1]
+#    for idx in range(dim):
+#        diff = torch.zeros_like(x)
+#        diff.view(x.shape[0], -1)[:, idx] = eps
+#        diff = diff.view(x.shape)
+#        forecast = smooth_predict_hard(model, x + diff, noise, sample_size).probs
+#        acc = (torch.argmax(forecast, dim=1) == y).sum() / float(x.shape[0])
+#        print(idx, acc,
+#              diff.reshape(x.shape[0], -1).norm(dim=1, p=1).mean(),
+#              diff.reshape(x.shape[0], -1).norm(dim=1, p=2).mean())
+#        if acc < 1:
+#            breakpoint()
+#        diff.view(x.shape[0], -1)[:, idx] = -eps
+#        diff = diff.view(x.shape)
+#        forecast = smooth_predict_hard(model, x + diff, noise, sample_size).probs
+#        acc = (torch.argmax(forecast, dim=1) == y).sum() / float(x.shape[0])
+#        if acc < 1:
+#            breakpoint()
+#        print(idx, acc,
+#              diff.reshape(x.shape[0], -1).norm(dim=1, p=1).mean(),
+#              diff.reshape(x.shape[0], -1).norm(dim=1, p=2).mean())
+#
+
     for _ in range(steps):
         forecast = smooth_predict_soft(model, x, noise, sample_size)
         loss = -forecast.log_prob(y).mean()
         grads = grad(loss, x)[0].reshape(x.shape[0], -1)
         if p == 1:
             keep_vals = torch.kthvalue(grads.abs(), k=grads.shape[1] // 4, dim=1).values
-#            keep_vals = torch.kthvalue(grads.abs(), k=1, dim=1).values
             grads[torch.abs(grads) < keep_vals.unsqueeze(1)] = 0
             grads_norm = torch.norm(grads, dim=1, p=1)
             grads = grads / (grads_norm.unsqueeze(1) + 1e-8)
@@ -95,7 +119,9 @@ def pgd_attack_smooth(model, x, y, eps, noise, sample_size, steps=20, p="inf", c
         diff = project_onto_ball(diff, eps, p)
         x = (x_orig + diff).clamp(*clamp)
         forecast = smooth_predict_hard(model, x, noise, sample_size).probs
-        print(_, (torch.argmax(forecast, dim=1) == y).sum() / float(x.shape[0]))
+        print(_, (torch.argmax(forecast, dim=1) == y).sum() / float(x.shape[0]),
+              diff.reshape(x.shape[0], -1).norm(dim=1, p=1).mean(),
+              diff.reshape(x.shape[0], -1).norm(dim=1, p=2).mean())
     x = x.detach()
     x.requires_grad = False
     return x
