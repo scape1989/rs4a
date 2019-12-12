@@ -10,7 +10,7 @@ from src.models import *
 from src.attacks import *
 from src.smooth import *
 from src.noises import *
-from src.datasets import get_dataset
+from src.datasets import *
 
 
 if __name__ == "__main__":
@@ -23,7 +23,6 @@ if __name__ == "__main__":
     argparser.add_argument("--sample-size-cert", default=1024, type=int)
     argparser.add_argument("--sigma", default=0.0, type=float)
     argparser.add_argument("--noise", default="Clean", type=str)
-    argparser.add_argument("--k", default=1, type=int)
     argparser.add_argument("--p", default=2, type=int)
     argparser.add_argument("--experiment-name", default="cifar", type=str)
     argparser.add_argument("--dataset", default="cifar", type=str)
@@ -39,7 +38,13 @@ if __name__ == "__main__":
     model = eval(args.model)(dataset=args.dataset, device=args.device)
     model.load_state_dict(torch.load(save_path))
     model.eval()
-    noise = eval(args.noise)(**args.__dict__)
+
+    if args.noise[-1].isdigit():
+        k = int(args.noise[-1])
+        noise = eval(args.noise[:-1])(sigma=args.sigma, device=args.device, p=args.p, k=k,
+                                      dim=get_dim_of_dataset(args.dataset))
+    else:
+        noise = eval(args.noise)(sigma=args.sigma, device=args.device, p=args.p)
 
     results = {
         "preds_smooth": np.zeros((len(test_dataset), 10)),

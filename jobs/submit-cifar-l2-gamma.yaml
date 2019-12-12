@@ -1,0 +1,184 @@
+description: Training CIFAR-10 Robustness [L2 matched]
+
+target:
+  vc: msrlabs
+  cluster: eu1
+
+environment:
+  image: microsoft_pytorch:v1.2.0_gpu_cuda9.0_py36_release_gpuenv_hvd0.16.2
+  registry: phillyregistry.azurecr.io
+  setup:
+  - pip install torchnet --user
+  - pip install statsmodels --user
+  - pip install tqdm --user
+
+code:
+  local_dir: $CONFIG_DIR/../
+
+data:
+  local_dir: $CONFIG_DIR/../data/
+  remote_dir: datasets/
+
+jobs:
+# ================================================================================================
+
+- name: cifar_gamma3_025
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma3_025 --noise=GammaNoise3 --sigma=0.25 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma3_025 --noise=GammaNoise3 --sigma=0.25 --p=2
+
+- name: cifar_gamma1_025
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma1_025 --noise=GammaNoise1 --sigma=0.25 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma1_025 --noise=GammaNoise1 --sigma=0.25 --p=2
+
+- name: cifar_gamma2_025
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma2_025 --noise=GammaNoise2 --sigma=0.25 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma2_025 --noise=GammaNoise2 --sigma=0.25 --p=2
+
+- name: cifar_gamma4_025
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma4_025 --noise=GammaNoise4 --sigma=0.25 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma4_025 --noise=GammaNoise4 --sigma=0.25 --p=2
+
+
+- name: cifar_gamma5_025
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma5_025 --noise=GammaNoise5 --sigma=0.25 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma5_025 --noise=GammaNoise5 --sigma=0.25 --p=2
+
+# ================================================================================================
+
+- name: cifar_gamma3_05
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma3_05 --noise=GammaNoise3 --sigma=0.5 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma3_05 --noise=GammaNoise3 --sigma=0.5 --p=2
+
+- name: cifar_gamma1_05
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma1_05 --noise=GammaNoise1 --sigma=0.5 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma1_05 --noise=GammaNoise1 --sigma=0.5 --p=2
+
+- name: cifar_gamma2_05
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma2_05 --noise=GammaNoise2 --sigma=0.5 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma2_05 --noise=GammaNoise2 --sigma=0.5 --p=2
+
+- name: cifar_gamma4_05
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma4_05 --noise=GammaNoise4 --sigma=0.5 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma4_05 --noise=GammaNoise4 --sigma=0.5 --p=2
+
+
+- name: cifar_gamma5_05
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma5_05 --noise=GammaNoise5 --sigma=0.5 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma5_05 --noise=GammaNoise5 --sigma=0.5 --p=2
+
+# ================================================================================================
+
+- name: cifar_gamma3_075
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma3_075 --noise=GammaNoise3 --sigma=0.75 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma3_075 --noise=GammaNoise3 --sigma=0.75 --p=2
+
+- name: cifar_gamma1_075
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma1_075 --noise=GammaNoise1 --sigma=0.75 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma1_075 --noise=GammaNoise1 --sigma=0.75 --p=2
+
+- name: cifar_gamma2_075
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma2_075 --noise=GammaNoise2 --sigma=0.75 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma2_075 --noise=GammaNoise2 --sigma=0.75 --p=2
+
+- name: cifar_gamma4_075
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma4_075 --noise=GammaNoise4 --sigma=0.75 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma4_075 --noise=GammaNoise4 --sigma=0.75 --p=2
+
+- name: cifar_gamma5_075
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma5_075 --noise=GammaNoise5 --sigma=0.75 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma5_075 --noise=GammaNoise5 --sigma=0.75 --p=2
+
+# ================================================================================================
+
+- name: cifar_gamma3_10
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma3_10 --noise=GammaNoise3 --sigma=1.0 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma3_10 --noise=GammaNoise3 --sigma=1.0 --p=2
+
+- name: cifar_gamma1_10
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma1_10 --noise=GammaNoise1 --sigma=1.0 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma1_10 --noise=GammaNoise1 --sigma=1.0 --p=2
+
+- name: cifar_gamma2_10
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma2_10 --noise=GammaNoise2 --sigma=1.0 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma2_10 --noise=GammaNoise2 --sigma=1.0 --p=2
+
+- name: cifar_gamma4_10
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma4_10 --noise=GammaNoise4 --sigma=1.0 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma4_10 --noise=GammaNoise4 --sigma=1.0 --p=2
+
+- name: cifar_gamma5_10
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma5_10 --noise=GammaNoise5 --sigma=1.0 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma5_10 --noise=GammaNoise5 --sigma=1.0 --p=2
+
+# ================================================================================================
+
+- name: cifar_gamma3_125
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma3_125 --noise=GammaNoise3 --sigma=1.25 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma3_125 --noise=GammaNoise3 --sigma=1.25 --p=2
+
+- name: cifar_gamma1_125
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma1_125 --noise=GammaNoise1 --sigma=1.25 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma1_125 --noise=GammaNoise1 --sigma=1.25 --p=2
+
+- name: cifar_gamma2_125
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma2_125 --noise=GammaNoise2 --sigma=1.25 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma2_125 --noise=GammaNoise2 --sigma=1.25 --p=2
+
+- name: cifar_gamma4_125
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma4_125 --noise=GammaNoise4 --sigma=1.25 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma4_125 --noise=GammaNoise4 --sigma=1.25 --p=2
+
+- name: cifar_gamma5_125
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_gamma5_125 --noise=GammaNoise5 --sigma=1.25 --p=2
+  - python3 -m src.test --experiment-name=cifar_gamma5_125 --noise=GammaNoise5 --sigma=1.25 --p=2
+

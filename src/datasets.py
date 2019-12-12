@@ -2,7 +2,7 @@ import torch
 from torchvision import datasets, transforms
 
 
-def get_dim(name):
+def get_dim_of_dataset(name):
 
     if name == "cifar":
         return 3 * 32 * 32

@@ -13,7 +13,7 @@ from src.models import *
 from src.noises import *
 from src.smooth import *
 from src.attacks import pgd_attack_smooth
-from src.datasets import get_dataset
+from src.datasets import get_dataset, get_dim_of_dataset
 
 
 if __name__ == "__main__":
@@ -29,9 +29,8 @@ if __name__ == "__main__":
     argparser.add_argument("--experiment-name", default="cifar", type=str)
     argparser.add_argument("--noise", default="Clean", type=str)
     argparser.add_argument("--sigma", default=0.0, type=float)
-    argparser.add_argument("--eps", default=1.0, type=float)
-    argparser.add_argument("--p", default=1, type=int)
-    argparser.add_argument("--k", default=1.0, type=float)
+    argparser.add_argument("--p", default=2, type=int)
+    argparser.add_argument("--eps", default=0.0, type=float)
     argparser.add_argument("--model", default="ResNet", type=str)
     argparser.add_argument("--dataset", default="cifar", type=str)
     argparser.add_argument("--adversarial", action="store_true")
@@ -60,9 +59,11 @@ if __name__ == "__main__":
     time_meter = meter.TimeMeter(unit=False)
 
     if args.noise[-1].isdigit():
-        noise = eval(args.noise[:-1])(**args.__dict__)
+        k = int(args.noise[-1])
+        noise = eval(args.noise[:-1])(sigma=args.sigma, device=args.device, p=args.p, k=k,
+                                      dim=get_dim_of_dataset(args.dataset))
     else:
-        noise = eval(args.noise)(**args.__dict__)
+        noise = eval(args.noise)(sigma=args.sigma, device=args.device, p=args.p)
 
     train_losses = []
 

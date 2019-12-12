@@ -37,8 +37,8 @@ jobs:
 - name: cifar_laplace_015
   sku: G1
   command:
-  - python3 -m src.train --experiment-name=cifar_laplace_015 --noise=LaplaceNoise --sigma=0.15 --k=1 --p=2
-  - python3 -m src.test --experiment-name=cifar_laplace_015 --noise=LaplaceNoise --sigma=0.15 --k=1 --p=2
+  - python3 -m src.train --experiment-name=cifar_laplace_015 --noise=LaplaceNoise --sigma=0.15 --p=2
+  - python3 -m src.test --experiment-name=cifar_laplace_015 --noise=LaplaceNoise --sigma=0.15 --p=2
 #
 #- name: cifar_expinf_015
 #  sku: G1
@@ -61,8 +61,8 @@ jobs:
 - name: cifar_lomax_015
   sku: G1
   command:
-  - python3 -m src.train --experiment-name=cifar_lomax_015 --noise=LomaxNoise --sigma=0.15 --k=3 --p=2
-  - python3 -m src.test --experiment-name=cifar_lomax_015 --noise=LomaxNoise --sigma=0.15 --k=3 --p=2
+  - python3 -m src.train --experiment-name=cifar_lomax_015 --noise=LomaxNoise --sigma=0.15 --p=2
+  - python3 -m src.test --experiment-name=cifar_lomax_015 --noise=LomaxNoise --sigma=0.15 --p=2
 
 # ================================================================================================
 
@@ -105,8 +105,8 @@ jobs:
 - name: cifar_lomax_025
   sku: G1
   command:
-  - python3 -m src.train --experiment-name=cifar_lomax_025 --noise=LomaxNoise --sigma=0.25 --k=3 --p=2
-  - python3 -m src.test --experiment-name=cifar_lomax_025 --noise=LomaxNoise --sigma=0.25 --k=3 --p=2
+  - python3 -m src.train --experiment-name=cifar_lomax_025 --noise=LomaxNoise --sigma=0.25 --p=2
+  - python3 -m src.test --experiment-name=cifar_lomax_025 --noise=LomaxNoise --sigma=0.25 --p=2
 
 # ================================================================================================
 
@@ -149,8 +149,8 @@ jobs:
 - name: cifar_lomax_125
   sku: G1
   command:
-  - python3 -m src.train --experiment-name=cifar_lomax_125 --noise=LomaxNoise --sigma=1.25 --k=3 --p=2
-  - python3 -m src.test --experiment-name=cifar_lomax_125 --noise=LomaxNoise --sigma=1.25 --k=3 --p=2
+  - python3 -m src.train --experiment-name=cifar_lomax_125 --noise=LomaxNoise --sigma=1.25 --p=2
+  - python3 -m src.test --experiment-name=cifar_lomax_125 --noise=LomaxNoise --sigma=1.25 --p=2
 
 # ================================================================================================
 
@@ -193,8 +193,8 @@ jobs:
 - name: cifar_lomax_05
   sku: G1
   command:
-  - python3 -m src.train --experiment-name=cifar_lomax_05 --noise=LomaxNoise --sigma=0.5 --k=3 --p=2
-  - python3 -m src.test --experiment-name=cifar_lomax_05 --noise=LomaxNoise --sigma=0.5 --k=3 --p=2
+  - python3 -m src.train --experiment-name=cifar_lomax_05 --noise=LomaxNoise --sigma=0.5 --p=2
+  - python3 -m src.test --experiment-name=cifar_lomax_05 --noise=LomaxNoise --sigma=0.5 --p=2
 
 # ================================================================================================
 
@@ -237,8 +237,8 @@ jobs:
 - name: cifar_lomax_10
   sku: G1
   command:
-  - python3 -m src.train --experiment-name=cifar_lomax_10 --noise=LomaxNoise --sigma=1.0 --k=3 --p=2
-  - python3 -m src.test --experiment-name=cifar_lomax_10 --noise=LomaxNoise --sigma=1.0 --k=3 --p=2
+  - python3 -m src.train --experiment-name=cifar_lomax_10 --noise=LomaxNoise --sigma=1.0 --p=2
+  - python3 -m src.test --experiment-name=cifar_lomax_10 --noise=LomaxNoise --sigma=1.0 --p=2
 
 # ================================================================================================
 
@@ -281,6 +281,6 @@ jobs:
 - name: cifar_lomax_075
   sku: G1
   command:
-  - python3 -m src.train --experiment-name=cifar_lomax_075 --noise=LomaxNoise --sigma=0.75 --k=3 --p=2
-  - python3 -m src.test --experiment-name=cifar_lomax_075 --noise=LomaxNoise --sigma=0.75 --k=3 --p=2
+  - python3 -m src.train --experiment-name=cifar_lomax_075 --noise=LomaxNoise --sigma=0.75 --p=2
+  - python3 -m src.test --experiment-name=cifar_lomax_075 --noise=LomaxNoise --sigma=0.75 --p=2
 
