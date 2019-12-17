@@ -79,8 +79,8 @@ if __name__ == "__main__":
     plt.xlabel("$\sigma$")
     plt.ylabel("Top-1 testing accuracy")
     plt.ylim((0, 1))
+    plt.suptitle(args.dir)
     plt.tight_layout()
-    plt.title(args.dir)
     plt.show()
 
     # plot certified accuracies
@@ -88,6 +88,7 @@ if __name__ == "__main__":
     sns.relplot(x="eps", y="top_1_acc_cert", hue="noise", kind="line", col="sigma",
                 col_wrap=2, data=selected, height=2, aspect=1.5)
     plt.ylim((0, 1))
+    plt.suptitle(args.dir)
     plt.tight_layout()
     plt.show()
 

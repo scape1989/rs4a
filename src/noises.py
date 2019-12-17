@@ -4,7 +4,7 @@ import scipy as sp
 import scipy.special
 import scipy.stats
 import torch
-from torch.distributions import Normal, Uniform, Laplace, Gamma, Dirichlet, Pareto, Bernoulli
+from torch.distributions import Normal, Uniform, Laplace, Gamma, Dirichlet, Pareto, Bernoulli, Beta
 
 
 def atanh(x):
@@ -13,9 +13,10 @@ def atanh(x):
 
 class Noise(object):
 
-    def __init__(self, sigma, device):
+    def __init__(self, sigma, device, dim=None):
         self.sigma = sigma
         self.device = device
+        self.dim = dim
 
     def sample(self, shape):
         raise NotImplementedError
@@ -108,8 +109,7 @@ class LomaxNoise(Noise):
 class ExpInfNoise(Noise):
 
     def __init__(self, sigma, device, p, dim=3*32*32, k=1):
-        super().__init__(sigma, device)
-        self.dim = dim
+        super().__init__(sigma, device, dim)
         self.k = k
         self.lambd = sigma / (math.exp(math.lgamma((dim + 1) / k) - math.lgamma(dim / k)))
         self.lambd = 2 * self.lambd if p == 1 else 3 ** 0.5 * self.lambd
@@ -132,8 +132,7 @@ class ExpInfNoise(Noise):
 class Exp1Noise(Noise):
 
     def __init__(self, sigma, device, p, dim=3*32*32, k=1):
-        super().__init__(sigma, device)
-        self.dim = dim
+        super().__init__(sigma, device, dim)
         self.k = k
         self.lambd = sigma / (math.exp(math.lgamma((dim + 1) / k) - math.lgamma(dim / k)))
         self.lambd *= dim if p == 1 else math.sqrt(0.5 * dim * (dim + 1))
@@ -162,8 +161,7 @@ class Exp1Noise(Noise):
 class Exp2Noise(Noise):
 
     def __init__(self, sigma, device, p, dim=3*32*32, k=1):
-        super().__init__(sigma, device)
-        self.dim = dim
+        super().__init__(sigma, device, dim)
         self.k = k
         self.lambd = math.sqrt(0.5 * math.pi * dim) * sigma if p == 1 else math.sqrt(dim) * sigma
         self.lambd = self.lambd / math.exp(math.lgamma((dim + 1) / k) - math.lgamma(dim / k))
@@ -187,8 +185,7 @@ class Exp2Noise(Noise):
 class MaskNoise(Noise):
 
     def __init__(self, sigma, device, p, dim=3*32*32):
-        super().__init__(sigma, device)
-        self.dim = dim
+        super().__init__(sigma, device, dim)
         self.lambd = 1 - dim * sigma ** 2 / 750 if p == 2 else 1 - dim * sigma / 125
 
     def sample(self, shape, x):
@@ -200,7 +197,7 @@ class MaskNoise(Noise):
         return (prob_lower_bound - 0.5) / self.lambd
 
 
-class TransformedGammaNoise(Noise):
+class GammaNoise(Noise):
 
     def __init__(self, sigma, device, p, k=1, dim=3*32*32):
         super().__init__(sigma, device)
@@ -216,4 +213,34 @@ class TransformedGammaNoise(Noise):
 
     def certify(self, prob_lower_bound):
         return torch.zeros_like(prob_lower_bound)
+
+
+class PTailNoise(Noise):
+
+    def __init__(self, sigma, device, p, k=2, dim=3*32*32):
+        super().__init__(sigma, device, dim)
+        self.k = k
+        self.beta_dist = Beta(torch.tensor(dim / 2, dtype=torch.float, device=device),
+                              torch.tensor(k, dtype=torch.float, device=device))
+        self.lambd = (2 * (k - 1)) ** 0.5 * sigma if p == 2 else 0 / 0
+        self.prob_lower_bounds, self.radii = np.load("./src/lib/ptail_cifar.npy", allow_pickle=True)
+
+    def sample(self, shape):
+        n_samples = int(np.prod(list(shape)) / self.dim)
+        beta_samples = self.beta_dist.sample((n_samples,)).unsqueeze(1)
+        radius = (beta_samples / (1 - beta_samples)) ** 0.5
+        noise = torch.randn(shape, device=self.device).reshape(n_samples, -1)
+        noise = noise / torch.norm(noise, dim=1, p=2).unsqueeze(1)
+        noise = noise * radius * self.lambd
+        return noise.reshape(shape)
+
+    def certify(self, prob_lower_bound):
+        prob_lower_bound = prob_lower_bound.numpy()
+        alpha = self.k + self.dim / 2
+        idxs = np.searchsorted(self.prob_lower_bounds[alpha], prob_lower_bound)
+        x_deltas = self.prob_lower_bounds[alpha][idxs] - self.prob_lower_bounds[alpha][idxs - 1]
+        y_deltas = self.radii[alpha][idxs] - self.radii[alpha][idxs - 1]
+        pcts = (prob_lower_bound - self.prob_lower_bounds[alpha][idxs - 1]) / x_deltas
+        radius = (pcts * y_deltas + self.radii[alpha][idxs - 1]) * self.lambd
+        return torch.tensor(radius, dtype=torch.float)
 

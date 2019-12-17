@@ -1,7 +1,10 @@
 *.pkl
 *.pyc
 *.torch
-*.npy
 *.swp
 data/
 ckpts/
+cifar_*/
+mnist_*/
+svhn_*/
+fahsion_*/

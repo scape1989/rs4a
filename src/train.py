@@ -13,7 +13,7 @@ from src.models import *
 from src.noises import *
 from src.smooth import *
 from src.attacks import pgd_attack_smooth
-from src.datasets import get_dataset, get_dim_of_dataset
+from src.datasets import get_dataset, get_dim
 
 
 if __name__ == "__main__":
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     if args.noise[-1].isdigit():
         k = int(args.noise[-1])
         noise = eval(args.noise[:-1])(sigma=args.sigma, device=args.device, p=args.p, k=k,
-                                      dim=get_dim_of_dataset(args.dataset))
+                                      dim=get_dim(args.dataset))
     else:
         noise = eval(args.noise)(sigma=args.sigma, device=args.device, p=args.p)
 

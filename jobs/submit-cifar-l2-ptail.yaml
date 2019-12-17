@@ -1,0 +1,122 @@
+description: Training CIFAR-10 Robustness [L2 matched, PTail]
+
+target:
+  vc: msrlabs
+  cluster: eu1
+
+environment:
+  image: microsoft_pytorch:v1.2.0_gpu_cuda9.0_py36_release_gpuenv_hvd0.16.2
+  registry: phillyregistry.azurecr.io
+  setup:
+  - pip install torchnet --user
+  - pip install statsmodels --user
+  - pip install tqdm --user
+
+code:
+  local_dir: $CONFIG_DIR/../
+
+data:
+  local_dir: $CONFIG_DIR/../data/
+  remote_dir: datasets/
+
+jobs:
+# ================================================================================================
+
+- name: cifar_ptail2_025
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_ptail2_025 --noise=PTailNoise2 --sigma=0.25 --p=2
+  - python3 -m src.test --experiment-name=cifar_ptail2_025 --noise=PTailNoise2 --sigma=0.25 --p=2
+
+- name: cifar_ptail4_025
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_ptail4_025 --noise=PTailNoise4 --sigma=0.25 --p=2
+  - python3 -m src.test --experiment-name=cifar_ptail4_025 --noise=PTailNoise4 --sigma=0.25 --p=2
+
+- name: cifar_ptail8_025
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_ptail8_025 --noise=PTailNoise8 --sigma=0.25 --p=2
+  - python3 -m src.test --experiment-name=cifar_ptail8_025 --noise=PTailNoise8 --sigma=0.25 --p=2
+
+# ================================================================================================
+
+- name: cifar_ptail2_05
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_ptail2_05 --noise=PTailNoise2 --sigma=0.5 --p=2
+  - python3 -m src.test --experiment-name=cifar_ptail2_05 --noise=PTailNoise2 --sigma=0.5 --p=2
+
+- name: cifar_ptail4_05
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_ptail4_05 --noise=PTailNoise4 --sigma=0.5 --p=2
+  - python3 -m src.test --experiment-name=cifar_ptail4_05 --noise=PTailNoise4 --sigma=0.5 --p=2
+
+- name: cifar_ptail8_05
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_ptail8_05 --noise=PTailNoise8 --sigma=0.5 --p=2
+  - python3 -m src.test --experiment-name=cifar_ptail8_05 --noise=PTailNoise8 --sigma=0.5 --p=2
+
+# ================================================================================================
+
+- name: cifar_ptail2_075
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_ptail2_075 --noise=PTailNoise2 --sigma=0.75 --p=2
+  - python3 -m src.test --experiment-name=cifar_ptail2_075 --noise=PTailNoise2 --sigma=0.75 --p=2
+
+- name: cifar_ptail4_075
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_ptail4_075 --noise=PTailNoise4 --sigma=0.75 --p=2
+  - python3 -m src.test --experiment-name=cifar_ptail4_075 --noise=PTailNoise4 --sigma=0.75 --p=2
+
+- name: cifar_ptail8_075
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_ptail8_075 --noise=PTailNoise8 --sigma=0.75 --p=2
+  - python3 -m src.test --experiment-name=cifar_ptail8_075 --noise=PTailNoise8 --sigma=0.75 --p=2
+
+# ================================================================================================
+
+- name: cifar_ptail2_10
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_ptail2_10 --noise=PTailNoise2 --sigma=1.0 --p=2
+  - python3 -m src.test --experiment-name=cifar_ptail2_10 --noise=PTailNoise2 --sigma=1.0 --p=2
+
+- name: cifar_ptail4_10
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_ptail4_10 --noise=PTailNoise4 --sigma=1.0 --p=2
+  - python3 -m src.test --experiment-name=cifar_ptail4_10 --noise=PTailNoise4 --sigma=1.0 --p=2
+
+- name: cifar_ptail8_10
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_ptail8_10 --noise=PTailNoise8 --sigma=1.0 --p=2
+  - python3 -m src.test --experiment-name=cifar_ptail8_10 --noise=PTailNoise8 --sigma=1.0 --p=2
+
+# ================================================================================================
+
+- name: cifar_ptail2_125
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_ptail2_125 --noise=PTailNoise2 --sigma=1.25 --p=2
+  - python3 -m src.test --experiment-name=cifar_ptail2_125 --noise=PTailNoise2 --sigma=1.25 --p=2
+
+- name: cifar_ptail4_125
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_ptail4_125 --noise=PTailNoise4 --sigma=1.25 --p=2
+  - python3 -m src.test --experiment-name=cifar_ptail4_125 --noise=PTailNoise4 --sigma=1.25 --p=2
+
+- name: cifar_ptail8_125
+  sku: G1
+  command:
+  - python3 -m src.train --experiment-name=cifar_ptail8_125 --noise=PTailNoise8 --sigma=1.25 --p=2
+  - python3 -m src.test --experiment-name=cifar_ptail8_125 --noise=PTailNoise8 --sigma=1.25 --p=2
+

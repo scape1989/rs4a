@@ -30,6 +30,12 @@ def project_onto_ball(x, eps, p="inf"):
         raise ValueError("Can only project onto 1,2,inf norm balls.")
     return x.view(original_shape)
 
+def shrink_l1(x, beta):
+    x[torch.abs(x) < beta] = 0
+    x[x > beta] -= beta
+    x[x < -beta] += beta
+    return x
+
 def fgsm_attack(model, x, y, eps):
     x.requires_grad = True
     grads = grad(model.loss(x, y).mean(), x)[0]
@@ -53,53 +59,12 @@ def pgd_attack(model, x, y, eps, steps=20, p="inf", clamp=(0, 1)):
     x = x.detach()
     x.requires_grad = False
     return x
-#
-#def pgd_attack_smooth(model, x, y, eps, noise, sample_size, steps=20, p="inf", clamp=(0, 1)):
-#    step_size = 2 * eps / steps
-#    x.requires_grad = True
-#    x_orig = x.clone().detach()
-#    for _ in range(steps):
-#        forecast = smooth_predict_soft(model, x, noise, sample_size)
-#        loss = -forecast.log_prob(y).mean()
-#        grads = grad(loss, x)[0]
-#        grads_norm = torch.norm(grads.view(x.shape[0], -1), dim=1, p=2)
-#        shape = (x.shape[0],) + (len(grads.shape) - 1) * (1,)
-#        grads = grads / (grads_norm.view(shape) + 1e-8)
-#        diff = (x + step_size * grads).clamp(*clamp) - x_orig
-#        diff = project_onto_ball(diff, eps, p)
-#        x = x_orig + diff
-#    x = x.detach()
-#    x.requires_grad = False
-#    return x
-#
 
 def pgd_attack_smooth(model, x, y, eps, noise, sample_size, steps=20, p="inf", clamp=(0, 1)):
-    step_size = 2 * eps / steps * 20
+
+    step_size = 2 * eps / steps
     x.requires_grad = True
     x_orig = x.clone().detach()
-#
-#    dim = x.view(x.shape[0], -1).shape[1]
-#    for idx in range(dim):
-#        diff = torch.zeros_like(x)
-#        diff.view(x.shape[0], -1)[:, idx] = eps
-#        diff = diff.view(x.shape)
-#        forecast = smooth_predict_hard(model, x + diff, noise, sample_size).probs
-#        acc = (torch.argmax(forecast, dim=1) == y).sum() / float(x.shape[0])
-#        print(idx, acc,
-#              diff.reshape(x.shape[0], -1).norm(dim=1, p=1).mean(),
-#              diff.reshape(x.shape[0], -1).norm(dim=1, p=2).mean())
-#        if acc < 1:
-#            breakpoint()
-#        diff.view(x.shape[0], -1)[:, idx] = -eps
-#        diff = diff.view(x.shape)
-#        forecast = smooth_predict_hard(model, x + diff, noise, sample_size).probs
-#        acc = (torch.argmax(forecast, dim=1) == y).sum() / float(x.shape[0])
-#        if acc < 1:
-#            breakpoint()
-#        print(idx, acc,
-#              diff.reshape(x.shape[0], -1).norm(dim=1, p=1).mean(),
-#              diff.reshape(x.shape[0], -1).norm(dim=1, p=2).mean())
-#
 
     for _ in range(steps):
         forecast = smooth_predict_soft(model, x, noise, sample_size)
@@ -118,6 +83,41 @@ def pgd_attack_smooth(model, x, y, eps, noise, sample_size, steps=20, p="inf", c
         diff = x + step_size * grads.reshape(x.shape) - x_orig
         diff = project_onto_ball(diff, eps, p)
         x = (x_orig + diff).clamp(*clamp)
+#        forecast = smooth_predict_hard(model, x, noise, sample_size).probs
+#        print(_, (torch.argmax(forecast, dim=1) == y).sum() / float(x.shape[0]),
+#              diff.reshape(x.shape[0], -1).norm(dim=1, p=1).mean(),
+#              diff.reshape(x.shape[0], -1).norm(dim=1, p=2).mean())
+    x = x.detach()
+    x.requires_grad = False
+    return x
+
+def ead_attack_smooth(model, x, y, eps, noise, sample_size, steps=20, p="inf", clamp=(0, 1)):
+
+    step_size = 2 * eps / steps / 10
+    x.requires_grad = True
+    x_orig = x.clone().detach()
+
+    for _ in range(steps * 32):
+        forecast = smooth_predict_soft(model, x, noise, sample_size)
+        loss = -forecast.log_prob(y).mean()
+        grads = grad(loss, x)[0].reshape(x.shape[0], -1)
+        if p == 1:
+            keep_vals = torch.kthvalue(grads.abs(), k=grads.shape[1] - 1, dim=1).values
+#            keep_vals = torch.kthvalue(grads.abs(), k=grads.shape[1] * 15 // 16, dim=1).values
+#            keep_vals = torch.kthvalue(grads.abs(), k=grads.shape[1] - 1, dim=1).values
+            grads[torch.abs(grads) <= keep_vals.unsqueeze(1)] = 0
+            grads = torch.sign(grads)
+            grads_norm = torch.norm(grads, dim=1, p=1)
+            grads = grads / (grads_norm.unsqueeze(1) + 1e-8)
+        elif p == 2:
+            grads_norm = torch.norm(grads, dim=1, p=2)
+            grads = grads / (grads_norm.unsqueeze(1) + 1e-8)
+        else:
+            raise ValueError
+        diff = x + step_size * grads.reshape(x.shape) - x_orig
+#        diff = shrink_l1(diff, 0.001)
+        diff = project_onto_ball(diff, eps, p)
+        x = (x_orig + diff).clamp(*clamp)
         forecast = smooth_predict_hard(model, x, noise, sample_size).probs
         print(_, (torch.argmax(forecast, dim=1) == y).sum() / float(x.shape[0]),
               diff.reshape(x.shape[0], -1).norm(dim=1, p=1).mean(),
@@ -125,4 +125,3 @@ def pgd_attack_smooth(model, x, y, eps, noise, sample_size, steps=20, p="inf", c
     x = x.detach()
     x.requires_grad = False
     return x
-

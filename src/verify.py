@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     argparser = ArgumentParser()
     argparser.add_argument("--device", default="cuda:0", type=str)
-    argparser.add_argument("--batch-size", default=1, type=int),
+    argparser.add_argument("--batch-size", default=4, type=int),
     argparser.add_argument("--num-workers", default=os.cpu_count(), type=int)
     argparser.add_argument("--sample-size-pred", default=64, type=int)
     argparser.add_argument("--sigma", default=0.0, type=float)
@@ -34,10 +34,16 @@ if __name__ == "__main__":
     model = eval(args.model)(dataset=args.dataset, device=args.device)
     model.load_state_dict(torch.load(save_path))
     model.eval()
-    noise = eval(args.noise)(**args.__dict__)
 
-    #eps_range = (0.25, 0.5, 0.75, 1.0, 1.25)
-    eps_range = (8.0,)
+    if args.noise[-1].isdigit():
+        k = int(args.noise[-1])
+        noise = eval(args.noise[:-1])(sigma=args.sigma, device=args.device, p=args.p, k=k,
+                                      dim=get_dim_of_dataset(args.dataset))
+    else:
+        noise = eval(args.noise)(sigma=args.sigma, device=args.device, p=args.p)
+
+    eps_range = (32.0, 16.0, 8.0, 1.25, 1.0, 0.75, 0.5, 0.25)
+    #eps_range = (8.0,)
 
     results = {f"preds_adv_{eps}": np.zeros((len(test_dataset), 10)) for eps in eps_range}
 
@@ -47,8 +53,8 @@ if __name__ == "__main__":
         lower, upper = i * args.batch_size, (i + 1) * args.batch_size
 
         for eps in eps_range:
-            x_adv = pgd_attack_smooth(model, x, y, eps=eps, noise=noise, sample_size=128,
-                                      steps=32, p=1, clamp=(0, 1))
+            x_adv = ead_attack_smooth(model, x, y, eps=eps, noise=noise, sample_size=128,
+                                      steps=4, p=1, clamp=(0, 1))
             preds_adv = smooth_predict_hard(model, x_adv, noise, args.sample_size_pred)
             results[f"preds_adv_{eps}"][lower:upper, :] = preds_adv.probs.data.cpu().numpy()
             assert ((x - x_adv).reshape(x.shape[0], -1).norm(dim=1, p=1) <= eps + 1e-2).all()
