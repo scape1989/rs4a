@@ -13,12 +13,12 @@ from matplotlib import pyplot as plt
 if __name__ == "__main__":
 
     argparser = ArgumentParser()
-    argparser.add_argument("--dataset", default="cifar", type=str)
     argparser.add_argument("--dir", default="./ckpts", type=str)
     argparser.add_argument("--debug", action="store_true")
     args = argparser.parse_args()
 
-    experiment_names = list(filter(lambda x: x.startswith(args.dataset), os.listdir(args.dir)))
+    dataset = args.dir.split("_")[0]
+    experiment_names = list(filter(lambda x: x.startswith(dataset), os.listdir(args.dir)))
 
     sns.set_style("whitegrid")
     sns.set_palette("husl")
@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     # save the experiment results
     df = pd.DataFrame(df)
-    df.to_csv(f"{args.dir}/results_{args.dataset}.csv", index=False)
+    df.to_csv(f"{args.dir}/results_{dataset}.csv", index=False)
 
     if args.debug:
         breakpoint()

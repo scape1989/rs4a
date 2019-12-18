@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from argparse import ArgumentParser
 from scipy.stats import gaussian_kde
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 from src.noises import *
 
 
@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
     lower_bounds = torch.tensor([0.6, 0.8, 0.9, 0.95])
 
-    plt.figure(figsize=(8, 3))
+#    plt.figure(figsize=(8, 3))
     axis = np.linspace(0, 2, 200)
 
     if args.noise[-1].isdigit():
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     print(rvs.norm(p=2, dim=1).pow(2).mean())
     print(noise.certify(lower_bounds))
 
-    plt.plot(axis, gaussian_kde(np.abs(rvs).flatten())(axis), label="Match L2")
+#    plt.plot(axis, gaussian_kde(np.abs(rvs).flatten())(axis), label="Match L2")
 
     if args.noise[-1].isdigit():
         k = int(args.noise[-1])
@@ -46,8 +46,8 @@ if __name__ == "__main__":
     print(rvs.norm(p=1, dim=1).mean())
     print(noise.certify(lower_bounds))
 
-    plt.plot(axis, gaussian_kde(np.abs(rvs).flatten())(axis), label="Match L1")
-    plt.legend()
-    plt.title(args.noise)
-    plt.tight_layout()
-    plt.show()
+#    plt.plot(axis, gaussian_kde(np.abs(rvs).flatten())(axis), label="Match L1")
+#    plt.legend()
+#    plt.title(args.noise)
+#    plt.tight_layout()
+#    plt.show()

@@ -1,4 +1,4 @@
-description: Training ImageNet Robustness [L2 matched]
+description: Training CIFAR-10 Robustness [L2 matched, MLP]
 
 target:
   vc: msrlabs
@@ -21,21 +21,29 @@ data:
 
 search:
   job_template:
-    name: imagenet
+    name: cifar_mlp
     sku: G1
     command:
     - python3 -m src.train
       --noise={noise}
       --sigma={sigma}
-      --experiment-name=imagenet_{noise}_{sigma}
-      --dataset=imagenet
+      --experiment-name=cifar_{noise}_{sigma}
       --p=2
+      --model=MLP
+      --lr=0.01
+    - python3 -m src.test
+      --noise={noise}
+      --sigma={sigma}
+      --experiment-name=cifar_{noise}_{sigma}
+      --p=2
+      --model=MLP
   type: grid
-  max_trials: 20
+  max_trials: 24
   params:
-    - name: noise
-      spec: discrete
-      values: ["GaussianNoise", "UniformNoise", "LaplaceNoise", "LomaxNoise"]
     - name: sigma
       spec: discrete
-      values: [0.25, 0.5, 0.75, 1.0, 1.25]
+      values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25]
+    - name: noise
+      spec: discrete
+      values: ["GaussianNoise", "LaplaceNoise", "UniformNoise", "LomaxNoise"]
+

@@ -55,7 +55,7 @@ class AlexNet(Forecaster):
 
     def __init__(self, dataset, device):
         super().__init__(dataset, device)
-        self.model = AlexNetBase(get_num_labels(dataset), drop_rate=0.0)
+        self.model = AlexNetBase(get_num_labels(dataset), drop_rate=0.5)
         self.model.to(device)
 
     def forward(self, x):

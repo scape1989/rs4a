@@ -1,4 +1,4 @@
-description: Training Fashion-MNIST Robustness [L2 matched]
+description: Training CIFAR-10 Robustness [L2 matched, Lomax]
 
 target:
   vc: msrlabs
@@ -21,30 +21,26 @@ data:
 
 search:
   job_template:
-    name: fashion
+    name: cifar_lomax
     sku: G1
     command:
     - python3 -m src.train
       --noise={noise}
       --sigma={sigma}
-      --experiment-name=fashion_{noise}_{sigma}
-      --dataset=fashion
-      --model=MLP
+      --experiment-name=cifar_{noise}_{sigma}
       --p=2
     - python3 -m src.test
       --noise={noise}
       --sigma={sigma}
-      --experiment-name=fashion_{noise}_{sigma}
-      --dataset=fashion
-      --model=MLP
+      --experiment-name=cifar_{noise}_{sigma}
       --p=2
   type: grid
-  max_trials: 24
+  max_trials: 25
   params:
     - name: sigma
       spec: discrete
-      values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25]
+      values: [0.25, 0.5, 0.75, 1.0, 1.25]
     - name: noise
       spec: discrete
-      values: ["GaussianNoise", "UniformNoise", "LaplaceNoise", "LomaxNoise"]
+      values: ["LomaxNoise1", "LomaxNoise2", "LomaxNoise3", "LomaxNoise4", "LomaxNoise5"]
 

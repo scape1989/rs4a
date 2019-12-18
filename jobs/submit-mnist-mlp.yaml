@@ -1,4 +1,4 @@
-description: Training ImageNet Robustness [L2 matched]
+description: Training MNIST Robustness [MLP]
 
 target:
   vc: msrlabs
@@ -17,25 +17,36 @@ code:
 
 data:
   local_dir: $CONFIG_DIR/../data/
-  remote_dir: datasets/
+  remote_dir: datasets
 
 search:
   job_template:
-    name: imagenet
+    name: mnist_linear
     sku: G1
     command:
     - python3 -m src.train
       --noise={noise}
       --sigma={sigma}
-      --experiment-name=imagenet_{noise}_{sigma}
-      --dataset=imagenet
+      --experiment-name=mnist_{noise}_{sigma}
       --p=2
+      --dataset=mnist
+      --model=MLP
+      --lr=0.01
+    - python3 -m src.test
+      --noise={noise}
+      --sigma={sigma}
+      --experiment-name=mnist_{noise}_{sigma}
+      --p=2
+      --dataset=mnist
+      --model=MLP
   type: grid
-  max_trials: 20
+  max_trials: 16
   params:
-    - name: noise
-      spec: discrete
-      values: ["GaussianNoise", "UniformNoise", "LaplaceNoise", "LomaxNoise"]
     - name: sigma
       spec: discrete
-      values: [0.25, 0.5, 0.75, 1.0, 1.25]
+      values: [1.0, 2.0, 3.0, 4.0]
+    - name: noise
+      spec: discrete
+      values: ["GaussianNoise", "LaplaceNoise", "UniformNoise", "LomaxNoise"]
+
+
