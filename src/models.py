@@ -6,6 +6,7 @@ from torchvision import models as base_models
 from src.datasets import *
 from src.lib.wide_resnet import WideResNet as WideResNetBase
 from src.lib.alexnet import AlexNet as AlexNetBase
+from src.lib.lenet import LeNet as LeNetBase
 
 
 class Forecaster(nn.Module):
@@ -56,6 +57,18 @@ class AlexNet(Forecaster):
     def __init__(self, dataset, device):
         super().__init__(dataset, device)
         self.model = AlexNetBase(get_num_labels(dataset), drop_rate=0.5)
+        self.model.to(device)
+
+    def forward(self, x):
+        x = self.norm(x)
+        return self.model(x)
+
+
+class LeNet(Forecaster):
+
+    def __init__(self, dataset, device):
+        super().__init__(dataset, device)
+        self.model = LeNetBase(get_normalization_shape(dataset)[0], get_num_labels(dataset))
         self.model.to(device)
 
     def forward(self, x):

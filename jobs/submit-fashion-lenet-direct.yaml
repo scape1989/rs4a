@@ -1,4 +1,4 @@
-description: Training Fashion-MNIST Robustness [MLP]
+description: Training Fashion-MNIST Robustness [LeNet, Direct]
 
 target:
   vc: msrlabs
@@ -21,7 +21,7 @@ data:
 
 search:
   job_template:
-    name: fashion_mlp
+    name: fashion_lenet
     sku: G1
     command:
     - python3 -m src.train
@@ -29,15 +29,16 @@ search:
       --sigma={sigma}
       --experiment-name=fashion_{noise}_{sigma}
       --dataset=fashion
-      --model=MLP
+      --model=LeNet
       --p=2
       --lr=0.01
+      --direct
     - python3 -m src.test
       --noise={noise}
       --sigma={sigma}
       --experiment-name=fashion_{noise}_{sigma}
       --dataset=fashion
-      --model=MLP
+      --model=LeNet
       --p=2
   type: grid
   max_trials: 24

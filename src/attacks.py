@@ -93,17 +93,17 @@ def pgd_attack_smooth(model, x, y, eps, noise, sample_size, steps=20, p="inf", c
 
 def ead_attack_smooth(model, x, y, eps, noise, sample_size, steps=20, p="inf", clamp=(0, 1)):
 
-    step_size = 2 * eps / steps / 10
+    step_size = 2 * eps / steps
     x.requires_grad = True
     x_orig = x.clone().detach()
 
-    for _ in range(steps * 32):
+    for _ in range(steps * 16):
         forecast = smooth_predict_soft(model, x, noise, sample_size)
         loss = -forecast.log_prob(y).mean()
         grads = grad(loss, x)[0].reshape(x.shape[0], -1)
         if p == 1:
-            keep_vals = torch.kthvalue(grads.abs(), k=grads.shape[1] - 1, dim=1).values
-#            keep_vals = torch.kthvalue(grads.abs(), k=grads.shape[1] * 15 // 16, dim=1).values
+#            keep_vals = torch.kthvalue(grads.abs(), k=grads.shape[1] - 1, dim=1).values
+            keep_vals = torch.kthvalue(grads.abs(), k=grads.shape[1] * 15 // 16, dim=1).values
 #            keep_vals = torch.kthvalue(grads.abs(), k=grads.shape[1] - 1, dim=1).values
             grads[torch.abs(grads) <= keep_vals.unsqueeze(1)] = 0
             grads = torch.sign(grads)
@@ -121,7 +121,8 @@ def ead_attack_smooth(model, x, y, eps, noise, sample_size, steps=20, p="inf", c
         forecast = smooth_predict_hard(model, x, noise, sample_size).probs
         print(_, (torch.argmax(forecast, dim=1) == y).sum() / float(x.shape[0]),
               diff.reshape(x.shape[0], -1).norm(dim=1, p=1).mean(),
-              diff.reshape(x.shape[0], -1).norm(dim=1, p=2).mean())
+              diff.reshape(x.shape[0], -1).norm(dim=1, p=2).mean(),
+              grads.sum())
     x = x.detach()
     x.requires_grad = False
     return x

@@ -7,6 +7,7 @@ from src.attacks import *
 from src.noises import *
 from src.models import *
 from src.datasets import get_dataset
+from src.utils import get_trailing_number
 
 
 if __name__ == "__main__":
@@ -35,14 +36,15 @@ if __name__ == "__main__":
     model.load_state_dict(torch.load(save_path))
     model.eval()
 
-    if args.noise[-1].isdigit():
-        k = int(args.noise[-1])
-        noise = eval(args.noise[:-1])(sigma=args.sigma, device=args.device, p=args.p, k=k,
-                                      dim=get_dim_of_dataset(args.dataset))
+    k = get_trailing_number(args.noise)
+    if k:
+        noise = eval(args.noise[:-len(str(k))])(sigma=args.sigma, device=args.device, p=args.p,
+                                                dim=get_dim(args.dataset), k=k)
     else:
-        noise = eval(args.noise)(sigma=args.sigma, device=args.device, p=args.p)
+        noise = eval(args.noise)(sigma=args.sigma, device=args.device, p=args.p,
+                                 dim=get_dim(args.dataset))
 
-    eps_range = (32.0, 16.0, 8.0, 1.25, 1.0, 0.75, 0.5, 0.25)
+    eps_range = (32.0, 16.0, 8.0, 1.25, 1.0, 0.5)
     #eps_range = (8.0,)
 
     results = {f"preds_adv_{eps}": np.zeros((len(test_dataset), 10)) for eps in eps_range}

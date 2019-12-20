@@ -11,6 +11,7 @@ from src.attacks import *
 from src.smooth import *
 from src.noises import *
 from src.datasets import *
+from src.utils import get_trailing_number
 
 
 if __name__ == "__main__":
@@ -39,16 +40,18 @@ if __name__ == "__main__":
     model.load_state_dict(torch.load(save_path))
     model.eval()
 
-    if args.noise[-1].isdigit():
-        k = int(args.noise[-1])
-        noise = eval(args.noise[:-1])(sigma=args.sigma, device=args.device, p=args.p, k=k,
-                                      dim=get_dim(args.dataset))
+    k = get_trailing_number(args.noise)
+    if k:
+        noise = eval(args.noise[:-len(str(k))])(sigma=args.sigma, device=args.device, p=args.p,
+                                                dim=get_dim(args.dataset), k=k)
     else:
-        noise = eval(args.noise)(sigma=args.sigma, device=args.device, p=args.p)
+        noise = eval(args.noise)(sigma=args.sigma, device=args.device, p=args.p,
+                                 dim=get_dim(args.dataset))
 
     results = {
         "preds_smooth": np.zeros((len(test_dataset), 10)),
         "labels": np.zeros(len(test_dataset)),
+        "prob_lower_bound": np.zeros(len(test_dataset)),
         "radius_smooth": np.zeros(len(test_dataset)),
         "preds_nll": np.zeros(len(test_dataset))
     }
@@ -59,11 +62,12 @@ if __name__ == "__main__":
         preds = model.forecast(model.forward(x))
         preds_smooth = smooth_predict_hard(model, x, noise, args.sample_size_pred)
         top_cats = preds_smooth.probs.argmax(dim=1)
-        radii = certify_smoothed(model, x, top_cats, 0.001, noise, args.sample_size_cert)
+        p_a, radii = certify_smoothed(model, x, top_cats, 0.001, noise, args.sample_size_cert)
 
         lower, upper = i * args.batch_size, (i + 1) * args.batch_size
         results["preds_smooth"][lower:upper, :] = preds_smooth.probs.data.cpu().numpy()
         results["labels"][lower:upper] = y.data.cpu().numpy()
+        results["prob_lower_bound"][lower:upper] = p_a.cpu().numpy()
         results["radius_smooth"][lower:upper] = radii.cpu().numpy()
         results["preds_nll"][lower:upper] = -preds_smooth.log_prob(y).cpu().numpy()
 

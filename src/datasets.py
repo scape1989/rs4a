@@ -73,3 +73,4 @@ def get_dataset(name, split):
         return datasets.SVHN("./data/svhn", split=split, download=True,
                              transform=transforms.ToTensor())
 
+    raise ValueError

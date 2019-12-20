@@ -1,4 +1,4 @@
-description: Training Fashion-MNIST Robustness [MLP]
+description: Training CIFAR-10 Robustness [L2 matched, Exp2Poly]
 
 target:
   vc: msrlabs
@@ -21,31 +21,27 @@ data:
 
 search:
   job_template:
-    name: fashion_mlp
+    name: cifar_exp2poly
     sku: G1
     command:
     - python3 -m src.train
       --noise={noise}
       --sigma={sigma}
-      --experiment-name=fashion_{noise}_{sigma}
-      --dataset=fashion
-      --model=MLP
+      --experiment-name=cifar_{noise}_{sigma}
       --p=2
-      --lr=0.01
     - python3 -m src.test
       --noise={noise}
       --sigma={sigma}
-      --experiment-name=fashion_{noise}_{sigma}
-      --dataset=fashion
-      --model=MLP
+      --experiment-name=cifar_{noise}_{sigma}
       --p=2
   type: grid
-  max_trials: 24
+  max_trials: 30
   params:
     - name: sigma
       spec: discrete
-      values: [0.15, 0.5, 1.0, 2.0, 3.0, 4.0]
+      values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25]
     - name: noise
       spec: discrete
-      values: ["GaussianNoise", "UniformNoise", "LaplaceNoise", "LomaxNoise"]
+      values: ["Exp2PolyNoise1", "Exp2PolyNoise2", "Exp2PolyNoise4", "Exp2PolyNoise1024", "Exp2PolyNoise2048"]
+      #values: ["PTailNoise100", "UniformBallNoise"]
 

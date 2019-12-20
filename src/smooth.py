@@ -35,36 +35,7 @@ def smooth_predict_hard_binary(model, x, noise, sample_size=64):
     logits = model.forward(samples).view(batch_size, sample_size, -1)
     probs = torch.sigmoid(logits).round()
     return Bernoulli(probs=probs.mean(dim=1))
-#
-#def smooth_predict_hard(model, x, noise, sample_size=64, clamp=(0, 1)):
-#    samples_shape = [1, sample_size] + ([1] * (len(x.shape) - 1))
-#    samples = x.unsqueeze(1).repeat(samples_shape)
-#    delta = noise.sample(samples.shape)
-#
-#    W, _ = sp.linalg.qr(np.random.randn(784, 784))
-#    delta = delta.view(*[-1] + [*samples.shape][2:])
-#    delta = delta.reshape(delta.shape[0], -1)
-#    delta = delta @ torch.tensor(W, device="cuda:0", dtype=torch.float)
-#    samples = (samples + delta.view(samples.shape)).clamp(*clamp)
-#
-#    samples = samples.view(*[-1] + [*samples.shape][2:])
-#    logits = model.forward(samples).view(x.shape[0], sample_size, -1)
-#    num_cats = logits.shape[-1]
-#    top_cats = torch.argmax(logits, dim=2)
-#    counts = nn.functional.one_hot(top_cats, num_cats).float().sum(dim=1)
-#    return Categorical(probs=counts / counts.shape[1])
-#
-#def smooth_predict_hard(model, x, noise, sample_size=64, clamp=(-float("Inf"), float("Inf"))):
-#    samples_shape = [1, sample_size] + ([1] * (len(x.shape) - 1))
-#    samples = x.unsqueeze(1).repeat(samples_shape)
-#    samples = (samples + noise.sample(samples.shape)).clamp(*clamp)
-#    samples = samples.view(*[-1] + [*samples.shape][2:])
-#    logits = model.forward(samples).view(x.shape[0], sample_size, -1)
-#    num_cats = logits.shape[-1]
-#    top_cats = torch.argmax(logits, dim=2)
-#    counts = nn.functional.one_hot(top_cats, num_cats).float().sum(dim=1)
-#    return Categorical(probs=counts / counts.shape[1])
-#
+
 def smooth_predict_hard(model, x, noise, sample_size=64, noise_batch_size=512, num_cats=10):
 
     counts = torch.zeros(x.shape[0], num_cats, dtype=torch.float, device=x.device)
@@ -87,5 +58,6 @@ def certify_smoothed(model, x, top_cats, alpha, noise, sample_size):
     preds = smooth_predict_hard(model, x, noise, sample_size)
     top_probs = preds.probs.gather(1, top_cats.unsqueeze(1)).detach().cpu()
     lower, _ = proportion_confint(top_probs * sample_size, sample_size, alpha=alpha, method="beta")
-    return noise.certify(torch.tensor(lower.squeeze(), dtype=torch.float))
+    lower = torch.tensor(lower.squeeze(), dtype=torch.float)
+    return lower, noise.certify(lower)
 
