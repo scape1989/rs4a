@@ -59,7 +59,6 @@ if __name__ == "__main__":
     for i, (x, y) in tqdm(enumerate(test_loader), total=len(test_loader)):
 
         x, y = x.to(args.device), y.to(args.device)
-        preds = model.forecast(model.forward(x))
         preds_smooth = smooth_predict_hard(model, x, noise, args.sample_size_pred)
         top_cats = preds_smooth.probs.argmax(dim=1)
         p_a, radii = certify_smoothed(model, x, top_cats, 0.001, noise, args.sample_size_cert)

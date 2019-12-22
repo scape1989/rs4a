@@ -71,41 +71,8 @@ def pgd_attack_smooth(model, x, y, eps, noise, sample_size, steps=20, p="inf", c
         loss = -forecast.log_prob(y).mean()
         grads = grad(loss, x)[0].reshape(x.shape[0], -1)
         if p == 1:
-            keep_vals = torch.kthvalue(grads.abs(), k=grads.shape[1] // 4, dim=1).values
-            grads[torch.abs(grads) < keep_vals.unsqueeze(1)] = 0
-            grads_norm = torch.norm(grads, dim=1, p=1)
-            grads = grads / (grads_norm.unsqueeze(1) + 1e-8)
-        elif p == 2:
-            grads_norm = torch.norm(grads, dim=1, p=2)
-            grads = grads / (grads_norm.unsqueeze(1) + 1e-8)
-        else:
-            raise ValueError
-        diff = x + step_size * grads.reshape(x.shape) - x_orig
-        diff = project_onto_ball(diff, eps, p)
-        x = (x_orig + diff).clamp(*clamp)
-#        forecast = smooth_predict_hard(model, x, noise, sample_size).probs
-#        print(_, (torch.argmax(forecast, dim=1) == y).sum() / float(x.shape[0]),
-#              diff.reshape(x.shape[0], -1).norm(dim=1, p=1).mean(),
-#              diff.reshape(x.shape[0], -1).norm(dim=1, p=2).mean())
-    x = x.detach()
-    x.requires_grad = False
-    return x
-
-def ead_attack_smooth(model, x, y, eps, noise, sample_size, steps=20, p="inf", clamp=(0, 1)):
-
-    step_size = 2 * eps / steps
-    x.requires_grad = True
-    x_orig = x.clone().detach()
-
-    for _ in range(steps * 16):
-        forecast = smooth_predict_soft(model, x, noise, sample_size)
-        loss = -forecast.log_prob(y).mean()
-        grads = grad(loss, x)[0].reshape(x.shape[0], -1)
-        if p == 1:
-#            keep_vals = torch.kthvalue(grads.abs(), k=grads.shape[1] - 1, dim=1).values
             keep_vals = torch.kthvalue(grads.abs(), k=grads.shape[1] * 15 // 16, dim=1).values
-#            keep_vals = torch.kthvalue(grads.abs(), k=grads.shape[1] - 1, dim=1).values
-            grads[torch.abs(grads) <= keep_vals.unsqueeze(1)] = 0
+            grads[torch.abs(grads) < keep_vals.unsqueeze(1)] = 0
             grads = torch.sign(grads)
             grads_norm = torch.norm(grads, dim=1, p=1)
             grads = grads / (grads_norm.unsqueeze(1) + 1e-8)
@@ -115,14 +82,13 @@ def ead_attack_smooth(model, x, y, eps, noise, sample_size, steps=20, p="inf", c
         else:
             raise ValueError
         diff = x + step_size * grads.reshape(x.shape) - x_orig
-#        diff = shrink_l1(diff, 0.001)
         diff = project_onto_ball(diff, eps, p)
         x = (x_orig + diff).clamp(*clamp)
         forecast = smooth_predict_hard(model, x, noise, sample_size).probs
         print(_, (torch.argmax(forecast, dim=1) == y).sum() / float(x.shape[0]),
               diff.reshape(x.shape[0], -1).norm(dim=1, p=1).mean(),
-              diff.reshape(x.shape[0], -1).norm(dim=1, p=2).mean(),
-              grads.sum())
+              diff.reshape(x.shape[0], -1).norm(dim=1, p=2).mean())
     x = x.detach()
     x.requires_grad = False
     return x
+

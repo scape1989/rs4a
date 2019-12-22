@@ -178,22 +178,6 @@ class Exp2Noise(Noise):
                  atanh(1 - 2 * self.beta_dist.ppf(1 - prob_lower_bound.numpy()))
         return torch.tensor(radius, dtype=torch.float)
 
-
-class MaskNoise(Noise):
-
-    def __init__(self, sigma, device, dim, p):
-        super().__init__(sigma, device, dim)
-        self.lambd = 1 - dim * sigma ** 2 / 750 if p == 2 else 1 - dim * sigma / 125
-
-    def sample(self, shape, x):
-        noises = torch.rand(shape, device=self.device)
-        mask = (noises < self.lambd).to(torch.float)
-        return mask * torch.zeros_like(x) - (1 - mask) * x
-
-    def certify(self, prob_lower_bound):
-        return (prob_lower_bound - 0.5) / self.lambd
-
-
 class GammaNoise(Noise):
 
     def __init__(self, sigma, device, dim, p, k=1):
@@ -284,4 +268,49 @@ class Exp2PolyNoise(Noise):
         pcts = (prob_lower_bound - self.prob_lower_bounds[alpha][idxs - 1]) / x_deltas
         radius = (pcts * y_deltas + self.radii[alpha][idxs - 1]) * self.lambd
         return torch.tensor(radius, dtype=torch.float)
+
+
+class MaskNoise(Noise):
+
+    def __init__(self, sigma, device, dim, p):
+        super().__init__(sigma, device, dim)
+        self.lambd = 1 - dim * sigma ** 2 / 750 if p == 2 else 1 - dim * sigma / 125
+
+    def sample(self, shape, x):
+        noises = torch.rand(shape, device=self.device)
+        mask = (noises < self.lambd).to(torch.float)
+        return mask * torch.zeros_like(x) - (1 - mask) * x
+
+    def certify(self, prob_lower_bound):
+        return (prob_lower_bound - 0.5) / self.lambd
+
+
+class MaskGaussianNoise(Noise):
+
+    def __init__(self, sigma, device, dim, p, k=2):
+        """
+        k is reciprocal of fraction of pixels retained (default 1/10)
+        """
+        super().__init__(sigma, device, dim, k)
+        self.n_pixels_retained = dim // k
+        #self.lambd = (k * (sigma ** 2 - (1 - 1 / k) * 0.06329)) ** 0.5
+        self.lambd = sigma
+        self.norm_dist = Normal(loc=torch.tensor(0., device=device),
+                                scale=torch.tensor(self.lambd, device=device))
+
+    def sample(self, x):
+        x_copy = x.reshape(-1, self.dim)
+        batch_size = x_copy.shape[0]
+        noise = self.norm_dist.sample(x_copy.shape) + x_copy
+        perm = torch.stack([torch.randperm(self.dim) for _ in range(batch_size)])
+        idxs = perm[:, :self.dim - self.n_pixels_retained]
+        rng = torch.arange(batch_size)
+        for batch_no in range(batch_size):
+            #noise[batch_no, idxs[batch_no]] = 0.4734
+            noise[batch_no, idxs[batch_no]] = -1
+        return noise.reshape(x.shape)
+
+    def certify(self, prob_lower_bound):
+        return self.lambd * Normal(0, 1).icdf(prob_lower_bound) / self.n_pixels_retained ** 0.5
+
 

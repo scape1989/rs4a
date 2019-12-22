@@ -45,7 +45,8 @@ def smooth_predict_hard(model, x, noise, sample_size=64, noise_batch_size=512, n
 
         shape = torch.Size([x.shape[0], min(num_samples_left, noise_batch_size)]) + x.shape[1:]
         samples = x.unsqueeze(1).expand(shape)
-        samples = (samples + noise.sample(samples.shape))
+        #samples = (samples + noise.sample(samples.shape)) # for non-masked noise
+        samples = noise.sample(samples)
         samples = samples.reshape(torch.Size([-1]) + samples.shape[2:])
         logits = model.forward(samples).view(shape[:2] + torch.Size([-1]))
         top_cats = torch.argmax(logits, dim=2)

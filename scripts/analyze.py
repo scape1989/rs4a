@@ -15,6 +15,7 @@ if __name__ == "__main__":
     argparser = ArgumentParser()
     argparser.add_argument("--dir", default="./ckpts", type=str)
     argparser.add_argument("--debug", action="store_true")
+    argparser.add_argument("--eps-max", default=4.0, type=float)
     args = argparser.parse_args()
 
     dataset = args.dir.split("_")[0]
@@ -24,7 +25,7 @@ if __name__ == "__main__":
     sns.set_palette("husl")
 
     df = defaultdict(list)
-    eps_range = np.linspace(0, 4, 50)
+    eps_range = np.linspace(0, args.eps_max, 50)
 
     for experiment_name in experiment_names:
 
@@ -95,11 +96,12 @@ if __name__ == "__main__":
     # plot top certified accuracy per epsilon, per type of noise
     grouped = df >> mask(X.noise != "Clean") \
                  >> group_by(X.eps, X.noise) \
+                 >> mutate(eps = X.eps * 255) \
                  >> arrange(X.top_1_acc_cert, ascending=False) \
                  >> summarize(top_1_acc_cert=first(X.top_1_acc_cert),
                               noise=first(X.noise))
 
-    sns.lineplot(x="eps", y="top_1_acc_cert", data=grouped, hue="noise")
+    sns.lineplot(x="eps", y="top_1_acc_cert", data=grouped, hue="noise", style="noise")
     plt.title(args.dir)
     plt.tight_layout()
     plt.show()

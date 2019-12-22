@@ -9,6 +9,7 @@ import torch.optim as optim
 from argparse import ArgumentParser
 from torchnet import meter
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 from src.models import *
 from src.noises import *
 from src.smooth import *
@@ -78,8 +79,11 @@ if __name__ == "__main__":
             if args.adversarial and epoch > args.num_epochs // 2:
                 x = pgd_attack_smooth(model, x, y, args.eps, noise, sample_size=2, p=args.p)
             elif not args.direct:
-                x = x + noise.sample(x.shape)
-
+#                x = x + noise.sample(x.shape) # for non-masked noise
+                x = noise.sample(x)
+#                x = torch.stack((x, 1 - x), dim=1) # for 6 channels
+#                x[x < 0] = 0
+#                x[x > 2] = 0
                 # random rotation matrix
 #                W, _ = sp.linalg.qr(np.random.randn(784, 784))
 #                delta = noise.sample(x.shape)
@@ -89,7 +93,7 @@ if __name__ == "__main__":
 
             optimizer.zero_grad()
             if args.direct:
-                loss = -direct_train_log_lik(model, x, y, noise, sample_size=16).mean()
+                loss = -direct_train_log_lik(model, x, y, noise, sample_size=32).mean()
             else:
                 loss = model.loss(x, y).mean()
             loss.backward()
@@ -120,10 +124,10 @@ if __name__ == "__main__":
     model.eval()
     acc_meter = meter.AverageValueMeter()
 
-    for x, y in train_loader:
+    for x, y in tqdm(train_loader):
 
          x, y = x.to(args.device), y.to(args.device)
-         preds_smooth = smooth_predict_hard(model, x, noise, sample_size=32)
+         preds_smooth = smooth_predict_hard(model, x, noise, sample_size=16)
          top_cats = preds_smooth.probs.argmax(dim=1)
          acc_meter.add(torch.sum(top_cats == y).cpu().data.numpy(), n=len(x))
 

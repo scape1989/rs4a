@@ -10,16 +10,16 @@ class BasicBlock(nn.Module):
         super(BasicBlock, self).__init__()
         self.bn1 = nn.BatchNorm2d(in_planes)
         self.relu1 = nn.ReLU(inplace=True)
-        self.conv1 = nn.Conv2d(in_planes, out_planes, kernel_size=3, 
+        self.conv1 = nn.Conv2d(in_planes, out_planes, kernel_size=3,
                                stride=stride, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(out_planes)
         self.relu2 = nn.ReLU(inplace=True)
-        self.conv2 = nn.Conv2d(out_planes, out_planes, kernel_size=3, 
+        self.conv2 = nn.Conv2d(out_planes, out_planes, kernel_size=3,
                                stride=1, padding=1, bias=False)
         self.drop_rate = drop_rate
         self.equalInOut = (in_planes == out_planes)
         self.convShortcut = (not self.equalInOut) and \
-                            nn.Conv2d(in_planes, out_planes, kernel_size=1, 
+                            nn.Conv2d(in_planes, out_planes, kernel_size=1,
                                       stride=stride, padding=0, bias=False) or None
 
     def forward(self, x):
