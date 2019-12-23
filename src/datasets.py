@@ -19,7 +19,7 @@ def get_num_labels(name):
 
 def get_normalization_shape(name):
     if name == "cifar":
-        return (3, 1, 1)
+        return (6, 1, 1)
     if name == "imagenet":
         return (3, 1, 1)
     if name == "svhn":
@@ -31,7 +31,7 @@ def get_normalization_shape(name):
 
 def get_normalization_stats(name):
     if name == "cifar":
-        return {"mu": [0.4914, 0.4822, 0.4465], "sigma": [0.2023, 0.1994, 0.2010]}
+        return {"mu": [0.4914, 0.4822, 0.4465, 1-0.4914, 1-0.4822, 1-0.4465], "sigma": [0.2023, 0.1994, 0.2010, 0.2023, 0.1994, 0.2010]}
     if name == "imagenet":
         return {"mu": [0.485, 0.456, 0.406], "sigma": [0.229, 0.224, 0.225]}
     if name == "svhn":

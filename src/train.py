@@ -81,9 +81,9 @@ if __name__ == "__main__":
             elif not args.direct:
 #                x = x + noise.sample(x.shape) # for non-masked noise
                 x = noise.sample(x)
-#                x = torch.stack((x, 1 - x), dim=1) # for 6 channels
-#                x[x < 0] = 0
-#                x[x > 2] = 0
+                x = torch.cat((x, 1 - x), dim=1) # for 6 channels
+                x[torch.isnan(x)] = 0
+                x[torch.isnan(x)] = 0
                 # random rotation matrix
 #                W, _ = sp.linalg.qr(np.random.randn(784, 784))
 #                delta = noise.sample(x.shape)

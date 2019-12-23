@@ -34,6 +34,7 @@ search:
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
       --p=2
+      --batch-size=1
   type: grid
   max_trials: 45
   params:
@@ -42,6 +43,6 @@ search:
       values: [0.0, 0.05, 0.10, 0.15, 0.25, 0.35, 0.5, 0.75, 1.0]
     - name: noise
       spec: discrete
-      values: ["MaskGaussianNoise1", "MaskGaussianNoise2", "MaskGaussianNoise5",
-               "MaskGaussianNoise10", "MaskGaussianNoise20"]
+      values: ["MaskGaussianNoisePatch1", "MaskGaussianNoisePatch2", "MaskGaussianNoisePatch5",
+               "MaskGaussianNoisePatch10", "MaskGaussianNoisePatch20"]
 

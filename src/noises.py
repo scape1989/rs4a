@@ -292,7 +292,7 @@ class MaskGaussianNoise(Noise):
         k is reciprocal of fraction of pixels retained (default 1/10)
         """
         super().__init__(sigma, device, dim, k)
-        self.n_pixels_retained = dim // k
+        self.n_pixels_retained = int((dim / 3) // k)
         #self.lambd = (k * (sigma ** 2 - (1 - 1 / k) * 0.06329)) ** 0.5
         self.lambd = sigma
         self.norm_dist = Normal(loc=torch.tensor(0., device=device),
@@ -302,12 +302,49 @@ class MaskGaussianNoise(Noise):
         x_copy = x.reshape(-1, self.dim)
         batch_size = x_copy.shape[0]
         noise = self.norm_dist.sample(x_copy.shape) + x_copy
-        perm = torch.stack([torch.randperm(self.dim) for _ in range(batch_size)])
-        idxs = perm[:, :self.dim - self.n_pixels_retained]
-        rng = torch.arange(batch_size)
+        perm = torch.stack([torch.randperm(self.dim // 3) for _ in range(batch_size)])
+        idxs = perm[:, :int((self.dim // 3) - self.n_pixels_retained)]
         for batch_no in range(batch_size):
             #noise[batch_no, idxs[batch_no]] = 0.4734
-            noise[batch_no, idxs[batch_no]] = -1
+#            noise[batch_no, idxs[batch_no]] = 0.4734
+#            noise[batch_no, idxs[batch_no] + 1024] = 0.4734
+#            noise[batch_no, idxs[batch_no] + 2048] = 0.4734
+#            noise[batch_no, idxs[batch_no]] = np.nan
+#            noise[batch_no, idxs[batch_no] + 1024] = np.nan
+#            noise[batch_no, idxs[batch_no] + 2048] = np.nan
+            noise[batch_no, idxs[batch_no]] = 0
+            noise[batch_no, idxs[batch_no] + 1024] = 0
+            noise[batch_no, idxs[batch_no] + 2048] = 0
+        return noise.reshape(x.shape)
+
+    def certify(self, prob_lower_bound):
+        return self.lambd * Normal(0, 1).icdf(prob_lower_bound) / (self.n_pixels_retained * 3)** 0.5
+
+
+class MaskGaussianNoisePatch(Noise):
+
+    def __init__(self, sigma, device, dim, p, k=2):
+        """
+        k is reciprocal of fraction of pixels retained (default 1/10)
+        """
+        super().__init__(sigma, device, dim, k)
+        self.patch_width = int((dim / 3 / k) ** 0.5)
+        self.n_pixels_retained = self.patch_width ** 2 * 3
+        self.lambd = sigma
+        self.norm_dist = Normal(loc=torch.tensor(0., device=device),
+                                scale=torch.tensor(self.lambd, device=device))
+
+    def sample(self, x):
+        x_copy = x.reshape(-1, 3, 32, 32)
+        batch_size = x_copy.shape[0]
+        noise = self.norm_dist.sample(x_copy.shape) + x_copy
+        top_left_x = torch.randint(int((self.dim / 3)** 0.5) - self.patch_width + 1, (batch_size,))
+        top_left_y = torch.randint(int((self.dim / 3)** 0.5) - self.patch_width + 1, (batch_size,))
+        for batch_no in range(batch_size):
+            noise[batch_no, :, :top_left_x[batch_no], :] = np.nan
+            noise[batch_no, :, :, :top_left_y[batch_no]] = np.nan
+            noise[batch_no, :, top_left_x[batch_no] + self.patch_width:, :] = np.nan
+            noise[batch_no, :, :, top_left_y[batch_no] + self.patch_width:] = np.nan
         return noise.reshape(x.shape)
 
     def certify(self, prob_lower_bound):

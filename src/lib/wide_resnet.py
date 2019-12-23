@@ -62,7 +62,7 @@ class WideResNet(nn.Module):
         assert ((depth - 4) % 6 == 0)
         n = (depth - 4) // 6
         block = BasicBlock
-        self.conv1 = nn.Conv2d(3, nChannels[0], kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(6, nChannels[0], kernel_size=3, stride=1, padding=1, bias=False)
         self.block1 = NetworkBlock(n, nChannels[0], nChannels[1], 1, drop_rate)
         self.block2 = NetworkBlock(n, nChannels[1], nChannels[2], 2, drop_rate)
         self.block3 = NetworkBlock(n, nChannels[2], nChannels[3], 2, drop_rate)
