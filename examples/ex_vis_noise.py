@@ -29,9 +29,10 @@ if __name__ == "__main__":
     x, y = dataset[args.idx]
     x = x.unsqueeze(0)
 
-    noise = MaskGaussianNoisePatch(sigma=0.0, device="cpu", dim=3*32*32, p=2, k=2)
+    noise = MaskGaussianNoise(sigma=3.0, device="cpu", dim=3*32*32, p=2, k=2)
     sample = noise.sample(x).clamp(0, 1)
     plt.imshow(sample[0].numpy().transpose((1,2,0)))
+    plt.show()
     breakpoint()
 
     for i in range(args.n_samples):

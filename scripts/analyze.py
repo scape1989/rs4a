@@ -37,12 +37,12 @@ if __name__ == "__main__":
             results[k] = np.load(f"{save_path}/{k}.npy")
 
         top_1_preds_smooth = np.argmax(results["preds_smooth"], axis=1)
+        top_1_acc_pred = (top_1_preds_smooth == results["labels"]).mean()
 
         for eps in eps_range:
 
             top_1_acc_cert = ((results["radius_smooth"] >= eps) & \
                               (top_1_preds_smooth == results["labels"])).mean()
-            top_1_acc_pred = (top_1_preds_smooth == results["labels"]).mean()
             df["experiment_name"].append(experiment_name)
             df["sigma"].append(experiment_args.sigma)
             df["noise"].append(experiment_args.noise)
@@ -95,8 +95,7 @@ if __name__ == "__main__":
 
     # plot top certified accuracy per epsilon, per type of noise
     grouped = df >> mask(X.noise != "Clean") \
-                 >> group_by(X.eps, X.noise) \
-                 >> mutate(eps = X.eps * 255) \
+                 >> group_by(X.eps, X.noise) \ #                 >> mutate(eps = X.eps * 255) \
                  >> arrange(X.top_1_acc_cert, ascending=False) \
                  >> summarize(top_1_acc_cert=first(X.top_1_acc_cert),
                               noise=first(X.noise))

@@ -14,11 +14,11 @@ from matplotlib import pyplot as plt
 if __name__ == "__main__":
 
     argparser = ArgumentParser()
-    argparser.add_argument("--dataset", default="cifar", type=str)
     argparser.add_argument("--dir", default="./ckpts", type=str)
     args = argparser.parse_args()
 
-    experiment_names = list(filter(lambda x: x.startswith(args.dataset), os.listdir(args.dir)))
+    dataset = args.dir.split("_")[0]
+    experiment_names = list(filter(lambda x: x.startswith(dataset), os.listdir(args.dir)))
 
     sns.set_style("white")
     sns.set_palette("husl")
@@ -37,14 +37,16 @@ if __name__ == "__main__":
        # preds = results["preds_smooth"][np.arange(len(results["preds_smooth"])),
        #                                 results["labels"].astype(int)]
         axis = np.linspace(0, 1, 500)
-        kde = sp.stats.gaussian_kde(results["prob_lower_bound"])(axis)
-
-        losses_df >>= bind_rows(pd.DataFrame({
-            "experiment_name": experiment_name,
-            "noise": experiment_args.noise,
-            "sigma": experiment_args.sigma,
-            "kde": kde,
-            "axis": axis}))
+        try:
+            kde = sp.stats.gaussian_kde(results["prob_lower_bound"])(axis)
+            losses_df >>= bind_rows(pd.DataFrame({
+                "experiment_name": experiment_name,
+                "noise": experiment_args.noise,
+                "sigma": experiment_args.sigma,
+                "kde": kde,
+                "axis": axis}))
+        except:
+            pass
 
     # show training curves
     losses_df >>= mask((X.sigma >= 0.15) & (X.sigma <= 1.25))
