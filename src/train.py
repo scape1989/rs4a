@@ -63,7 +63,7 @@ if __name__ == "__main__":
     k = get_trailing_number(args.noise)
     if k:
         noise = eval(args.noise[:-len(str(k))])(sigma=args.sigma, device=args.device, p=args.p,
-                                                  dim=get_dim(args.dataset), k=k)
+                                                dim=get_dim(args.dataset), k=k)
     else:
         noise = eval(args.noise)(sigma=args.sigma, device=args.device, p=args.p,
                                  dim=get_dim(args.dataset))
@@ -81,9 +81,9 @@ if __name__ == "__main__":
             elif not args.direct:
 #                x = x + noise.sample(x.shape) # for non-masked noise
                 x = noise.sample(x)
-                x = torch.cat((x, 1 - x), dim=1) # for 6 channels
-                x[torch.isnan(x)] = 0
-                x[torch.isnan(x)] = 0
+#                x = torch.cat((x, 1 - x), dim=1) # for 6 channels
+#                x[torch.isnan(x)] = 0
+#                x[torch.isnan(x)] = 0
                 # random rotation matrix
 #                W, _ = sp.linalg.qr(np.random.randn(784, 784))
 #                delta = noise.sample(x.shape)
@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
             optimizer.zero_grad()
             if args.direct:
-                loss = -direct_train_log_lik(model, x, y, noise, sample_size=32).mean()
+                loss = -direct_train_log_lik(model, x, y, noise, sample_size=16).mean()
             else:
                 loss = model.loss(x, y).mean()
             loss.backward()

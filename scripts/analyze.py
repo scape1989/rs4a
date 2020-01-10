@@ -8,6 +8,7 @@ from argparse import ArgumentParser
 from collections import defaultdict
 from dfply import *
 from matplotlib import pyplot as plt
+from src.utils import get_trailing_number
 
 
 if __name__ == "__main__":
@@ -39,11 +40,14 @@ if __name__ == "__main__":
         top_1_preds_smooth = np.argmax(results["preds_smooth"], axis=1)
         top_1_acc_pred = (top_1_preds_smooth == results["labels"]).mean()
 
+#        k = get_trailing_number(experiment_args.noise)
+
         for eps in eps_range:
 
             top_1_acc_cert = ((results["radius_smooth"] >= eps) & \
                               (top_1_preds_smooth == results["labels"])).mean()
             df["experiment_name"].append(experiment_name)
+#            df["sigma"].append(experiment_args.sigma / (3 * 32 * 32 / k) ** 0.5)
             df["sigma"].append(experiment_args.sigma)
             df["noise"].append(experiment_args.noise)
             df["eps"].append(eps)
@@ -95,13 +99,14 @@ if __name__ == "__main__":
 
     # plot top certified accuracy per epsilon, per type of noise
     grouped = df >> mask(X.noise != "Clean") \
-                 >> group_by(X.eps, X.noise) \ #                 >> mutate(eps = X.eps * 255) \
+                 >> group_by(X.eps, X.noise) \
                  >> arrange(X.top_1_acc_cert, ascending=False) \
                  >> summarize(top_1_acc_cert=first(X.top_1_acc_cert),
                               noise=first(X.noise))
 
     sns.lineplot(x="eps", y="top_1_acc_cert", data=grouped, hue="noise", style="noise")
     plt.title(args.dir)
+    plt.xlabel("prob_lower_bound")
     plt.tight_layout()
     plt.show()
 

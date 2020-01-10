@@ -1,5 +1,6 @@
 import torch
 from torchvision import datasets, transforms
+from src.lib.zipdata import ZipData
 
 
 def get_dim(name):
@@ -15,11 +16,11 @@ def get_dim(name):
         return 28 * 28
 
 def get_num_labels(name):
-    return 10
+    return 1000 if name == "imagenet" else 10
 
 def get_normalization_shape(name):
     if name == "cifar":
-        return (6, 1, 1)
+        return (3, 1, 1)
     if name == "imagenet":
         return (3, 1, 1)
     if name == "svhn":
@@ -31,7 +32,7 @@ def get_normalization_shape(name):
 
 def get_normalization_stats(name):
     if name == "cifar":
-        return {"mu": [0.4914, 0.4822, 0.4465, 1-0.4914, 1-0.4822, 1-0.4465], "sigma": [0.2023, 0.1994, 0.2010, 0.2023, 0.1994, 0.2010]}
+        return {"mu": [0.4914, 0.4822, 0.4465], "sigma": [0.2023, 0.1994, 0.2010]}
     if name == "imagenet":
         return {"mu": [0.485, 0.456, 0.406], "sigma": [0.229, 0.224, 0.225]}
     if name == "svhn":
@@ -53,16 +54,30 @@ def get_dataset(name, split):
                                 transform=transforms.ToTensor())
 
     if name == "imagenet" and split == "train":
-        return datasets.ImageNet("./data/imagenet", train=True, download=True,
-                                 transform=transforms.Compose([transforms.RandomResizedCrop(224),
-                                                               transforms.RandomHorizontalFlip(),
-                                                               transforms.ToTensor()]))
-    if name == "imagenet" and split == "test":
-        return datasets.ImageNet("./data/imagenet", train=False, download=True,
-                                 transform=transforms.Compose([transforms.Resize(256),
-                                                               transforms.CenterCrop(224),
-                                                               transforms.ToTensor()]))
+        return ZipData("/hdfs/public/imagenet/2012/train.zip",
+					   "/hdfs/public/imagenet/2012/train_map.txt",
+                       transforms.Compose([transforms.RandomResizedCrop(224),
+                                           transforms.RandomHorizontalFlip(),
+                                           transforms.ToTensor()]))
 
+    if name == "imagenet" and split == "test":
+        return ZipData("/hdfs/public/imagenet/2012/val.zip",
+					   "/hdfs/public/imagenet/2012/val_map.txt",
+                       transforms.Compose([transforms.Resize(256),
+                                           transforms.CenterCrop(224),
+                                           transforms.ToTensor()]))
+#
+#    if name == "imagenet" and split == "train":
+#        return datasets.ImageNet("./data/imagenet", train=True, download=True,
+#                                 transform=transforms.Compose([transforms.RandomResizedCrop(224),
+#                                                               transforms.RandomHorizontalFlip(),
+#                                                               transforms.ToTensor()]))
+#    if name == "imagenet" and split == "test":
+#        return datasets.ImageNet("./data/imagenet", train=False, download=True,
+#                                 transform=transforms.Compose([transforms.Resize(256),
+#                                                               transforms.CenterCrop(224),
+#                                                               transforms.ToTensor()]))
+#
     if name == "mnist":
         return datasets.MNIST("./data/mnist", train=(split == "train"), download=True,
                               transform=transforms.ToTensor())

@@ -21,7 +21,7 @@ if __name__ == "__main__":
     #noises = ["ExpInfNoise", "UniformNoise"]
     #noises = ["GaussianNoise", "PTailNoise8", "PTailNoise100", "PTailNoise2"]
     #noises = ["Exp1Noise1", "Exp1Noise10"]#, "Exp1Noise20"]
-    noises = ["Exp2PolyNoise1", "PTailNoise2"]
+    noises = ["GaussianNoise", "PTailNoise8", "PTailNoise2", "PTailNoise4"]
 
     sns.set_style("whitegrid")
     sns.set_palette("husl")
@@ -38,7 +38,7 @@ if __name__ == "__main__":
         else:
             noise = eval(noise_str)(sigma=args.sigma, device="cpu", p=2, dim=args.dim)
 
-        rvs = noise.sample((args.batch_size, 2, args.dim))
+        rvs = noise.sample(torch.zeros(args.batch_size, args.dim))
         rvs = rvs.reshape((args.batch_size, -1))
 
         l2_norms = rvs.norm(p=2, dim=1).pow(2) / args.dim / 2

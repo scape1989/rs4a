@@ -22,6 +22,7 @@ if __name__ == "__main__":
     argparser.add_argument("--num-workers", default=os.cpu_count(), type=int)
     argparser.add_argument("--sample-size-pred", default=64, type=int)
     argparser.add_argument("--sample-size-cert", default=1024, type=int)
+    argparser.add_argument("--noise-batch-size", default=512, type=int)
     argparser.add_argument("--sigma", default=0.0, type=float)
     argparser.add_argument("--noise", default="Clean", type=str)
     argparser.add_argument("--p", default=2, type=int)
@@ -59,9 +60,11 @@ if __name__ == "__main__":
     for i, (x, y) in tqdm(enumerate(test_loader), total=len(test_loader)):
 
         x, y = x.to(args.device), y.to(args.device)
-        preds_smooth = smooth_predict_hard(model, x, noise, args.sample_size_pred)
+        preds_smooth = smooth_predict_hard(model, x, noise, args.sample_size_pred,
+                                           args.noise_batch_size)
         top_cats = preds_smooth.probs.argmax(dim=1)
-        p_a, radii = certify_smoothed(model, x, top_cats, 0.001, noise, args.sample_size_cert)
+        p_a, radii = certify_smoothed(model, x, top_cats, 0.001, noise, args.sample_size_cert,
+                                      args.noise_batch_size)
 
         lower, upper = i * args.batch_size, (i + 1) * args.batch_size
         results["preds_smooth"][lower:upper, :] = preds_smooth.probs.data.cpu().numpy()

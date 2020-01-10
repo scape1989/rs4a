@@ -19,7 +19,6 @@ if __name__ == "__main__":
     argparser.add_argument("--sample-size-pred", default=64, type=int)
     argparser.add_argument("--sigma", default=0.0, type=float)
     argparser.add_argument("--noise", default="Clean", type=str)
-    argparser.add_argument("--k", default=1, type=int)
     argparser.add_argument("--p", default=2, type=int)
     argparser.add_argument("--experiment-name", default="cifar", type=str)
     argparser.add_argument("--dataset", default="cifar", type=str)
@@ -28,7 +27,7 @@ if __name__ == "__main__":
     args = argparser.parse_args()
 
     test_dataset = get_dataset(args.dataset, "test")
-    test_loader = DataLoader(test_dataset, shuffle=True, batch_size=args.batch_size, # todo: fix
+    test_loader = DataLoader(test_dataset, shuffle=False, batch_size=args.batch_size, # todo: fix
                              num_workers=args.num_workers)
 
     save_path = f"{args.output_dir}/{args.experiment_name}/model_ckpt.torch"
@@ -44,8 +43,8 @@ if __name__ == "__main__":
         noise = eval(args.noise)(sigma=args.sigma, device=args.device, p=args.p,
                                  dim=get_dim(args.dataset))
 
-    eps_range = (32.0, 16.0, 8.0, 1.25, 1.0, 0.5)
-    #eps_range = (8.0,)
+    #eps_range = (32.0, 16.0, 8.0, 1.25, 1.0, 0.5)
+    eps_range = (3.0, 2.0, 1.0, 0.5, 0.25)
 
     results = {f"preds_adv_{eps}": np.zeros((len(test_dataset), 10)) for eps in eps_range}
 
@@ -56,7 +55,7 @@ if __name__ == "__main__":
 
         for eps in eps_range:
             x_adv = pgd_attack_smooth(model, x, y, eps=eps, noise=noise, sample_size=128,
-                                      steps=4, p=1, clamp=(0, 1))
+                                      steps=20, p=1, clamp=(0, 1))
             preds_adv = smooth_predict_hard(model, x_adv, noise, args.sample_size_pred)
             results[f"preds_adv_{eps}"][lower:upper, :] = preds_adv.probs.data.cpu().numpy()
             assert ((x - x_adv).reshape(x.shape[0], -1).norm(dim=1, p=1) <= eps + 1e-2).all()

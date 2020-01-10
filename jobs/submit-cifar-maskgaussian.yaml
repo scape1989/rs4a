@@ -29,6 +29,7 @@ search:
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
       --p=2
+      --direct
     - python3 -m src.test
       --noise={noise}
       --sigma={sigma}

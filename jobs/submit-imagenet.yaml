@@ -1,7 +1,7 @@
 description: Training ImageNet Robustness [L2 matched]
 
 target:
-  vc: msrlabs
+  vc: msrlabspvc9
   cluster: eu1
 
 environment:
@@ -22,7 +22,7 @@ data:
 search:
   job_template:
     name: imagenet
-    sku: G1
+    sku: G2
     command:
     - python3 -m src.train
       --noise={noise}
@@ -30,6 +30,16 @@ search:
       --experiment-name=imagenet_{noise}_{sigma}
       --dataset=imagenet
       --p=2
+      --batch-size=64
+      --num-epochs=30
+    - python3 -m src.test
+      --noise={noise}
+      --sigma={sigma}
+      --experiment-name=imagenet_{noise}_{sigma}
+      --dataset=imagenet
+      --p=2
+      --batch-size=2
+      --noise-batch-size=64
   type: grid
   max_trials: 20
   params:
@@ -39,3 +49,4 @@ search:
     - name: sigma
       spec: discrete
       values: [0.25, 0.5, 0.75, 1.0, 1.25]
+
