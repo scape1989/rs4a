@@ -26,7 +26,7 @@ if __name__ == "__main__":
     sns.set_palette("husl")
 
     df = defaultdict(list)
-    eps_range = np.linspace(0, args.eps_max, 50)
+    eps_range = np.linspace(0, args.eps_max, 81)
 
     for experiment_name in experiment_names:
 
@@ -62,6 +62,14 @@ if __name__ == "__main__":
     if args.debug:
         breakpoint()
 
+    # plot clean training accuracy against certified accuracy at eps
+    tmp = df >> mask(X.eps.isin((0.25, 0.5, 0.75, 1.0)))
+
+    fig = sns.relplot(data=tmp, kind="scatter", x="top_1_acc_train", y="top_1_acc_cert", hue="noise",
+                col="eps", col_wrap=2, aspect=1, height=2, size="sigma")
+    fig.map_dataframe(plt.plot, (plt.xlim()[0], plt.xlim()[1]), (plt.xlim()[0], plt.xlim()[1]), 'k--').set_axis_labels("top_1_acc_train", "top_1_acc_cert").add_legend()
+    plt.show()
+
     # plot clean training and testing accuracy
     grouped = df >> mask(X.noise != "Clean") \
                  >> group_by(X.experiment_name) \
@@ -70,6 +78,11 @@ if __name__ == "__main__":
                               sigma=first(X.sigma),
                               top_1_acc_train=first(X.top_1_acc_train),
                               top_1_acc_pred=first(X.top_1_acc_pred))
+
+    fig = sns.relplot(x="top_1_acc_train", y="top_1_acc_pred", hue="noise", col="sigma", style="noise",
+                col_wrap=2, height=2, aspect=1, data=grouped)
+    fig.map_dataframe(plt.plot, (plt.xlim()[0], 1), (plt.xlim()[0],1), 'k--').set_axis_labels("top_1_acc_train", "top_1_acc_val").add_legend()
+    plt.show()
 
     plt.figure(figsize=(8, 6))
     plt.subplot(2, 1, 1)

@@ -38,6 +38,22 @@ class Clean(Noise):
         return torch.zeros_like(prob_lower_bound)
 
 
+class RotationNoise(Noise):
+
+    def __init__(self, sigma, device, dim, p):
+        super().__init__(sigma, device, None)
+        try:
+            W = np.load("./src/lib/W.npy")
+        except FileNotFoundError:
+            W, _ = sp.linalg.qr(np.random.randn(dim, dim))
+            np.save("./src/lib/W.npy", W)
+        self.W = torch.tensor(W, device=device, dtype=torch.float)
+
+    def sample(self, x):
+        x_copy = x.view(x.shape[0], -1)
+        return (x_copy @ self.W).view(x.shape)
+
+
 class UniformNoise(Noise):
 
     def __init__(self, sigma, device, dim, p):

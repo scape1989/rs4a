@@ -29,6 +29,7 @@ if __name__ == "__main__":
     argparser.add_argument("--experiment-name", default="cifar", type=str)
     argparser.add_argument("--dataset", default="cifar", type=str)
     argparser.add_argument("--model", default="ResNet", type=str)
+    argparser.add_argument("--rotate", action="store_true")
     argparser.add_argument('--output-dir', type=str, default=os.getenv("PT_OUTPUT_DIR"))
     args = argparser.parse_args()
 
@@ -57,9 +58,16 @@ if __name__ == "__main__":
         "preds_nll": np.zeros(len(test_dataset))
     }
 
+    if args.rotate:
+        rotate_noise = RotationNoise(0.0, args.device, dim=get_dim(args.dataset), p=None)
+
     for i, (x, y) in tqdm(enumerate(test_loader), total=len(test_loader)):
 
         x, y = x.to(args.device), y.to(args.device)
+
+        if args.rotate:
+            x = rotate_noise.sample(x)
+
         preds_smooth = smooth_predict_hard(model, x, noise, args.sample_size_pred,
                                            args.noise_batch_size)
         top_cats = preds_smooth.probs.argmax(dim=1)

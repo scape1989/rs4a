@@ -37,6 +37,7 @@ if __name__ == "__main__":
     argparser.add_argument("--dataset", default="cifar", type=str)
     argparser.add_argument("--adversarial", action="store_true")
     argparser.add_argument("--direct", action="store_true")
+    argparser.add_argument("--rotate", action="store_true")
     argparser.add_argument('--output-dir', type=str, default=os.getenv("PT_OUTPUT_DIR"))
     args = argparser.parse_args()
 
@@ -68,13 +69,22 @@ if __name__ == "__main__":
         noise = eval(args.noise)(sigma=args.sigma, device=args.device, p=args.p,
                                  dim=get_dim(args.dataset))
 
+    if args.rotate:
+        rotate_noise = RotationNoise(0.0, args.device, dim=get_dim(args.dataset), p=None)
+
     train_losses = []
 
     for epoch in range(args.num_epochs):
 
         for i, (x, y) in enumerate(train_loader):
 
+            if i > 4:
+                break
+
             x, y = x.to(args.device), y.to(args.device)
+
+            if args.rotate:
+                x = rotate_noise.sample(x)
 
             if args.adversarial and epoch > args.num_epochs // 2:
                 x = pgd_attack_smooth(model, x, y, args.eps, noise, sample_size=2, p=args.p)
@@ -126,10 +136,11 @@ if __name__ == "__main__":
 
     for x, y in tqdm(train_loader):
 
-         x, y = x.to(args.device), y.to(args.device)
-         preds_smooth = smooth_predict_hard(model, x, noise, sample_size=16)
-         top_cats = preds_smooth.probs.argmax(dim=1)
-         acc_meter.add(torch.sum(top_cats == y).cpu().data.numpy(), n=len(x))
+        x, y = x.to(args.device), y.to(args.device)
+        x = rotate_noise.sample(x) if args.rotate else x
+        preds_smooth = smooth_predict_hard(model, x, noise, sample_size=16)
+        top_cats = preds_smooth.probs.argmax(dim=1)
+        acc_meter.add(torch.sum(top_cats == y).cpu().data.numpy(), n=len(x))
 
     print("Training accuracy: ", acc_meter.value())
     save_path = f"{args.output_dir}/{args.experiment_name}/acc_train.npy"

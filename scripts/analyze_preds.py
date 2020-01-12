@@ -37,21 +37,17 @@ if __name__ == "__main__":
        # preds = results["preds_smooth"][np.arange(len(results["preds_smooth"])),
        #                                 results["labels"].astype(int)]
         axis = np.linspace(0, 1, 500)
-        try:
-            kde = sp.stats.gaussian_kde(results["prob_lower_bound"])(axis)
-            losses_df >>= bind_rows(pd.DataFrame({
-                "experiment_name": experiment_name,
-                "noise": experiment_args.noise,
-                "sigma": experiment_args.sigma,
-                "kde": kde,
-                "axis": axis}))
-        except:
-            pass
+        cdf = (results["prob_lower_bound"] < axis[:, np.newaxis]).mean(axis=1)
+        losses_df >>= bind_rows(pd.DataFrame({
+            "experiment_name": experiment_name,
+            "noise": experiment_args.noise,
+            "sigma": experiment_args.sigma,
+            "cdf": cdf,
+            "axis": axis}))
 
     # show training curves
     losses_df >>= mask((X.sigma >= 0.15) & (X.sigma <= 1.25))
-    sns.relplot(x="axis", y="kde", hue="noise", data=losses_df, col="sigma",
-                col_wrap=2, kind="line", height=1.5, aspect=3.5, alpha=0.5)
-    plt.tight_layout()
+    sns.relplot(x="axis", y="cdf", hue="noise", data=losses_df, col="sigma",
+                col_wrap=2, kind="line", height=1.5, aspect=2.5, alpha=0.5)
     plt.show()
 
