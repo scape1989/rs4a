@@ -21,7 +21,8 @@ if __name__ == "__main__":
     #noises = ["ExpInfNoise", "UniformNoise"]
     #noises = ["GaussianNoise", "PTailNoise8", "PTailNoise100", "PTailNoise2"]
     #noises = ["Exp1Noise1", "Exp1Noise10"]#, "Exp1Noise20"]
-    noises = ["GaussianNoise", "PTailNoise8", "PTailNoise2", "PTailNoise4"]
+    #noises = ["GaussianNoise", "PTailNoise8", "PTailNoise2", "PTailNoise4"]
+    noises = ["UniformNoise", "PowerLawNoise10", "PowerLawNoise5", "PowerLawNoise100"]
 
     sns.set_style("whitegrid")
     sns.set_palette("husl")

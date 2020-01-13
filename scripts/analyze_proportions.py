@@ -49,10 +49,10 @@ if __name__ == "__main__":
     if args.debug:
         breakpoint()
 
-    plt.figure(figsize=(8, 6))
     sns.relplot(x="eps", y="proportion_over", hue="noise", kind="line", col="sigma",
                 col_wrap=2, data=df, height=2, aspect=1.5)
     plt.suptitle(args.dir)
     plt.tight_layout()
+    plt.xlabel("p_A")
     plt.show()
 

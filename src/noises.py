@@ -169,11 +169,11 @@ class ExpInfNoise(Noise):
 
     def sample(self, x):
         radius = (self.gamma_dist.sample((len(x), 1))) ** (1 / self.k)
-        noise = (2 * torch.rand(shape, device=self.device) - 1).reshape((len(x), -1))
+        noise = (2 * torch.rand(x.shape, device=self.device) - 1).reshape((len(x), -1))
         sel_dims = torch.randint(noise.shape[1], size=(noise.shape[0],))
         idxs = torch.arange(0, noise.shape[0], dtype=torch.long)
         noise[idxs, sel_dims] = torch.sign(torch.rand(len(x), device=self.device) - 0.5)
-        return noise * radius + x
+        return (noise * radius).view(x.shape) + x
 
     def certify(self, prob_lower_bound):
         return 2 * self.lambd * self.gamma_factor * (prob_lower_bound - 0.5)
@@ -227,18 +227,36 @@ class Exp2Noise(Noise):
                  atanh(1 - 2 * self.beta_dist.ppf(1 - prob_lower_bound.numpy()))
         return torch.tensor(radius, dtype=torch.float)
 
+
+class PowerLawNoise(Noise):
+
+    def __init__(self, sigma, device, dim, p, k=2):
+        super().__init__(sigma, device, dim, k)
+        self.beta_dist = sp.stats.betaprime(dim, k)
+        self.lambd = 3 ** 0.5 * (k - 1) * sigma / dim
+
+    def sample(self, x):
+        radius = torch.tensor(self.beta_dist.rvs((len(x), 1)), dtype=torch.float, device=self.device)
+        noise = (2 * torch.rand(x.shape, device=self.device) - 1).reshape((len(x), -1))
+        sel_dims = torch.randint(noise.shape[1], size=(len(x),))
+        idxs = torch.arange(0, len(x), dtype=torch.long)
+        noise[idxs, sel_dims] = torch.sign(torch.rand(len(x), device=self.device) - 0.5)
+        return (noise * radius * self.lambd).view(x.shape) + x
+
+    def certify(self, prob_lower_bound):
+        return self.lambd * 2 * self.dim / self.k * (prob_lower_bound - 0.5)
+
+
 class PTailNoise(Noise):
 
     def __init__(self, sigma, device, dim, p, k=2):
         super().__init__(sigma, device, dim, k)
-        self.beta_dist = Beta(torch.tensor(dim / 2, dtype=torch.float, device=device),
-                              torch.tensor(k, dtype=torch.float, device=device))
+        self.beta_dist = sp.stats.betaprime(0.5 * dim, k)
         self.lambd = (2 * (k - 1)) ** 0.5 * sigma if p == 2 else 0 / 0
         self.prob_lower_bounds, self.radii = np.load("./src/lib/radii_ptail.npy", allow_pickle=True)
 
     def sample(self, x):
-        beta_samples = self.beta_dist.sample((len(x), 1))
-        radius = (beta_samples / (1 - beta_samples)) ** 0.5
+        radius = torch.tensor(self.beta_dist.rvs((len(x), 1)), dtype=torch.float, device=self.device) ** 0.5
         noise = torch.randn_like(x)
         noise = noise / torch.norm(noise, dim=1, p=2).unsqueeze(1)
         return noise * radius * self.lambd + x

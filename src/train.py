@@ -78,20 +78,27 @@ if __name__ == "__main__":
 
         for i, (x, y) in enumerate(train_loader):
 
-            if i > 4:
-                break
-
             x, y = x.to(args.device), y.to(args.device)
 
-            if args.rotate:
-                x = rotate_noise.sample(x)
+#            if args.rotate:
+#                x = rotate_noise.sample(x)
 
             if args.adversarial and epoch > args.num_epochs // 2:
                 x = pgd_attack_smooth(model, x, y, args.eps, noise, sample_size=2, p=args.p)
             elif not args.direct:
 #                x = x + noise.sample(x.shape) # for non-masked noise
-                x = noise.sample(x)
-#                x = torch.cat((x, 1 - x), dim=1) # for 6 channels
+
+                # new code block below
+                orig_shape = x.shape
+                x = x.view(len(x), -1)
+                noisy_x = noise.sample(x)
+                noisy_x = rotate_noise.sample(noisy_x - x) + x
+                x = noisy_x.reshape(orig_shape)
+
+#                x = noise.sample(x.view(len(x), -1)).reshape(x.shape) restore this
+
+                # for 6 channels
+#                x = torch.cat((x, 1 - x), dim=1)
 #                x[torch.isnan(x)] = 0
 #                x[torch.isnan(x)] = 0
                 # random rotation matrix
@@ -137,7 +144,7 @@ if __name__ == "__main__":
     for x, y in tqdm(train_loader):
 
         x, y = x.to(args.device), y.to(args.device)
-        x = rotate_noise.sample(x) if args.rotate else x
+#        x = rotate_noise.sample(x) if args.rotate else x
         preds_smooth = smooth_predict_hard(model, x, noise, sample_size=16)
         top_cats = preds_smooth.probs.argmax(dim=1)
         acc_meter.add(torch.sum(top_cats == y).cpu().data.numpy(), n=len(x))

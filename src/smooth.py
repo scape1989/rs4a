@@ -41,15 +41,23 @@ def smooth_predict_hard(model, x, noise, sample_size=64, noise_batch_size=512, n
     counts = torch.zeros(x.shape[0], num_cats, dtype=torch.float, device=x.device)
     num_samples_left = sample_size
 
+    # delete this
+    rotate_noise = RotationNoise(0.0, "gpu", dim=3072, p=None)
+
     while num_samples_left > 0:
 
         shape = torch.Size([x.shape[0], min(num_samples_left, noise_batch_size)]) + x.shape[1:]
         samples = x.unsqueeze(1).expand(shape)
         samples = samples.reshape(torch.Size([-1]) + samples.shape[2:])
-        samples = noise.sample(samples)
+#        samples = noise.sample(samples) restore this
+
+        diff = noise.sample(samples) - samples
+        samples = samples + rotate_noise.sample(diff)
+
 #        samples = torch.cat((samples, 1 - samples), dim=2) # for 2 channels
 #        samples[torch.isnan(samples)] = 0
 #        samples[torch.isnan(samples)] = 0
+
         logits = model.forward(samples).view(shape[:2] + torch.Size([-1]))
         top_cats = torch.argmax(logits, dim=2)
         counts += F.one_hot(top_cats, num_cats).float().sum(dim=1)

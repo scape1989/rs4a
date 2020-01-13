@@ -26,10 +26,10 @@ if __name__ == "__main__":
     else:
         noise = eval(args.noise)(sigma=args.sigma, device="cpu", p=2, dim=args.dim)
 
-    rvs = noise.sample((args.batch_size, 2, args.dim))
-    rvs = rvs.reshape((args.batch_size, -1))
+    x = torch.zeros((args.batch_size, args.dim))
+    rvs = noise.sample(x)
     print("== L2 Match")
-    print((rvs.norm(p=2, dim=1).pow(2) / args.dim / 2).mean() ** 0.5)
+    print((rvs.norm(p=2, dim=1).pow(2) / args.dim).mean() ** 0.5)
     print(noise.certify(lower_bounds))
 #
 #    if args.noise[-1].isdigit():

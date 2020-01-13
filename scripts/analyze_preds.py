@@ -15,6 +15,8 @@ if __name__ == "__main__":
 
     argparser = ArgumentParser()
     argparser.add_argument("--dir", default="./ckpts", type=str)
+    argparser.add_argument("--target", default="prob_corret", type=str)
+    argparser.add_argument("--use-pdf", action="store_true")
     args = argparser.parse_args()
 
     dataset = args.dir.split("_")[0]
@@ -31,13 +33,31 @@ if __name__ == "__main__":
         experiment_args = pickle.load(open(f"{args.dir}/{experiment_name}/args.pkl", "rb"))
         results = {}
 
-        for k in ("prob_lower_bound",):
+        for k in ("prob_lower_bound", "preds_smooth", "labels", "radius_smooth"):
             results[k] = np.load(f"{save_path}/{k}.npy")
 
-       # preds = results["preds_smooth"][np.arange(len(results["preds_smooth"])),
-       #                                 results["labels"].astype(int)]
-        axis = np.linspace(0, 1, 500)
-        cdf = (results["prob_lower_bound"] < axis[:, np.newaxis]).mean(axis=1)
+        p_correct = results["preds_smooth"][np.arange(len(results["preds_smooth"])),
+                                            results["labels"].astype(int)]
+        p_top = results["prob_lower_bound"]
+
+        if args.target == "prob_lower_bound":
+            tgt = p_top
+            axis = np.linspace(0, 1, 500)
+        elif args.target == "prob_correct":
+            tgt = p_correct
+            axis = np.linspace(0, 1, 500)
+        elif args.target == "radius_smooth":
+            tgt = results["radius_smooth"]
+            tgt = tgt[~np.isnan(tgt)]
+            axis = np.linspace(0, 4.0, 500)
+        else:
+            raise ValueError
+
+        if args.use_pdf:
+            cdf = sp.stats.gaussian_kde(tgt)(axis)
+        else:
+            cdf = (tgt < axis[:, np.newaxis]).mean(axis=1)
+
         losses_df >>= bind_rows(pd.DataFrame({
             "experiment_name": experiment_name,
             "noise": experiment_args.noise,

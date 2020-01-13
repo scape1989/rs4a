@@ -12,11 +12,11 @@ from matplotlib import pyplot as plt
 if __name__ == "__main__":
 
     argparser = ArgumentParser()
-    argparser.add_argument("--dataset", default="cifar", type=str)
     argparser.add_argument("--dir", default="./ckpts", type=str)
     args = argparser.parse_args()
 
-    experiment_names = list(filter(lambda x: x.startswith(args.dataset), os.listdir(args.dir)))
+    dataset = args.dir.split("_")[0]
+    experiment_names = list(filter(lambda x: x.startswith(dataset), os.listdir(args.dir)))
 
     sns.set_style("white")
     sns.set_palette("husl")

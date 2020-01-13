@@ -8,6 +8,7 @@ from argparse import ArgumentParser
 from collections import defaultdict
 from dfply import *
 from matplotlib import pyplot as plt
+from src.models import *
 from src.utils import get_trailing_number
 
 
@@ -118,8 +119,8 @@ if __name__ == "__main__":
                               noise=first(X.noise))
 
     sns.lineplot(x="eps", y="top_1_acc_cert", data=grouped, hue="noise", style="noise")
-    plt.ylim((0, 1))
     plt.title(args.dir)
+    plt.xlabel("prob_lower_bound")
     plt.tight_layout()
     plt.show()
 

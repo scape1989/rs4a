@@ -29,11 +29,11 @@ if __name__ == "__main__":
     x, y = dataset[args.idx]
     x = x.unsqueeze(0)
 
-    noise = RotationNoise(sigma=0.0, device="cpu", dim=3*32*32, p=2)
-    sample = noise.sample(x).clamp(0, 1)
-    plt.imshow(sample[0].numpy().transpose((1,2,0)))
-    plt.show()
-    breakpoint()
+#    noise = RotationNoise(sigma=0.0, device="cpu", dim=3*32*32, p=2)
+#    sample = noise.sample(x).clamp(0, 1)
+#    plt.imshow(sample[0].numpy().transpose((1,2,0)))
+#    plt.show()
+#    breakpoint()
 #
 #    noise = MaskGaussianNoise(sigma=0.0, device="cpu", dim=3*32*32, p=2, k=10)
 #    sample = noise.sample(x).clamp(0, 1)
@@ -43,8 +43,8 @@ if __name__ == "__main__":
 #
     for i in range(args.n_samples):
 
-        noise = LaplaceNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=2)
-        sample = (x + noise.sample(x.shape)).clamp(0, 1)
+        noise = LaplaceNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=2, dim=3 * 32 * 32)
+        sample = (noise.sample(x)).clamp(0, 1)
         plt.subplot(4, args.n_samples, i + 1)
         plot_image(sample, args.dataset)
         plt.axis("off")
@@ -52,8 +52,8 @@ if __name__ == "__main__":
 
     for i in range(args.n_samples):
 
-        noise = GaussianNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=2)
-        sample = (x + noise.sample(x.shape)).clamp(0, 1)
+        noise = GaussianNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=2, dim=3 * 32 * 32)
+        sample = (noise.sample(x)).clamp(0, 1)
         plt.subplot(4, args.n_samples, i + 1 + args.n_samples)
         plot_image(sample, args.dataset)
         plt.axis("off")
@@ -61,17 +61,17 @@ if __name__ == "__main__":
 
     for i in range(args.n_samples):
 
-        noise = ExpInfNoise(sigma=args.sigma + 0.1 * i, device="cpu", k=1, p=2)
-        sample = (x + noise.sample(x.shape)).clamp(0, 1)
+        noise = PowerLawNoise(sigma=args.sigma + 0.1 * i, device="cpu", k=16, p=2, dim=3 * 32 * 32)
+        sample = (noise.sample(x)).clamp(0, 1)
         plt.subplot(4, args.n_samples, i + 1 + args.n_samples * 2)
         plot_image(sample, args.dataset)
         plt.axis("off")
-        plt.title(f"ExpInf {args.sigma + 0.1 * i:.1f}")
+        plt.title(f"PowerLaw {args.sigma + 0.1 * i:.1f}")
 
     for i in range(args.n_samples):
 
-        noise = UniformNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=2)
-        sample = (x + noise.sample(x.shape)).clamp(0, 1)
+        noise = UniformNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=2, dim=3 * 32 * 32)
+        sample = (noise.sample(x)).clamp(0, 1)
         plt.subplot(4, args.n_samples, i + 1 + args.n_samples * 3)
         plot_image(sample, args.dataset)
         plt.axis("off")
