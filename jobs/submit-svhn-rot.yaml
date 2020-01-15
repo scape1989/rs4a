@@ -1,7 +1,7 @@
 description: Training SVHN Robustness [L2 matched, Rotated]
 
 target:
-  vc: msrlabs
+  vc: msrlabspvc9
   cluster: eu1
 
 environment:

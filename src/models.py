@@ -34,10 +34,12 @@ class ResNet(Forecaster):
         super().__init__(dataset, device)
         if dataset == "imagenet":
             self.model = nn.DataParallel(base_models.resnet50())
+            self.norm = nn.DataParallel(self.norm)
         else:
             self.model = WideResNetBase(depth=40, widen_factor=2,
                                         num_classes=get_num_labels(dataset))
-        self.model.to(device)
+        self.norm = self.norm.to(device)
+        self.model = self.model.to(device)
 
     def forward(self, x):
         x = self.norm(x)
@@ -49,7 +51,7 @@ class LinearModel(Forecaster):
     def __init__(self, dataset, device):
         super().__init__(dataset, device)
         self.model = nn.Linear(get_dim(dataset), get_num_labels(dataset))
-        self.model.to(device)
+        self.model = self.model.to(device)
 
     def forward(self, x):
         x = self.norm(x).view(x.shape[0], -1)
@@ -61,7 +63,7 @@ class AlexNet(Forecaster):
     def __init__(self, dataset, device):
         super().__init__(dataset, device)
         self.model = AlexNetBase(get_num_labels(dataset), drop_rate=0.5)
-        self.model.to(device)
+        self.model = self.model.to(device)
 
     def forward(self, x):
         x = self.norm(x)
@@ -73,7 +75,7 @@ class LeNet(Forecaster):
     def __init__(self, dataset, device):
         super().__init__(dataset, device)
         self.model = LeNetBase(get_normalization_shape(dataset)[0], get_num_labels(dataset))
-        self.model.to(device)
+        self.model = self.model.to(device)
 
     def forward(self, x):
         x = self.norm(x)
@@ -90,7 +92,7 @@ class MLP(Forecaster):
             nn.Linear(2048, 512),
             nn.ReLU(),
             nn.Linear(512, get_num_labels(dataset)))
-        self.model.to(device)
+        self.model = self.model.to(device)
 
     def forward(self, x):
         x = self.norm(x).view(x.shape[0], -1)
@@ -109,14 +111,14 @@ class NormalizeLayer(nn.Module):
         super().__init__()
         self.dim = dim
         if mu and sigma:
-            self.mu = torch.tensor(mu, device=device).reshape(dim)
-            self.log_sig = torch.tensor(sigma, device=device)
-            self.log_sig = torch.log(self.log_sig).reshape(dim)
+            self.mu = nn.Parameter(torch.tensor(mu, device=device).reshape(dim), requires_grad=False)
+            self.log_sig = nn.Parameter(torch.log(torch.tensor(sigma, device=device)).reshape(dim), requires_grad=False)
             self.initialized = True
         else:
-            self.mu = nn.Parameter(torch.zeros(dim, device=device))
-            self.log_sig = nn.Parameter(torch.zeros(dim, device=device))
-            self.initialized = False
+            raise ValueError
+#            self.mu = nn.Parameter(torch.zeros(dim, device=device))
+#            self.log_sig = nn.Parameter(torch.zeros(dim, device=device))
+#            self.initialized = False
 
     def forward(self, x):
         if not self.initialized:

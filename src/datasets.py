@@ -54,15 +54,15 @@ def get_dataset(name, split):
                                 transform=transforms.ToTensor())
 
     if name == "imagenet" and split == "train":
-        return ZipData("/hdfs/public/imagenet/2012/train.zip",
-					   "/hdfs/public/imagenet/2012/train_map.txt",
+        return ZipData("/mnt/imagenet/train.zip",
+					   "/mnt/imagenet/train_map.txt",
                        transforms.Compose([transforms.RandomResizedCrop(224),
                                            transforms.RandomHorizontalFlip(),
                                            transforms.ToTensor()]))
 
     if name == "imagenet" and split == "test":
-        return ZipData("/hdfs/public/imagenet/2012/val.zip",
-					   "/hdfs/public/imagenet/2012/val_map.txt",
+        return ZipData("/mnt/imagenet/val.zip",
+					   "/mnt/imagenet/val_map.txt",
                        transforms.Compose([transforms.Resize(256),
                                            transforms.CenterCrop(224),
                                            transforms.ToTensor()]))

@@ -1,4 +1,4 @@
-description: Training CIFAR-10 Robustness [L2 matched, Lomax]
+description: Training MNIST Robustness [LeNet MaskGaussian]
 
 target:
   vc: msrlabspvc9
@@ -17,30 +17,37 @@ code:
 
 data:
   local_dir: $CONFIG_DIR/../data/
-  remote_dir: datasets/
+  remote_dir: datasets
 
 search:
   job_template:
-    name: cifar_lomax
+    name: mnist_linear
     sku: G1
     command:
     - python3 -m src.train
       --noise={noise}
       --sigma={sigma}
-      --experiment-name=cifar_{noise}_{sigma}
+      --experiment-name=mnist_{noise}_{sigma}
       --p=2
+      --dataset=mnist
+      --model=LeNet
+      --lr=0.01
     - python3 -m src.test
       --noise={noise}
       --sigma={sigma}
-      --experiment-name=cifar_{noise}_{sigma}
+      --experiment-name=mnist_{noise}_{sigma}
       --p=2
+      --dataset=mnist
+      --model=LeNet
   type: grid
   max_trials: 20
   params:
     - name: sigma
       spec: discrete
-      values: [0.25, 0.5, 0.75, 1.0, 1.25]
+      values: [0.25, 0.5, 0.75, 1.0, 2.0]
     - name: noise
       spec: discrete
-      values: ["LomaxNoise8", "LomaxNoise32", "LomaxNoise64", "LomaxNoise128"]
+      values: ["MaskGaussianNoise1", "MaskGaussianNoise2", "MaskGaussianNoise5",
+               "MaskGaussianNoise10"]
+
 

@@ -1,7 +1,7 @@
 description: Training ImageNet Robustness [L2 matched]
 
 target:
-  vc: msrlabspvc9
+  vc: msrlabs
   cluster: eu1
 
 environment:
@@ -45,7 +45,7 @@ search:
   params:
     - name: noise
       spec: discrete
-      values: ["GaussianNoise", "UniformNoise", "LaplaceNoise", "LomaxNoise"]
+      values: ["MaskGaussianNoise5"]
     - name: sigma
       spec: discrete
       values: [0.25, 0.5, 0.75, 1.0, 1.25]

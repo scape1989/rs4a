@@ -21,10 +21,10 @@ from src.utils import get_trailing_number
 if __name__ == "__main__":
 
     argparser = ArgumentParser()
-    argparser.add_argument("--device", default="cuda:0", type=str)
+    argparser.add_argument("--device", default="cuda", type=str)
     argparser.add_argument("--lr", default=0.1, type=float)
     argparser.add_argument("--batch-size", default=64, type=int)
-    argparser.add_argument("--num-workers", default=os.cpu_count(), type=int)
+    argparser.add_argument("--num-workers", default=min(os.cpu_count(), 8), type=int)
     argparser.add_argument("--num-epochs", default=120, type=int)
     argparser.add_argument("--print-every", default=20, type=int)
     argparser.add_argument("--save-every", default=50, type=int)
@@ -47,9 +47,11 @@ if __name__ == "__main__":
     model = eval(args.model)(dataset=args.dataset, device=args.device)
     model.train()
 
-    train_loader = DataLoader(get_dataset(args.dataset, "train"), shuffle=True,
+    train_loader = DataLoader(get_dataset(args.dataset, "train"),
+                              shuffle=True,
                               batch_size=args.batch_size,
-                              num_workers=args.num_workers)
+                              num_workers=args.num_workers,
+                              pin_memory=args.device != "cpu")
 
     optimizer = optim.SGD(model.parameters(),
                           lr=args.lr,
@@ -80,22 +82,15 @@ if __name__ == "__main__":
 
             x, y = x.to(args.device), y.to(args.device)
 
-#            if args.rotate:
-#                x = rotate_noise.sample(x)
+            if args.rotate:
+                x = rotate_noise.sample(x)
 
             if args.adversarial and epoch > args.num_epochs // 2:
                 x = pgd_attack_smooth(model, x, y, args.eps, noise, sample_size=2, p=args.p)
             elif not args.direct:
 #                x = x + noise.sample(x.shape) # for non-masked noise
-
-                # new code block below
-                orig_shape = x.shape
-                x = x.view(len(x), -1)
-                noisy_x = noise.sample(x)
-                noisy_x = rotate_noise.sample(noisy_x - x) + x
-                x = noisy_x.reshape(orig_shape)
-
-#                x = noise.sample(x.view(len(x), -1)).reshape(x.shape) restore this
+#                x = noise.sample(x.view(len(x), -1)).view(x.shape)
+                x = noise.sample(x)
 
                 # for 6 channels
 #                x = torch.cat((x, 1 - x), dim=1)
@@ -108,11 +103,12 @@ if __name__ == "__main__":
 #                delta = delta @ torch.tensor(W, device=args.device, dtype=torch.float)
 #                x = x + delta.view(x.shape)
 
-            optimizer.zero_grad()
             if args.direct:
                 loss = -direct_train_log_lik(model, x, y, noise, sample_size=16).mean()
             else:
                 loss = model.loss(x, y).mean()
+
+            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             loss_meter.add(loss.cpu().data.numpy(), n=1)
@@ -144,7 +140,7 @@ if __name__ == "__main__":
     for x, y in tqdm(train_loader):
 
         x, y = x.to(args.device), y.to(args.device)
-#        x = rotate_noise.sample(x) if args.rotate else x
+        x = rotate_noise.sample(x) if args.rotate else x
         preds_smooth = smooth_predict_hard(model, x, noise, sample_size=16)
         top_cats = preds_smooth.probs.argmax(dim=1)
         acc_meter.add(torch.sum(top_cats == y).cpu().data.numpy(), n=len(x))

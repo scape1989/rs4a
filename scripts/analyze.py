@@ -63,12 +63,12 @@ if __name__ == "__main__":
         breakpoint()
 
     # plot clean training accuracy against certified accuracy at eps
-    tmp = df >> mask(X.eps.isin((0.25, 0.5, 0.75, 1.0)))
+#    tmp = df >> mask(X.eps.isin((0.25, 0.5, 0.75, 1.0)))
 
-    fig = sns.relplot(data=tmp, kind="scatter", x="top_1_acc_train", y="top_1_acc_cert", hue="noise",
-                col="eps", col_wrap=2, aspect=1, height=2, size="sigma")
-    fig.map_dataframe(plt.plot, (plt.xlim()[0], plt.xlim()[1]), (plt.xlim()[0], plt.xlim()[1]), 'k--').set_axis_labels("top_1_acc_train", "top_1_acc_cert").add_legend()
-    plt.show()
+#    fig = sns.relplot(data=tmp, kind="scatter", x="top_1_acc_train", y="top_1_acc_cert", hue="noise",
+#                col="eps", col_wrap=2, aspect=1, height=2, size="sigma")
+#    fig.map_dataframe(plt.plot, (plt.xlim()[0], plt.xlim()[1]), (plt.xlim()[0], plt.xlim()[1]), 'k--').set_axis_labels("top_1_acc_train", "top_1_acc_cert").add_legend()
+#    plt.show()
 
     # plot clean training and testing accuracy
     grouped = df >> mask(X.noise != "Clean") \

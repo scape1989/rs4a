@@ -17,9 +17,9 @@ from src.utils import get_trailing_number
 if __name__ == "__main__":
 
     argparser = ArgumentParser()
-    argparser.add_argument("--device", default="cuda:0", type=str)
+    argparser.add_argument("--device", default="cuda", type=str)
     argparser.add_argument("--batch-size", default=2, type=int)
-    argparser.add_argument("--num-workers", default=os.cpu_count(), type=int)
+    argparser.add_argument("--num-workers", default=min(os.cpu_count(), 8), type=int)
     argparser.add_argument("--sample-size-pred", default=64, type=int)
     argparser.add_argument("--sample-size-cert", default=1024, type=int)
     argparser.add_argument("--noise-batch-size", default=512, type=int)
@@ -30,7 +30,8 @@ if __name__ == "__main__":
     argparser.add_argument("--dataset", default="cifar", type=str)
     argparser.add_argument("--model", default="ResNet", type=str)
     argparser.add_argument("--rotate", action="store_true")
-    argparser.add_argument('--output-dir', type=str, default=os.getenv("PT_OUTPUT_DIR"))
+    argparser.add_argument("--output-dir", type=str, default=os.getenv("PT_OUTPUT_DIR"))
+    argparser.add_argument("--save-path", type=str, default=None)
     args = argparser.parse_args()
 
     test_dataset = get_dataset(args.dataset, "test")

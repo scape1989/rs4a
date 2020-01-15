@@ -13,7 +13,7 @@ from src.utils import get_trailing_number
 if __name__ == "__main__":
 
     argparser = ArgumentParser()
-    argparser.add_argument("--device", default="cuda:0", type=str)
+    argparser.add_argument("--device", default="cuda", type=str)
     argparser.add_argument("--batch-size", default=4, type=int),
     argparser.add_argument("--num-workers", default=os.cpu_count(), type=int)
     argparser.add_argument("--sample-size-pred", default=64, type=int)

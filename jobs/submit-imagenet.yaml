@@ -4,6 +4,11 @@ target:
   vc: msrlabspvc9
   cluster: eu1
 
+storage:
+  imagenet:
+    storage_account_name: msrairesidentssa8
+    container_name: imagenet
+
 environment:
   image: microsoft_pytorch:v1.2.0_gpu_cuda9.0_py36_release_gpuenv_hvd0.16.2
   registry: phillyregistry.azurecr.io
@@ -22,7 +27,7 @@ data:
 search:
   job_template:
     name: imagenet
-    sku: G2
+    sku: G4
     command:
     - python3 -m src.train
       --noise={noise}

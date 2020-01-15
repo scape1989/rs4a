@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     # show training curves
     losses_df >>= mask((X.sigma >= 0.15) & (X.sigma <= 1.25))
-    sns.relplot(x="iter", y="losses_train", hue="experiment_name", data=losses_df, col="sigma",
+    sns.relplot(x="iter", y="losses_train", hue="noise", data=losses_df, col="sigma",
                 col_wrap=2, kind="line", height=1.5, aspect=3.5, alpha=0.5)
     plt.tight_layout()
     plt.show()

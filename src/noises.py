@@ -76,7 +76,7 @@ class GaussianNoise(Noise):
                                 scale=torch.tensor(self.lambd, device=device))
 
     def sample(self, x):
-        return self.norm_dist.sample(x.shape) + x
+        return torch.randn_like(x) * self.lambd + x
 
     def certify(self, prob_lower_bound):
         return self.norm_dist.icdf(prob_lower_bound)
@@ -307,7 +307,14 @@ class MaskGaussianNoise(Noise):
         super().__init__(sigma, device, dim, k)
         self.n_pixels_retained = int(dim // k)
         self.lambd = sigma
-        self.impute_val = 0.4734 if dim == 3072 else 0.449
+        if dim == 3072:
+            self.impute_val = 0.4734
+        elif dim == 150528:
+            self.impute_val = 0.449
+        elif dim == 784:
+            self.impute_val = 0.1307
+        else:
+            raise ValueError
 
     def sample(self, x):
         x_copy = x.view(len(x), -1)
