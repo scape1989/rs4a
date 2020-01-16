@@ -1,7 +1,7 @@
 description: Training ImageNet Robustness [L2 matched, Unif]
 
 target:
-  vc: msrlabspvc9
+  vc: msrlabs
   cluster: eu1
 
 storage:

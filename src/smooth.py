@@ -46,7 +46,7 @@ def smooth_predict_hard(model, x, noise, sample_size=64, noise_batch_size=512, n
         shape = torch.Size([x.shape[0], min(num_samples_left, noise_batch_size)]) + x.shape[1:]
         samples = x.unsqueeze(1).expand(shape)
         samples = samples.reshape(torch.Size([-1]) + samples.shape[2:])
-        samples = noise.sample(samples) # restore this
+        samples = noise.sample(samples.view(len(samples), -1)).view(samples.shape)
 #        samples = torch.cat((samples, 1 - samples), dim=2) # for 2 channels
 #        samples[torch.isnan(samples)] = 0
 #        samples[torch.isnan(samples)] = 0

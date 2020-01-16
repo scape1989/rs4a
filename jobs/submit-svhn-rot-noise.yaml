@@ -1,4 +1,4 @@
-description: Training SVHN Robustness [L2 matched, Rotated]
+description: Training SVHN Robustness [L2 matched, RotNoise]
 
 target:
   vc: msrlabspvc9
@@ -30,7 +30,6 @@ search:
       --experiment-name=svhn_{noise}_{sigma}
       --dataset=svhn
       --p=2
-      --rotate
       --lr=0.05
     - python3 -m src.test
       --noise={noise}
@@ -38,7 +37,6 @@ search:
       --experiment-name=svhn_{noise}_{sigma}
       --dataset=svhn
       --p=2
-      --rotate
   type: grid
   max_trials: 24
   params:
@@ -47,5 +45,5 @@ search:
       values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25]
     - name: noise
       spec: discrete
-      values: ["GaussianNoise", "UniformNoise", "LaplaceNoise", "LomaxNoise"]
+      values: ["RotatedLaplaceNoise", "RotatedUniformNoise"]
 

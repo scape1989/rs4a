@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
     argparser = ArgumentParser()
     argparser.add_argument("--dir", default="./ckpts", type=str)
-    argparser.add_argument("--target", default="prob_corret", type=str)
+    argparser.add_argument("--target", default="prob_correct", type=str)
     argparser.add_argument("--use-pdf", action="store_true")
     args = argparser.parse_args()
 
@@ -66,7 +66,6 @@ if __name__ == "__main__":
             "axis": axis}))
 
     # show training curves
-    losses_df >>= mask((X.sigma >= 0.15) & (X.sigma <= 1.25))
     sns.relplot(x="axis", y="cdf", hue="noise", data=losses_df, col="sigma",
                 col_wrap=2, kind="line", height=1.5, aspect=2.5, alpha=0.5)
     plt.show()

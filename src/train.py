@@ -51,7 +51,7 @@ if __name__ == "__main__":
                               shuffle=True,
                               batch_size=args.batch_size,
                               num_workers=args.num_workers,
-                              pin_memory=args.device != "cpu")
+                              pin_memory=False)
 
     optimizer = optim.SGD(model.parameters(),
                           lr=args.lr,
@@ -89,8 +89,7 @@ if __name__ == "__main__":
                 x = pgd_attack_smooth(model, x, y, args.eps, noise, sample_size=2, p=args.p)
             elif not args.direct:
 #                x = x + noise.sample(x.shape) # for non-masked noise
-#                x = noise.sample(x.view(len(x), -1)).view(x.shape)
-                x = noise.sample(x)
+                x = noise.sample(x.view(len(x), -1)).view(x.shape)
 
                 # for 6 channels
 #                x = torch.cat((x, 1 - x), dim=1)

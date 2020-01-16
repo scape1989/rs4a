@@ -1,4 +1,4 @@
-description: Training SVHN Robustness [L2 matched, Rotated]
+description: Training CIFAR-10 Robustness [L2 matched, RotNoise]
 
 target:
   vc: msrlabspvc9
@@ -21,31 +21,26 @@ data:
 
 search:
   job_template:
-    name: svhn
+    name: cifar
     sku: G1
     command:
     - python3 -m src.train
       --noise={noise}
       --sigma={sigma}
-      --experiment-name=svhn_{noise}_{sigma}
-      --dataset=svhn
+      --experiment-name=cifar_{noise}_{sigma}
       --p=2
-      --rotate
-      --lr=0.05
     - python3 -m src.test
       --noise={noise}
       --sigma={sigma}
-      --experiment-name=svhn_{noise}_{sigma}
-      --dataset=svhn
+      --experiment-name=cifar_{noise}_{sigma}
       --p=2
-      --rotate
   type: grid
-  max_trials: 24
+  max_trials: 18
   params:
     - name: sigma
       spec: discrete
       values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25]
     - name: noise
       spec: discrete
-      values: ["GaussianNoise", "UniformNoise", "LaplaceNoise", "LomaxNoise"]
+      values: ["RotatedLaplaceNoise", "RotatedUniformNoise"]
 

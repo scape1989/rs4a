@@ -67,6 +67,27 @@ class UniformNoise(Noise):
         return 2 * self.lambd * (prob_lower_bound - 0.5)
 
 
+class RotatedUniformNoise(Noise):
+
+    def __init__(self, sigma, device, dim, p):
+        super().__init__(sigma, device, None)
+        self.lambd = 2 * sigma if p == 1 else sigma * 3 ** 0.5
+        try:
+            W = np.load("./src/lib/W.npy")
+        except FileNotFoundError:
+            W, _ = sp.linalg.qr(np.random.randn(dim, dim))
+            np.save("./src/lib/W.npy", W)
+        self.W = torch.tensor(W, device=device, dtype=torch.float)
+
+    def sample(self, x):
+        noise = (torch.rand_like(x) - 0.5) * 2 * self.lambd
+        noise = noise @ self.W
+        return x + noise
+
+    def certify(self, prob_lower_bound):
+        return 2 * self.lambd * (prob_lower_bound - 0.5)
+
+
 class GaussianNoise(Noise):
 
     def __init__(self, sigma, device, dim, p):
@@ -80,7 +101,6 @@ class GaussianNoise(Noise):
 
     def certify(self, prob_lower_bound):
         return self.norm_dist.icdf(prob_lower_bound)
-
 
 class LaplaceNoise(Noise):
 
@@ -98,6 +118,29 @@ class LaplaceNoise(Noise):
         b = -self.lambd * (torch.log(2 * (1 - prob_lower_bound)))
         return torch.max(a, b)
 
+class RotatedLaplaceNoise(Noise):
+
+    def __init__(self, sigma, device, dim, p):
+        super().__init__(self, device, None)
+        self.lambd = sigma if p == 1 else sigma * 2 ** (-0.5)
+        self.laplace_dist = Laplace(loc=torch.tensor(0., device=device),
+                                    scale=torch.tensor(self.lambd, device=device))
+        try:
+            W = np.load("./src/lib/W.npy")
+        except FileNotFoundError:
+            W, _ = sp.linalg.qr(np.random.randn(dim, dim))
+            np.save("./src/lib/W.npy", W)
+        self.W = torch.tensor(W, device=device, dtype=torch.float)
+
+    def sample(self, x):
+        noise = self.laplace_dist.sample(x.shape)
+        noise = noise @ self.W
+        return x + noise
+
+    def certify(self, prob_lower_bound):
+        a = 0.5 * self.lambd *  torch.log(prob_lower_bound / (1 - prob_lower_bound))
+        b = -self.lambd * (torch.log(2 * (1 - prob_lower_bound)))
+        return torch.max(a, b)
 
 class LomaxNoise(Noise):
 
