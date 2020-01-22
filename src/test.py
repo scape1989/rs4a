@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 from argparse import ArgumentParser
 from torchnet import meter
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from tqdm import tqdm
 from src.models import *
 from src.attacks import *
@@ -28,6 +28,7 @@ if __name__ == "__main__":
     argparser.add_argument("--sigma", default=0.0, type=float)
     argparser.add_argument("--noise", default="Clean", type=str)
     argparser.add_argument("--p", default=2, type=int)
+    argparser.add_argument("--dataset-skip", default=1, type=int)
     argparser.add_argument("--experiment-name", default="cifar", type=str)
     argparser.add_argument("--dataset", default="cifar", type=str)
     argparser.add_argument("--model", default="ResNet", type=str)
@@ -39,6 +40,7 @@ if __name__ == "__main__":
 
     num_cats = get_num_labels(args.dataset)
     test_dataset = get_dataset(args.dataset, "test")
+    test_dataset = Subset(test_dataset, list(range(0, len(test_dataset), args.dataset_skip)))
     test_loader = DataLoader(test_dataset, shuffle=False, batch_size=args.batch_size,
                              num_workers=args.num_workers)
 
@@ -114,6 +116,7 @@ if __name__ == "__main__":
         sys.exit()
 
     train_dataset = get_dataset(args.dataset, "train")
+    train_dataset = Subset(train_dataset, list(range(0, len(test_dataset), args.dataset_skip)))
     train_loader = DataLoader(train_dataset, shuffle=False, batch_size=args.batch_size,
                               num_workers=args.num_workers)
     acc_meter = meter.AverageValueMeter()

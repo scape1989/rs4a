@@ -3,6 +3,7 @@
 *.torch
 *.npy
 *.csv
+*.eps
 *.swp
 stdout.txt
 data/
