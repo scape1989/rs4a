@@ -57,8 +57,8 @@ def smooth_predict_hard(model, x, noise, sample_size=64, noise_batch_size=512, n
 
     return Categorical(probs=counts)
 
-def certify_smoothed(model, x, top_cats, alpha, noise, sample_size, noise_batch_size=512):
-    preds = smooth_predict_hard(model, x, noise, sample_size, noise_batch_size)
+def certify_smoothed(model, x, top_cats, alpha, noise, sample_size, noise_batch_size=512, num_cats=10):
+    preds = smooth_predict_hard(model, x, noise, sample_size, noise_batch_size, num_cats)
     top_probs = preds.probs.gather(1, top_cats.unsqueeze(1)).detach().cpu()
     lower, _ = proportion_confint(top_probs * sample_size, sample_size, alpha=alpha, method="beta")
     lower = torch.tensor(lower.squeeze(), dtype=torch.float)

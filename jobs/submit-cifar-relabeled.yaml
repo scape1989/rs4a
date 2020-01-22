@@ -1,7 +1,7 @@
-description: Training ImageNet Robustness [L2 matched]
+description: Training CIFAR-10 Relabeled Robustness [L2 matched]
 
 target:
-  vc: msrlabs
+  vc: msrlabspvc9
   cluster: eu1
 
 environment:
@@ -21,32 +21,28 @@ data:
 
 search:
   job_template:
-    name: imagenet
-    sku: G2
+    name: cifar
+    sku: G1
     command:
     - python3 -m src.train
       --noise={noise}
       --sigma={sigma}
-      --experiment-name=imagenet_{noise}_{sigma}
-      --dataset=imagenet
+      --experiment-name=cifar_{noise}_{sigma}
+      --dataset=cifar_relabeled
       --p=2
-      --batch-size=64
-      --num-epochs=1
     - python3 -m src.test
       --noise={noise}
       --sigma={sigma}
-      --experiment-name=imagenet_{noise}_{sigma}
-      --dataset=imagenet
+      --experiment-name=cifar_{noise}_{sigma}
+      --dataset=cifar_relabeled
       --p=2
-      --batch-size=2
-      --noise-batch-size=64
   type: grid
-  max_trials: 1
+  max_trials: 18
   params:
-    - name: noise
-      spec: discrete
-      values: ["MaskGaussianNoise5"]
     - name: sigma
       spec: discrete
-      values: [0.25, 0.5, 0.75, 1.0, 1.25]
+      values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25]
+    - name: noise
+      spec: discrete
+      values: ["GaussianNoise", "LaplaceNoise", "UniformNoise"]
 

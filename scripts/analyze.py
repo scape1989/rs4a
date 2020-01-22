@@ -31,7 +31,7 @@ if __name__ == "__main__":
     for experiment_name in experiment_names:
 
         save_path = f"{args.dir}/{experiment_name}"
-        experiment_args = pickle.load(open(f"{args.dir}/{experiment_name}/args.pkl", "rb"))
+#        experiment_args = pickle.load(open(f"{args.dir}/{experiment_name}/args.pkl", "rb"))
         results = {}
 
         for k in  ("preds_smooth", "labels", "radius_smooth", "acc_train"):
@@ -40,7 +40,9 @@ if __name__ == "__main__":
         top_1_preds_smooth = np.argmax(results["preds_smooth"], axis=1)
         top_1_acc_pred = (top_1_preds_smooth == results["labels"]).mean()
 
-#        k = get_trailing_number(experiment_args.noise)
+        _, noise, sigma = experiment_name.split("_")
+        sigma = float(sigma)
+        noise = noise.replace("Noise", "")
 
         for eps in eps_range:
 
@@ -48,73 +50,77 @@ if __name__ == "__main__":
                               (top_1_preds_smooth == results["labels"])).mean()
             df["experiment_name"].append(experiment_name)
 #            df["sigma"].append(experiment_args.sigma / (3 * 32 * 32 / k) ** 0.5)
-            df["sigma"].append(experiment_args.sigma)
-            df["noise"].append(experiment_args.noise)
+            df["sigma"].append(sigma)
+            df["noise"].append(noise)
             df["eps"].append(eps)
             df["top_1_acc_train"].append(results["acc_train"][0])
             df["top_1_acc_cert"].append(top_1_acc_cert)
             df["top_1_acc_pred"].append(top_1_acc_pred)
 
     # save the experiment results
-    df = pd.DataFrame(df)
+    df = pd.DataFrame(df) >> arrange(X.noise) >> mask(X.noise != "Lomax")
     df.to_csv(f"{args.dir}/results_{dataset}.csv", index=False)
 
     if args.debug:
         breakpoint()
 
     # plot clean training accuracy against certified accuracy at eps
-    tmp = df >> mask(X.eps.isin((0.25, 0.5, 0.75, 1.0)))
-
-    tmp_by_top_acc_cert = tmp >> mask(X.eps == 1.0) >> arrange(X.top_1_acc_cert, ascending=False) >> group_by(X.noise) >> head(1)
-    print(tmp_by_top_acc_cert)
-
-    fig = sns.relplot(data=tmp, kind="line", x="top_1_acc_train", y="top_1_acc_cert", hue="noise",
-                      col="eps", col_wrap=2, aspect=1, height=2)
-
-#    fig = sns.relplot(data=tmp, kind="scatter", x="top_1_acc_train", y="top_1_acc_cert", hue="noise",
-#                      col="eps", col_wrap=2, aspect=1, height=2, size="sigma")
-    fig.map_dataframe(plt.plot, (plt.xlim()[0], plt.xlim()[1]), (plt.xlim()[0], plt.xlim()[1]), 'k--').set_axis_labels("top_1_acc_train", "top_1_acc_cert").add_legend()
+    tmp = df >> mask(X.eps == 0.25) >> arrange(X.noise)
+    plt.figure(figsize=(3, 3))
+    sns.scatterplot(x="top_1_acc_train", y="top_1_acc_cert", hue="noise", style="noise",
+                    size="sigma", data=tmp, legend=False)
+    plt.plot(np.linspace(0.0, 1.0), np.linspace(0.0, 1.0), "--", color="gray")
+    plt.ylim((0, 1))
+    plt.xlim((0.0, 1.0))
+    plt.xlabel("Top-1 training accuracy")
+    plt.ylabel("Top-1 certified accuracy, $\epsilon$ = 0.25")
+    plt.tight_layout()
+    plt.savefig(f"{args.dir}/train_vs_certified.eps")
     plt.show()
+#    tmp = df >> mask(X.eps.isin((0.25, 0.5, 0.75, 1.0)))
+#    fig = sns.relplot(data=tmp, kind="scatter", x="top_1_acc_train", y="top_1_acc_cert",
+#                      hue="noise", col="eps", col_wrap=2, aspect=1, height=2, size="sigma")
+#    fig.map_dataframe(plt.plot, (plt.xlim()[0], plt.xlim()[1]), (plt.xlim()[0], plt.xlim()[1]), 'k--').set_axis_labels("top_1_acc_train", "top_1_acc_cert").add_legend()
+#    plt.show()
 
     # plot clean training and testing accuracy
-    grouped = df >> mask(X.noise != "Clean") \
-                 >> group_by(X.experiment_name) \
+    grouped = df >> group_by(X.experiment_name) \
                  >> summarize(experiment_name=first(X.experiment_name),
                               noise=first(X.noise),
                               sigma=first(X.sigma),
                               top_1_acc_train=first(X.top_1_acc_train),
                               top_1_acc_pred=first(X.top_1_acc_pred))
 
-    fig = sns.relplot(x="top_1_acc_train", y="top_1_acc_pred", hue="noise", col="sigma", style="noise",
-                col_wrap=2, height=2, aspect=1, data=grouped)
-    fig.map_dataframe(plt.plot, (plt.xlim()[0], 1), (plt.xlim()[0],1), 'k--').set_axis_labels("top_1_acc_train", "top_1_acc_val").add_legend()
-    plt.show()
+#    fig = sns.relplot(x="top_1_acc_train", y="top_1_acc_pred", hue="noise", col="sigma",
+#                      style="noise", col_wrap=2, height=2, aspect=1, data=grouped)
+#    fig.map_dataframe(plt.plot, (plt.xlim()[0], 1), (plt.xlim()[0],1), 'k--').set_axis_labels("Top-1 training accuracy", "Top-1 testing accuracy").add_legend()
+#    plt.show()
 
-    plt.figure(figsize=(8, 6))
-    plt.subplot(2, 1, 1)
+    plt.figure(figsize=(6.5, 2.5))
+    plt.subplot(1, 2, 1)
     sns.lineplot(x="sigma", y="top_1_acc_train", hue="noise", markers=True, dashes=False,
                  style="noise", data=grouped, alpha=1)
     plt.xlabel("$\sigma$")
     plt.ylabel("Top-1 training accuracy")
     plt.ylim((0, 1))
-    plt.subplot(2, 1, 2)
+    plt.subplot(1, 2, 2)
     sns.lineplot(x="sigma", y="top_1_acc_pred", hue="noise", markers=True, dashes=False,
-                 style="noise", data=grouped, alpha=1)
+                 style="noise", data=grouped, alpha=1, legend=False)
     plt.xlabel("$\sigma$")
     plt.ylabel("Top-1 testing accuracy")
     plt.ylim((0, 1))
-    plt.suptitle(args.dir)
     plt.tight_layout()
+    plt.savefig(f"{args.dir}/train_test_accuracies.eps")
     plt.show()
 
     # plot certified accuracies
-    selected = df >> mask(X.noise != "Clean")
-    sns.relplot(x="eps", y="top_1_acc_cert", hue="noise", kind="line", col="sigma",
-                col_wrap=2, data=selected, height=2, aspect=1.5)
-    plt.ylim((0, 1))
-    plt.suptitle(args.dir)
-    plt.tight_layout()
-    plt.show()
+#    selected = df >> mask(X.noise != "Clean")
+#    sns.relplot(x="eps", y="top_1_acc_cert", hue="noise", kind="line", col="sigma",
+#                col_wrap=2, data=selected, height=2, aspect=1.5)
+#    plt.ylim((0, 1))
+#    plt.suptitle(args.dir)
+#    plt.tight_layout()
+#    plt.show()
 
     # plot top certified accuracy per epsilon, per type of noise
     grouped = df >> mask(X.noise != "Clean") \
@@ -123,9 +129,12 @@ if __name__ == "__main__":
                  >> summarize(top_1_acc_cert=first(X.top_1_acc_cert),
                               noise=first(X.noise))
 
+    plt.figure(figsize=(3, 3))
     sns.lineplot(x="eps", y="top_1_acc_cert", data=grouped, hue="noise", style="noise")
     plt.ylim((0, 1))
-    plt.title(args.dir)
+    plt.xlabel("$\epsilon$")
+    plt.ylabel("Top-1 certified accuracy")
     plt.tight_layout()
+    plt.savefig(f"{args.dir}/certified_accuracies_l1.eps")
     plt.show()
 

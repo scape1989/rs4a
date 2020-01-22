@@ -37,14 +37,6 @@ search:
       --p=2
       --batch-size=64
       --num-epochs=30
-    - python3 -m src.test
-      --noise={noise}
-      --sigma={sigma}
-      --experiment-name=imagenet_{noise}_{sigma}
-      --dataset=imagenet
-      --p=2
-      --batch-size=2
-      --noise-batch-size=64
   type: grid
   max_trials: 15
   params:

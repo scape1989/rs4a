@@ -1,4 +1,4 @@
-description: Training CIFAR-10 Robustness [L2 matched, MLP]
+description: Certifying ImageNet Robustness [L2 matched]
 
 target:
   vc: msrlabspvc9
@@ -12,6 +12,11 @@ environment:
   - pip install statsmodels --user
   - pip install tqdm --user
 
+storage:
+  imagenet:
+    storage_account_name: tonyduanstorage
+    container_name: imagenet
+
 code:
   local_dir: $CONFIG_DIR/../
 
@@ -21,32 +26,26 @@ data:
 
 search:
   job_template:
-    name: cifar_mlp
-    sku: G1
+    name: cert_imagenet_100k
+    sku: G2
     command:
-    - python3 -m src.train
-      --noise={noise}
-      --sigma={sigma}
-      --experiment-name=cifar_{noise}_{sigma}
-      --p=2
-      --model=MLP
-      --lr=0.01
     - python3 -m src.test
       --noise={noise}
       --sigma={sigma}
-      --experiment-name=cifar_{noise}_{sigma}
-      --p=2
-      --model=MLP
+      --dataset=imagenet
+      --experiment-name=imagenet_{noise}_{sigma}
       --sample-size-pred=64
       --sample-size-cert=100000
-      --noise-batch-size=512
+      --noise-batch-size=32
+      --p=2
+      --save-path=/mnt/imagenet/imagenet_l1/imagenet_{noise}_{sigma}/model_ckpt.torch
   type: grid
-  max_trials: 18
+  max_trials: 20
   params:
     - name: sigma
       spec: discrete
-      values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25]
+      values: [1.50, 1.75, 2.0, 2.25, 2.5]
     - name: noise
       spec: discrete
-      values: ["GaussianNoise", "LaplaceNoise", "UniformNoise"]
+      values: ["UniformNoise"]
 

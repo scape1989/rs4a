@@ -1,4 +1,5 @@
 import torch
+import random
 from torchvision import datasets, transforms
 from src.lib.zipdata import ZipData
 
@@ -52,6 +53,20 @@ def get_dataset(name, split):
     if name == "cifar" and split == "test":
         return datasets.CIFAR10("./data/cifar_10", train=False, download=True,
                                 transform=transforms.ToTensor())
+
+    if name == "cifar_relabeled" and split == "train":
+        cifar = datasets.CIFAR10("./data/cifar_10", train=True, download=True,
+                                 transform=transforms.Compose([transforms.RandomCrop(32, padding=4),
+                                                               transforms.RandomHorizontalFlip(),
+                                                               transforms.ToTensor()]))
+        random.shuffle(cifar.targets, random=lambda: 0.5)
+        return cifar
+
+    if name == "cifar_relabeled" and split == "test":
+        cifar = datasets.CIFAR10("./data/cifar_10", train=False, download=True,
+                                 transform=transforms.ToTensor())
+        random.shuffle(cifar.targets, random=lambda: 0.5)
+        return cifar
 
     if name == "imagenet" and split == "train":
         return ZipData("/mnt/imagenet/train.zip",

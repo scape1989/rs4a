@@ -110,6 +110,9 @@ class NormalizeLayer(nn.Module):
     def __init__(self, dim, device, mu=None, sigma=None):
         super().__init__()
         self.dim = dim
+#        self.mu = torch.tensor(mu, device=device).reshape(dim)
+#        self.log_sig = torch.log(torch.tensor(sigma, device=device)).reshape(dim)
+#        self.initialized = True
         if mu and sigma:
             self.mu = nn.Parameter(torch.tensor(mu, device=device).reshape(dim), requires_grad=False)
             self.log_sig = nn.Parameter(torch.log(torch.tensor(sigma, device=device)).reshape(dim), requires_grad=False)

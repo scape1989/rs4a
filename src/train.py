@@ -132,22 +132,21 @@ if __name__ == "__main__":
     torch.save(model.state_dict(), save_path)
     args_path = f"{args.output_dir}/{args.experiment_name}/args.pkl"
     pickle.dump(args, open(args_path, "wb"))
-
-    model.eval()
-    acc_meter = meter.AverageValueMeter()
-
-    for x, y in tqdm(train_loader):
-
-        x, y = x.to(args.device), y.to(args.device)
-        x = rotate_noise.sample(x) if args.rotate else x
-        preds_smooth = smooth_predict_hard(model, x, noise, sample_size=16)
-        top_cats = preds_smooth.probs.argmax(dim=1)
-        acc_meter.add(torch.sum(top_cats == y).cpu().data.numpy(), n=len(x))
-
-    print("Training accuracy: ", acc_meter.value())
-    save_path = f"{args.output_dir}/{args.experiment_name}/acc_train.npy"
-    np.save(save_path,  acc_meter.value())
-
     save_path = f"{args.output_dir}/{args.experiment_name}/losses_train.npy"
     np.save(save_path, np.array(train_losses))
 
+#    model.eval()
+#    acc_meter = meter.AverageValueMeter()
+#
+#    for x, y in tqdm(train_loader):
+#
+#        x, y = x.to(args.device), y.to(args.device)
+#        x = rotate_noise.sample(x) if args.rotate else x
+#        preds_smooth = smooth_predict_hard(model, x, noise, sample_size=16)
+#        top_cats = preds_smooth.probs.argmax(dim=1)
+#        acc_meter.add(torch.sum(top_cats == y).cpu().data.numpy(), n=len(x))
+#
+#    print("Training accuracy: ", acc_meter.value())
+#    save_path = f"{args.output_dir}/{args.experiment_name}/acc_train.npy"
+#    np.save(save_path,  acc_meter.value())
+#
