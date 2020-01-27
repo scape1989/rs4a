@@ -1,13 +1,8 @@
-description: Training ImageNet Robustness [L2 matched, Extra]
+description: Training CIFAR-10 Robustness [L2 matched, Adversarial]
 
 target:
   vc: msrlabspvc9
   cluster: eu1
-
-storage:
-  imagenet:
-    storage_account_name: msrairesidentssa8
-    container_name: imagenet
 
 environment:
   image: microsoft_pytorch:v1.2.0_gpu_cuda9.0_py36_release_gpuenv_hvd0.16.2
@@ -26,25 +21,31 @@ data:
 
 search:
   job_template:
-    name: imagenet
-    sku: G2
+    name: cifar
+    sku: G1
     command:
     - python3 -m src.train
       --noise={noise}
       --sigma={sigma}
-      --experiment-name=imagenet_{noise}_{sigma}
-      --dataset=imagenet
+      --experiment-name=cifar_adv_{noise}_{sigma}_{eps}
       --p=2
-      --batch-size=64
-      --num-epochs=30
+      --adversarial
+      --eps={eps}
+    - python3 -m src.test
+      --noise={noise}
+      --sigma={sigma}
+      --experiment-name=cifar_adv_{noise}_{sigma}_{eps}
+      --p=2
   type: grid
-  max_trials: 20
+  max_trials: 30
   params:
-    - name: noise
-      spec: discrete
-      values: ["LaplaceNoise", "UniformNoise"]
     - name: sigma
       spec: discrete
-      values: [1.50, 1.75, 2.0, 0.15]
-#      values: [1.50, 1.75, 2.0, 2.25, 2.5]
+      values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25]
+    - name: noise
+      spec: discrete
+      values: ["UniformNoise"]
+    - name: eps
+      spec: discrete
+      values: [0.1, 0.2, 0.3, 0.4, 0.5]
 

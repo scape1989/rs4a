@@ -1,9 +1,14 @@
+import numpy as np
+import pandas as pd
+import seaborn as sns
 import torch
 import torch.nn.functional as F
 import os
+import itertools
 from argparse import ArgumentParser
 from collections import defaultdict
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
+from matplotlib import pyplot as plt
 from tqdm import tqdm
 from src.attacks import *
 from src.noises import *
@@ -28,58 +33,98 @@ if __name__ == "__main__":
     argparser.add_argument("--batch-size", default=4, type=int),
     argparser.add_argument("--num-workers", default=os.cpu_count(), type=int)
     argparser.add_argument("--sample-size", default=64, type=int)
-    argparser.add_argument("--noise", default="Clean", type=str)
-    argparser.add_argument("--p", default=2, type=int)
-    argparser.add_argument("--experiment-name", default="cifar", type=str)
     argparser.add_argument("--dataset", default="cifar", type=str)
+    argparser.add_argument("--dataset-skip", default=20, type=int)
     argparser.add_argument("--model", default="ResNet", type=str)
-    argparser.add_argument("--output-dir", type=str, default=os.getenv("PT_OUTPUT_DIR"))
+    argparser.add_argument("--output-dir", type=str, default="cifar_snapshots")
+    argparser.add_argument("--load", action="store_true")
     args = argparser.parse_args()
 
+    sns.set_style("whitegrid")
+    sns.set_palette("husl")
+
+    noises = ["UniformNoise", "GaussianNoise", "LaplaceNoise"]
+    sigma = 1.0
+    epochs = np.arange(1, 30, 1)
+
     test_dataset = get_dataset(args.dataset, "test")
-    test_loader = DataLoader(test_dataset, shuffle=False, batch_size=args.batch_size, # todo: fix
+    test_dataset = Subset(test_dataset, list(range(0, len(test_dataset), args.dataset_skip)))
+    test_loader = DataLoader(test_dataset, shuffle=False, batch_size=args.batch_size,
                              num_workers=args.num_workers)
 
-    save_path = f"{args.output_dir}/{args.experiment_name}/model_ckpt.torch"
-    true_model = eval(args.model)(dataset=args.dataset, device=args.device)
-    true_model.load_state_dict(torch.load(save_path))
-    true_model.eval()
+    results = defaultdict(list)
 
-    l2_norms = np.zeros(len(test_loader))
+    for noise_str, epoch in itertools.product(noises, epochs):
 
-    sigma_range = (0.25, 0.5, 1.0, 1.25)
-    results = defaultdict(lambda: np.zeros(len(test_dataset)))
+        if args.load:
+            break
 
-    for sigma in sigma_range:
-
-        noise = eval(args.noise)(sigma=sigma, device=args.device, p=args.p,
-                                 dim=get_dim(args.dataset))
-
-        experiment_name = f"cifar_{args.noise}_{sigma}"
-        save_path = f"{args.output_dir}/{experiment_name}/model_ckpt.torch"
+        save_path = f"{args.output_dir}/cifar_{noise_str}_{sigma}/{epoch-1}/model_ckpt.torch"
         model = eval(args.model)(dataset=args.dataset, device=args.device)
         model.load_state_dict(torch.load(save_path))
         model.eval()
 
+        noise = eval(noise_str)(sigma=sigma, device=args.device, p=2, dim=get_dim(args.dataset))
+
         for i, (x, y) in tqdm(enumerate(test_loader), total=len(test_loader)):
 
             x, y = x.to(args.device), y.to(args.device)
-            lower, upper = i * args.batch_size, (i + 1) * args.batch_size
-
-            rep_true = get_final_layer(true_model, x)
 
             v = x.unsqueeze(1).expand((args.batch_size, args.sample_size, 3, 32, 32))
             v = v.reshape((-1, 3, 32, 32))
-            rep_noisy = get_final_layer(model, noise.sample(v))
-            rep_noisy = rep_noisy.reshape(args.batch_size, -1, rep_true.shape[-1])
-            diffs = rep_noisy - rep_true.unsqueeze(1)
+            noised = noise.sample(v)
+            rep_noisy = get_final_layer(model, noised)
+            rep_noisy = rep_noisy.reshape(args.batch_size, -1, rep_noisy.shape[-1])
+#            diffs = rep_noisy - rep_true.unsqueeze(1)
 
-            means = torch.norm(diffs, dim=2).mean(dim=1).data
-            sds = torch.norm(diffs, dim=2).std(dim=1).data
-            results[f"diffs_l2_mean_{args.noise}_{sigma}"][lower:upper] = means.cpu().numpy()
-            results[f"diffs_l2_sd_{args.noise}_{sigma}"][lower:upper] = sds.cpu().numpy()
+            top_cats = model(noised).reshape(args.batch_size, -1, 10).argmax(dim=2).mode(dim=1)
+            top_cats = top_cats.values
 
-    save_path = f"{args.output_dir}/{args.experiment_name}"
-    for k, v in results.items():
-        np.save(f"{save_path}/{k}.npy", v)
+            l2 = torch.stack([F.pdist(rep_i, p=2) for rep_i in rep_noisy]).mean(dim=1).data
+            l1 = torch.stack([F.pdist(rep_i, p=1) for rep_i in rep_noisy]).mean(dim=1).data
+            linf = torch.stack([F.pdist(rep_i, p=float("inf")) for rep_i in rep_noisy]).mean(dim=1).data
+
+#            l1 = torch.norm(diffs, dim=2, p=1).mean(dim=1).data
+#            l2 = torch.norm(diffs, dim=2).mean(dim=1).data
+#            linf = torch.norm(diffs, dim=2, p=float("inf")).mean(dim=1).data
+
+            results["acc"] += (y == top_cats).float().cpu().numpy().tolist()
+            results["l1"] += l1.cpu().numpy().tolist()
+            results["l2"] += l2.cpu().numpy().tolist()
+            results["linf"] += linf.cpu().numpy().tolist()
+            results["noise"] += args.batch_size * [noise_str]
+            results["epoch"] += args.batch_size * [epoch]
+
+    if args.load:
+        results = pd.read_csv(f"{args.output_dir}/snapshots.csv")
+    else:
+        results = pd.DataFrame(results)
+    results.to_csv(f"{args.output_dir}/snapshots.csv")
+
+    plt.figure(figsize=(10, 6))
+    plt.subplot(2, 2, 1)
+    sns.lineplot(x="epoch", y="l2", hue="noise", data=results)
+    plt.xlabel("Epoch")
+    plt.ylabel("L2")
+#    plt.ylim((0, 0.5))
+    plt.legend()
+    plt.subplot(2, 2, 2)
+    sns.lineplot(x="epoch", y="l1", hue="noise", data=results)
+    plt.xlabel("Epoch")
+    plt.ylabel("L1")
+#    plt.ylim((0, 1))
+    plt.legend()
+    plt.subplot(2, 2, 3)
+    sns.lineplot(x="epoch", y="linf", hue="noise", data=results)
+    plt.xlabel("Epoch")
+    plt.ylabel("Linf")
+#    plt.ylim((0, 1))
+    plt.legend()
+    plt.subplot(2, 2, 4)
+    sns.lineplot(x="epoch", y="acc", hue="noise", data=results)
+    plt.xlabel("Epoch")
+    plt.ylabel("Acc")
+    plt.ylim((0, 1))
+    plt.legend()
+    plt.show()
 

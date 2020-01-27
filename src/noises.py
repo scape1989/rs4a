@@ -149,7 +149,7 @@ class LomaxNoise(Noise):
         if k > 2:
             self.lambd = (k - 1) * sigma if p == 1 else math.sqrt(0.5 * (k - 1) * (k - 2)) * sigma
         else:
-            self.lambd = 0.01 * sigma # heuristic, todo: fix
+            self.lambd = 0.01 * sigma # heuristic
         self.pareto_dist = Pareto(scale=torch.tensor(self.lambd, device=device, dtype=torch.float),
                                   alpha=torch.tensor(self.k, device=device, dtype=torch.float))
 
@@ -191,7 +191,7 @@ class UniformBallNoise(Noise):
 
     def sample(self, x):
         radius = torch.rand((len(x), 1), device=self.device) ** (1 / self.dim) * self.lambd
-        noise = torch.randn(shape, device=self.device).reshape(len(x), -1)
+        noise = torch.randn(x.shape, device=self.device).reshape(len(x), -1)
         noise = noise / torch.norm(noise, dim=1, p=2).unsqueeze(1) * radius
         return noise + x
 
@@ -306,8 +306,9 @@ class PTailNoise(Noise):
 
     def certify(self, prob_lower_bound):
         prob_lower_bound = prob_lower_bound.numpy()
-        alpha = self.k + self.dim / 2
+        alpha = self.k + 0.5 * self.dim
         idxs = np.searchsorted(self.prob_lower_bounds[alpha], prob_lower_bound)
+        idxs = np.minimum(idxs, len(self.prob_lower_bounds[alpha]) - 1)
         x_deltas = self.prob_lower_bounds[alpha][idxs] - self.prob_lower_bounds[alpha][idxs - 1]
         y_deltas = self.radii[alpha][idxs] - self.radii[alpha][idxs - 1]
         pcts = (prob_lower_bound - self.prob_lower_bounds[alpha][idxs - 1]) / x_deltas

@@ -1,4 +1,4 @@
-description: Certifying ImageNet Robustness [L2 matched, MaskGaussian]
+description: Training CIFAR-10 Robustness [L2 matched, Snapshot]
 
 target:
   vc: msrlabspvc9
@@ -12,11 +12,6 @@ environment:
   - pip install statsmodels --user
   - pip install tqdm --user
 
-storage:
-  imagenet:
-    storage_account_name: tonyduanstorage
-    container_name: imagenet
-
 code:
   local_dir: $CONFIG_DIR/../
 
@@ -26,28 +21,29 @@ data:
 
 search:
   job_template:
-    name: cert_imagenet_maskgaussian
-    sku: G2
+    name: cifar
+    sku: G1
     command:
+    - python3 -m src.train
+      --noise={noise}
+      --sigma={sigma}
+      --experiment-name=cifar_{noise}_{sigma}
+      --p=2
+      --save-every=1
+      --batch-size=16
+      --num-epochs=30
     - python3 -m src.test
       --noise={noise}
       --sigma={sigma}
-      --dataset=imagenet
-      --experiment-name=imagenet_{noise}_{sigma}
-      --sample-size-pred=64
-      --sample-size-cert=1024
-      --noise-batch-size=32
+      --experiment-name=cifar_{noise}_{sigma}
       --p=2
-      --save-path=/mnt/imagenet/imagenet_maskgaussian/imagenet_{noise}_{sigma}/model_ckpt.torch
-      --dataset-skip=20
-      --test-set-only
   type: grid
-  max_trials: 15
+  max_trials: 30
   params:
     - name: sigma
       spec: discrete
       values: [0.25, 0.5, 0.75, 1.0, 1.25]
     - name: noise
       spec: discrete
-      values: ["MaskGaussianNoise1", "MaskGaussianNoise3", "MaskGaussianNoise10"]
+      values: ["GaussianNoise", "LaplaceNoise", "UniformNoise"]
 

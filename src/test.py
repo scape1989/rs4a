@@ -38,7 +38,6 @@ if __name__ == "__main__":
     argparser.add_argument("--save-path", type=str, default=None)
     args = argparser.parse_args()
 
-    num_cats = get_num_labels(args.dataset)
     test_dataset = get_dataset(args.dataset, "test")
     test_dataset = Subset(test_dataset, list(range(0, len(test_dataset), args.dataset_skip)))
     test_loader = DataLoader(test_dataset, shuffle=False, batch_size=args.batch_size,
@@ -79,7 +78,7 @@ if __name__ == "__main__":
                                  dim=get_dim(args.dataset))
 
     results = {
-        "preds_smooth": np.zeros((len(test_dataset), num_cats)),
+        "preds_smooth": np.zeros((len(test_dataset), get_num_labels(args.dataset))),
         "labels": np.zeros(len(test_dataset)),
         "prob_lower_bound": np.zeros(len(test_dataset)),
         "radius_smooth": np.zeros(len(test_dataset)),
@@ -95,10 +94,10 @@ if __name__ == "__main__":
         x = rotate_noise.sample(x) if args.rotate else x
 
         preds_smooth = smooth_predict_hard(model, x, noise, args.sample_size_pred,
-                                           args.noise_batch_size, num_cats=num_cats)
+                                           noise_batch_size=args.noise_batch_size)
         top_cats = preds_smooth.probs.argmax(dim=1)
         p_a, radii = certify_smoothed(model, x, top_cats, 0.001, noise, args.sample_size_cert,
-                                      args.noise_batch_size, num_cats=num_cats)
+                                      noise_batch_size=args.noise_batch_size)
 
         lower, upper = i * args.batch_size, (i + 1) * args.batch_size
         results["preds_smooth"][lower:upper, :] = preds_smooth.probs.data.cpu().numpy()
@@ -116,7 +115,6 @@ if __name__ == "__main__":
         sys.exit()
 
     train_dataset = get_dataset(args.dataset, "train")
-    train_dataset = Subset(train_dataset, list(range(0, len(test_dataset), args.dataset_skip)))
     train_loader = DataLoader(train_dataset, shuffle=False, batch_size=args.batch_size,
                               num_workers=args.num_workers)
     acc_meter = meter.AverageValueMeter()
@@ -127,10 +125,12 @@ if __name__ == "__main__":
         x = rotate_noise.sample(x) if args.rotate else x
 
         preds_smooth = smooth_predict_hard(model, x, noise, args.sample_size_pred,
-                                           args.noise_batch_size, num_cats=num_cats)
+                                           args.noise_batch_size)
         top_cats = preds_smooth.probs.argmax(dim=1)
         acc_meter.add(torch.sum(top_cats == y).cpu().data.numpy(), n=len(x))
 
     print("Training accuracy: ", acc_meter.value())
+    save_path = f"{args.output_dir}/{args.experiment_name}"
+    pathlib.Path(save_path).mkdir(parents=True, exist_ok=True)
     np.save(f"{save_path}/acc_train.npy",  acc_meter.value())
 

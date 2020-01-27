@@ -1,6 +1,4 @@
 import numpy as np
-import scipy as sp
-import scipy.stats
 import pandas as pd
 import os
 import pickle
@@ -18,11 +16,10 @@ if __name__ == "__main__":
     argparser = ArgumentParser()
     argparser.add_argument("--dir", default="./ckpts", type=str)
     argparser.add_argument("--debug", action="store_true")
-    argparser.add_argument("--eps-max", default=0.1, type=float)
+    argparser.add_argument("--eps-max", default=0.08, type=float)
     args = argparser.parse_args()
 
-    dataset = args.dir.split("_")[0]
-    experiment_names = list(filter(lambda x: x.startswith(dataset), os.listdir(args.dir)))
+    experiment_names = os.listdir(args.dir)
 
     sns.set_style("whitegrid")
     sns.set_palette("husl")
@@ -32,44 +29,30 @@ if __name__ == "__main__":
 
     for experiment_name in experiment_names:
 
-        save_path = f"{args.dir}/{experiment_name}"
-        results = {}
-
-        for k in  ("preds_smooth", "labels", "radius_smooth", "prob_lower_bound"):#, "acc_train"):
-            results[k] = np.load(f"{save_path}/{k}.npy")
-
-        top_1_preds_smooth = np.argmax(results["preds_smooth"], axis=1)
-        top_1_acc_pred = (top_1_preds_smooth == results["labels"]).mean()
-
-        _, noise, sigma = experiment_name.split("_")
-        sigma = float(sigma)
-
-        if noise == "GaussianNoise":
-            results["radius_smooth"] = results["radius_smooth"] / 3072 ** 0.5
-        elif noise == "LaplaceNoise":
-            results["radius_smooth"] = sp.stats.norm.ppf(results["prob_lower_bound"]) * sigma / 2 ** 0.5 / 3072 ** 0.5
-        elif noise == "UniformNoise":
-            results["radius_smooth"] = 3 ** 0.5 / 3072 * sigma * np.log(0.5 / (1 - results["prob_lower_bound"]))
-#            results["radius_smooth"] = 2 * 3 ** 0.5 * sigma * (1 - (1.5 - results["prob_lower_bound"]) ** (1 / 3072))
-        else:
+        if not experiment_name.endswith("txt"):
             continue
+
+        noise = experiment_name.split("_")[5]
+        sigma = float(experiment_name.split("_")[7])
+
+        tsv = pd.read_csv(f"{args.dir}/{experiment_name}", sep="\t")
+
+        top_1_acc_pred = (tsv["predict"] == tsv["label"]).mean()
 
         for eps in eps_range:
 
-            top_1_acc_cert = ((results["radius_smooth"] >= eps) & \
-                              (top_1_preds_smooth == results["labels"])).mean()
-            df["experiment_name"].append(experiment_name)
+            top_1_acc_cert = ((tsv["radius"] >= eps) & \
+                              (tsv["predict"] == tsv["label"])).mean()
+#            df["sigma"].append(experiment_args.sigma / (3 * 32 * 32 / k) ** 0.5)
             df["sigma"].append(sigma)
             df["noise"].append(noise)
-            df["eps"].append(eps * 255)
-#            df["top_1_acc_train"].append(results["acc_train"][0])
-            df["top_1_acc_train"].append(0)
+            df["eps"].append(eps)
             df["top_1_acc_cert"].append(top_1_acc_cert)
             df["top_1_acc_pred"].append(top_1_acc_pred)
 
     # save the experiment results
-    df = pd.DataFrame(df)
-    df.to_csv(f"{args.dir}/results_{dataset}.csv", index=False)
+    df = pd.DataFrame(df) >> arrange(X.noise)
+    df.to_csv(f"{args.dir}/results.csv", index=False)
 
     if args.debug:
         breakpoint()
@@ -85,17 +68,18 @@ if __name__ == "__main__":
 
     # plot top certified accuracy per epsilon, per type of noise
     grouped = df >> mask(X.noise != "Clean") \
+                 >> mask(X.sigma < 0.1) \
                  >> group_by(X.eps, X.noise) \
                  >> arrange(X.top_1_acc_cert, ascending=False) \
                  >> summarize(top_1_acc_cert=first(X.top_1_acc_cert),
                               noise=first(X.noise))
 
-    plt.figure(figsize=(3.5, 3))
+    plt.figure(figsize=(3, 3))
     sns.lineplot(x="eps", y="top_1_acc_cert", data=grouped, hue="noise", style="noise")
     plt.ylim((0, 1))
-    plt.xlabel("$\epsilon \\times 255$")
+    plt.xlabel("$\epsilon$")
     plt.ylabel("Top-1 certified accuracy")
     plt.tight_layout()
-    plt.savefig(f"{args.dir}/certified_accuracies_linf.eps")
+    plt.savefig(f"{args.dir}/certified_accuracies_l1.eps")
     plt.show()
 

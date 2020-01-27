@@ -86,9 +86,8 @@ if __name__ == "__main__":
                 x = rotate_noise.sample(x)
 
             if args.adversarial and epoch > args.num_epochs // 2:
-                x = pgd_attack_smooth(model, x, y, args.eps, noise, sample_size=2, p=args.p)
+                x = pgd_attack_smooth(model, x, y, args.eps, noise, sample_size=4, p=2)
             elif not args.direct:
-#                x = x + noise.sample(x.shape) # for non-masked noise
                 x = noise.sample(x.view(len(x), -1)).view(x.shape)
 
                 # for 6 channels
@@ -121,7 +120,7 @@ if __name__ == "__main__":
                 train_losses.append(loss_meter.value()[0])
                 loss_meter.reset()
 
-        if epoch % args.save_every == 0:
+        if (epoch + 1) % args.save_every == 0:
             save_path = f"{args.output_dir}/{args.experiment_name}/{epoch}/"
             pathlib.Path(save_path).mkdir(parents=True, exist_ok=True)
             torch.save(model.state_dict(), f"{save_path}/model_ckpt.torch")
@@ -135,18 +134,3 @@ if __name__ == "__main__":
     save_path = f"{args.output_dir}/{args.experiment_name}/losses_train.npy"
     np.save(save_path, np.array(train_losses))
 
-#    model.eval()
-#    acc_meter = meter.AverageValueMeter()
-#
-#    for x, y in tqdm(train_loader):
-#
-#        x, y = x.to(args.device), y.to(args.device)
-#        x = rotate_noise.sample(x) if args.rotate else x
-#        preds_smooth = smooth_predict_hard(model, x, noise, sample_size=16)
-#        top_cats = preds_smooth.probs.argmax(dim=1)
-#        acc_meter.add(torch.sum(top_cats == y).cpu().data.numpy(), n=len(x))
-#
-#    print("Training accuracy: ", acc_meter.value())
-#    save_path = f"{args.output_dir}/{args.experiment_name}/acc_train.npy"
-#    np.save(save_path,  acc_meter.value())
-#

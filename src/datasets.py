@@ -15,6 +15,8 @@ def get_dim(name):
         return 3 * 224 * 224
     if name == "fashion":
         return 28 * 28
+    if name == "cifar_relabeled":
+        return 3 * 32 * 32
 
 def get_num_labels(name):
     return 1000 if name == "imagenet" else 10
@@ -30,6 +32,8 @@ def get_normalization_shape(name):
         return (1, 1, 1)
     if name == "fashion":
         return (1, 1, 1)
+    if name == "cifar_relabeled":
+        return (3, 1, 1)
 
 def get_normalization_stats(name):
     if name == "cifar":
@@ -42,6 +46,8 @@ def get_normalization_stats(name):
         return {"mu": [0.1307,], "sigma": [0.3081,]}
     if name == "fashion":
         return {"mu": [0.2849,], "sigma": [0.3516,]}
+    if name == "cifar_relabeled":
+        return {"mu": [0.4914, 0.4822, 0.4465], "sigma": [0.2023, 0.1994, 0.2010]}
 
 def get_dataset(name, split):
 

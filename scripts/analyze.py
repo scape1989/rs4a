@@ -16,7 +16,7 @@ if __name__ == "__main__":
     argparser = ArgumentParser()
     argparser.add_argument("--dir", default="./ckpts", type=str)
     argparser.add_argument("--debug", action="store_true")
-    argparser.add_argument("--eps-max", default=4.0, type=float)
+    argparser.add_argument("--eps-max", default=5.0, type=float)
     args = argparser.parse_args()
 
     dataset = args.dir.split("_")[0]
@@ -60,6 +60,10 @@ if __name__ == "__main__":
     # save the experiment results
     df = pd.DataFrame(df) >> arrange(X.noise) >> mask(X.noise != "Lomax")
     df.to_csv(f"{args.dir}/results_{dataset}.csv", index=False)
+
+    # print top-1 certified accuracies
+    print(df >> mask(X.eps.isin((0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0))) \
+             >> group_by(X.eps, X.noise) >> arrange(X.top_1_acc_cert, ascending=False) >> head(1))
 
     if args.debug:
         breakpoint()

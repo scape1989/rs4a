@@ -15,20 +15,20 @@ if __name__ == "__main__":
     argparser.add_argument("--sigma", type=float, default=0.25)
     args = argparser.parse_args()
 
-    #noises = ["GaussianNoise", "LaplaceNoise", "UniformNoise"]
+    noises = ["GaussianNoise", "LaplaceNoise", "UniformNoise"]
     #noises = ["GaussianNoise", "Exp2PolyNoise2048", "PTailNoise100"]
     #noises = ["GammaNoise3", "GammaNoise4", "GammaNoise5"]
     #noises = ["ExpInfNoise", "UniformNoise"]
     #noises = ["GaussianNoise", "PTailNoise8", "PTailNoise100", "PTailNoise2"]
     #noises = ["Exp1Noise1", "Exp1Noise10"]#, "Exp1Noise20"]
     #noises = ["GaussianNoise", "PTailNoise8", "PTailNoise2", "PTailNoise4"]
-    noises = ["UniformNoise", "PowerLawNoise10", "PowerLawNoise5", "PowerLawNoise100"]
 
     sns.set_style("whitegrid")
     sns.set_palette("husl")
 
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(8, 8))
     axis = np.linspace(0, 0.5, 400)
+    linf_axis = np.linspace(0, 2.5, 400)
 
     for noise_str in noises:
 
@@ -42,18 +42,32 @@ if __name__ == "__main__":
         rvs = noise.sample(torch.zeros(args.batch_size, args.dim))
         rvs = rvs.reshape((args.batch_size, -1))
 
-        l2_norms = rvs.norm(p=2, dim=1).pow(2) / args.dim / 2
+        l1_norms = rvs.norm(p=1, dim=1) / args.dim
+        l2_norms = rvs.norm(p=2, dim=1).pow(2) / args.dim
+        linf_norms = rvs.norm(p=float("inf"), dim=1)
 
-        plt.subplot(2, 1, 1)
+        plt.subplot(2, 2, 1)
         plt.plot(axis, gaussian_kde(np.abs(rvs).flatten())(axis), label=noise_str)
-        plt.subplot(2, 1, 2)
+        plt.subplot(2, 2, 2)
         plt.plot(axis, gaussian_kde(l2_norms ** 0.5)(axis), label=noise_str)
+        plt.subplot(2, 2, 3)
+        plt.plot(linf_axis, gaussian_kde(linf_norms)(linf_axis), label=noise_str)
+        plt.subplot(2, 2, 4)
+        plt.plot(axis, gaussian_kde(l1_norms)(axis), label=noise_str)
 
-    plt.subplot(2, 1, 1)
+    plt.subplot(2, 2, 1)
     plt.legend()
     plt.xlabel("$|x_i|$")
-    plt.subplot(2, 1, 2)
+    plt.subplot(2, 2, 2)
     plt.legend()
     plt.xlabel("$\sqrt{||x||_2^2/ d}$")
+    plt.subplot(2, 2, 3)
+    plt.legend()
+    plt.xlabel("$||x||_\infty$")
+    plt.subplot(2, 2, 4)
+    plt.legend()
+    plt.xlabel("$||x||_1 / d$")
+
     plt.tight_layout()
     plt.show()
+

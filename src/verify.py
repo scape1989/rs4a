@@ -27,7 +27,6 @@ if __name__ == "__main__":
     argparser.add_argument("--output-dir", type=str, default=os.getenv("PT_OUTPUT_DIR"))
     args = argparser.parse_args()
 
-    num_cats = get_num_labels(args.dataset)
     test_dataset = get_dataset(args.dataset, "test")
     test_loader = DataLoader(test_dataset, shuffle=False, batch_size=args.batch_size, # todo: fix
                              num_workers=args.num_workers)
@@ -45,7 +44,6 @@ if __name__ == "__main__":
         noise = eval(args.noise)(sigma=args.sigma, device=args.device, p=args.p,
                                  dim=get_dim(args.dataset))
 
-    #eps_range = (32.0, 16.0, 8.0, 1.25, 1.0, 0.5)
     eps_range = (3.0, 2.0, 1.0, 0.5, 0.25)
 
     results = {f"preds_adv_{eps}": np.zeros((len(test_dataset), 10)) for eps in eps_range}
@@ -59,7 +57,7 @@ if __name__ == "__main__":
             x_adv = pgd_attack_smooth(model, x, y, eps=eps, noise=noise, sample_size=128,
                                       steps=20, p=1, clamp=(0, 1))
             preds_adv = smooth_predict_hard(model, x_adv, noise, args.sample_size_pred,
-                                            args.noise_batch_size, num_cats=num_cats)
+                                            args.noise_batch_size)
             results[f"preds_adv_{eps}"][lower:upper, :] = preds_adv.probs.data.cpu().numpy()
             assert ((x - x_adv).reshape(x.shape[0], -1).norm(dim=1, p=1) <= eps + 1e-2).all()
 

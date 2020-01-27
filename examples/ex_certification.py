@@ -21,7 +21,7 @@ if __name__ == "__main__":
     sns.set_style("whitegrid")
     sns.set_palette("husl")
 
-    plt.figure(figsize=(6, 2))
+    plt.figure(figsize=(4, 2))
     axis = np.linspace(0.5, 1.0, 400)
 
     df = defaultdict(list)

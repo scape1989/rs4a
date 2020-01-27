@@ -1,7 +1,7 @@
 description: Training CIFAR-10 Robustness [L2 matched, Exp2Poly]
 
 target:
-  vc: msrlabs
+  vc: msrlabspvc9
   cluster: eu1
 
 environment:
@@ -34,6 +34,9 @@ search:
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
       --p=2
+      --sample-size-pred=64
+      --sample-size-cert=100000
+      --noise-batch-size=512
   type: grid
   max_trials: 30
   params:
@@ -42,6 +45,5 @@ search:
       values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25]
     - name: noise
       spec: discrete
-      values: ["Exp2PolyNoise1", "Exp2PolyNoise2", "Exp2PolyNoise4", "Exp2PolyNoise1024", "Exp2PolyNoise2048"]
-      #values: ["PTailNoise100", "UniformBallNoise"]
+      values: ["Exp2PolyNoise1", "Exp2PolyNoise1024"]
 
