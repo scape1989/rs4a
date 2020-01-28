@@ -17,6 +17,13 @@ from src.datasets import get_dataset
 from src.utils import get_trailing_number
 
 
+def get_final_layer_mlp(model, x):
+    out = model.model[0](x.reshape(x.shape[0], -1))
+    out = model.model[1](out)
+    out = model.model[2](out)
+    out = model.model[3](out)
+    return out
+
 def get_final_layer(model, x):
     out = model.model.conv1(x)
     out = model.model.block1(out)
@@ -36,7 +43,7 @@ if __name__ == "__main__":
     argparser.add_argument("--dataset", default="cifar", type=str)
     argparser.add_argument("--dataset-skip", default=20, type=int)
     argparser.add_argument("--model", default="ResNet", type=str)
-    argparser.add_argument("--output-dir", type=str, default="cifar_snapshots")
+    argparser.add_argument("--dir", type=str, default="cifar_snapshots")
     argparser.add_argument("--load", action="store_true")
     args = argparser.parse_args()
 
@@ -44,7 +51,6 @@ if __name__ == "__main__":
     sns.set_palette("husl")
 
     noises = ["UniformNoise", "GaussianNoise", "LaplaceNoise"]
-    sigma = 1.0
     epochs = np.arange(1, 30, 1)
 
     test_dataset = get_dataset(args.dataset, "test")
@@ -59,7 +65,9 @@ if __name__ == "__main__":
         if args.load:
             break
 
-        save_path = f"{args.output_dir}/cifar_{noise_str}_{sigma}/{epoch-1}/model_ckpt.torch"
+        sigma = 1.25 if noise_str == "UniformNoise" else 0.75
+
+        save_path = f"{args.dir}/cifar_{noise_str}_{sigma}/{epoch-1}/model_ckpt.torch"
         model = eval(args.model)(dataset=args.dataset, device=args.device)
         model.load_state_dict(torch.load(save_path))
         model.eval()
@@ -73,9 +81,13 @@ if __name__ == "__main__":
             v = x.unsqueeze(1).expand((args.batch_size, args.sample_size, 3, 32, 32))
             v = v.reshape((-1, 3, 32, 32))
             noised = noise.sample(v)
-            rep_noisy = get_final_layer(model, noised)
+            if args.model == "ResNet":
+                rep_noisy = get_final_layer(model, noised)
+            elif args.model == "MLP":
+                rep_noisy = get_final_layer_mlp(model, noised)
+            else:
+                raise ValueError
             rep_noisy = rep_noisy.reshape(args.batch_size, -1, rep_noisy.shape[-1])
-#            diffs = rep_noisy - rep_true.unsqueeze(1)
 
             top_cats = model(noised).reshape(args.batch_size, -1, 10).argmax(dim=2).mode(dim=1)
             top_cats = top_cats.values
@@ -83,10 +95,6 @@ if __name__ == "__main__":
             l2 = torch.stack([F.pdist(rep_i, p=2) for rep_i in rep_noisy]).mean(dim=1).data
             l1 = torch.stack([F.pdist(rep_i, p=1) for rep_i in rep_noisy]).mean(dim=1).data
             linf = torch.stack([F.pdist(rep_i, p=float("inf")) for rep_i in rep_noisy]).mean(dim=1).data
-
-#            l1 = torch.norm(diffs, dim=2, p=1).mean(dim=1).data
-#            l2 = torch.norm(diffs, dim=2).mean(dim=1).data
-#            linf = torch.norm(diffs, dim=2, p=float("inf")).mean(dim=1).data
 
             results["acc"] += (y == top_cats).float().cpu().numpy().tolist()
             results["l1"] += l1.cpu().numpy().tolist()
@@ -96,10 +104,10 @@ if __name__ == "__main__":
             results["epoch"] += args.batch_size * [epoch]
 
     if args.load:
-        results = pd.read_csv(f"{args.output_dir}/snapshots.csv")
+        results = pd.read_csv(f"{args.dir}/snapshots.csv")
     else:
         results = pd.DataFrame(results)
-    results.to_csv(f"{args.output_dir}/snapshots.csv")
+    results.to_csv(f"{args.dir}/snapshots.csv")
 
     plt.figure(figsize=(10, 6))
     plt.subplot(2, 2, 1)

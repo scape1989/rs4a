@@ -118,13 +118,12 @@ if __name__ == "__main__":
     plt.show()
 
     # plot certified accuracies
-#    selected = df >> mask(X.noise != "Clean")
-#    sns.relplot(x="eps", y="top_1_acc_cert", hue="noise", kind="line", col="sigma",
-#                col_wrap=2, data=selected, height=2, aspect=1.5)
-#    plt.ylim((0, 1))
-#    plt.suptitle(args.dir)
-#    plt.tight_layout()
-#    plt.show()
+    selected = df >> mutate(certacc=X.top_1_acc_cert)
+    sns.relplot(x="eps", y="certacc", hue="noise", kind="line", col="sigma",
+                col_wrap=2, data=selected, height=2, aspect=1.5)
+    plt.ylim((0, 1))
+    plt.tight_layout()
+    plt.show()
 
     # plot top certified accuracy per epsilon, per type of noise
     grouped = df >> mask(X.noise != "Clean") \

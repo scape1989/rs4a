@@ -323,7 +323,8 @@ class Exp2PolyNoise(Noise):
         self.lambd = (2 * dim / k) ** 0.5 * sigma
         self.gamma_dist = Gamma(torch.tensor(0.5 * self.k, device=device),
                                 torch.tensor((1 / self.lambd) ** 2, device=device))
-        self.prob_lower_bounds, self.radii = np.load("./src/lib/radii_exp2poly.npy", allow_pickle=True)
+        self.prob_lower_bounds, self.radii = np.load("./src/lib/radii_exp2poly.npy",
+                                                     allow_pickle=True)
 
     def sample(self, x):
         radius = self.gamma_dist.sample((len(x), 1)) ** 0.5
@@ -335,6 +336,7 @@ class Exp2PolyNoise(Noise):
         prob_lower_bound = prob_lower_bound.numpy()
         alpha = self.dim - self.k
         idxs = np.searchsorted(self.prob_lower_bounds[alpha], prob_lower_bound)
+        idxs = np.minimum(idxs, len(self.prob_lower_bounds[alpha]) - 1)
         x_deltas = self.prob_lower_bounds[alpha][idxs] - self.prob_lower_bounds[alpha][idxs - 1]
         y_deltas = self.radii[alpha][idxs] - self.radii[alpha][idxs - 1]
         pcts = (prob_lower_bound - self.prob_lower_bounds[alpha][idxs - 1]) / x_deltas

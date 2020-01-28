@@ -38,6 +38,7 @@ if __name__ == "__main__":
                                                    dim=args.dim, k=k)
         else:
             noise = eval(noise_str)(sigma=args.sigma, device="cpu", p=2, dim=args.dim)
+        noise_str = noise_str.replace("Noise", "")
 
         rvs = noise.sample(torch.zeros(args.batch_size, args.dim))
         rvs = rvs.reshape((args.batch_size, -1))

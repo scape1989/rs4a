@@ -47,5 +47,5 @@ search:
       values: ["UniformNoise"]
     - name: eps
       spec: discrete
-      values: [0.1, 0.2, 0.3, 0.4, 0.5]
+      values: [0.1, 0.2, 0.4, 0.7, 1.0]
 

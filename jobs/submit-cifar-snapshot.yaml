@@ -32,11 +32,8 @@ search:
       --save-every=1
       --batch-size=16
       --num-epochs=30
-    - python3 -m src.test
-      --noise={noise}
-      --sigma={sigma}
-      --experiment-name=cifar_{noise}_{sigma}
-      --p=2
+      --model=MLP
+      --lr=0.01
   type: grid
   max_trials: 30
   params:
