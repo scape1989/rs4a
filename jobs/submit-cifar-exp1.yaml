@@ -1,4 +1,4 @@
-description: Training CIFAR-10 Robustness [L2 matched, Exp2]
+description: Training CIFAR-10 Robustness [L2 matched, Exp1]
 
 target:
   vc: msrlabspvc9
@@ -21,7 +21,7 @@ data:
 
 search:
   job_template:
-    name: cifar_exp2
+    name: cifar_exp1
     sku: G1
     command:
     - python3 -m src.train
@@ -37,6 +37,7 @@ search:
       --sample-size-pred=64
       --sample-size-cert=100000
       --noise-batch-size=512
+      --dataset-skip=4
   type: grid
   max_trials: 30
   params:
@@ -45,5 +46,5 @@ search:
       values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5]
     - name: noise
       spec: discrete
-      values: ["Exp2Noise1", "Exp2Noise2", "Exp2Noise4", "Exp2Noise8"]
+      values: ["Exp1Noise1", "Exp1Noise2", "Exp1Noise4", "Exp1Noise8"]
 

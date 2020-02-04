@@ -140,7 +140,7 @@ if __name__ == "__main__":
     plt.show()
 #
     # plot top certified accuracy per epsilon, per type of noise
-    grouped = df >> mask(X.noise != "Clean") \
+    grouped = df >> mask(X.noise != "Clean", X.noise != "ExpInf", X.noise != "Lomax") \
                  >> group_by(X.eps, X.noise) \
                  >> arrange(X.top_1_acc_cert, ascending=False) \
                  >> summarize(top_1_acc_cert=first(X.top_1_acc_cert),

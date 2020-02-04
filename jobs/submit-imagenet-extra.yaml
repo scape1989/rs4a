@@ -45,5 +45,5 @@ search:
       values: ["UniformNoise"]
     - name: sigma
       spec: discrete
-      values: [2.75, 3.0, 3.25]
+      values: [3.5, 3.75, 4.0, 4.25, 4.5, 4.75, 5]
 
