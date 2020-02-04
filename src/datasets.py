@@ -87,18 +87,7 @@ def get_dataset(name, split):
                        transforms.Compose([transforms.Resize(256),
                                            transforms.CenterCrop(224),
                                            transforms.ToTensor()]))
-#
-#    if name == "imagenet" and split == "train":
-#        return datasets.ImageNet("./data/imagenet", train=True, download=True,
-#                                 transform=transforms.Compose([transforms.RandomResizedCrop(224),
-#                                                               transforms.RandomHorizontalFlip(),
-#                                                               transforms.ToTensor()]))
-#    if name == "imagenet" and split == "test":
-#        return datasets.ImageNet("./data/imagenet", train=False, download=True,
-#                                 transform=transforms.Compose([transforms.Resize(256),
-#                                                               transforms.CenterCrop(224),
-#                                                               transforms.ToTensor()]))
-#
+
     if name == "mnist":
         return datasets.MNIST("./data/mnist", train=(split == "train"), download=True,
                               transform=transforms.ToTensor())

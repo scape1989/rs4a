@@ -1,4 +1,4 @@
-description: Training CIFAR-10 Robustness [L2 matched]
+description: Training CIFAR-10 Robustness [L2 matched, ExpInf, Sweep]
 
 target:
   vc: msrlabspvc9
@@ -21,7 +21,7 @@ data:
 
 search:
   job_template:
-    name: cifar
+    name: cifar_expinf
     sku: G1
     command:
     - python3 -m src.train
@@ -39,12 +39,12 @@ search:
       --noise-batch-size=512
       --dataset-skip=4
   type: grid
-  max_trials: 5
+  max_trials: 30
   params:
     - name: sigma
       spec: discrete
-      values: [2.75, 3.0, 3.25, 3.5]
+      values: [2.25, 2.5, 2.75]
     - name: noise
       spec: discrete
-      values: ["UniformNoise"]
+      values: ["ExpInfNoise1", "ExpInfNoise2", "ExpInfNoise4", "ExpInfNoise8"]
 

@@ -37,13 +37,14 @@ search:
       --sample-size-pred=64
       --sample-size-cert=100000
       --noise-batch-size=512
+      --dataset-skip=20
   type: grid
-  max_trials: 30
+  max_trials: 100
   params:
     - name: sigma
       spec: discrete
-      values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25]
+      values: [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5]
     - name: noise
       spec: discrete
-      values: ["PTailNoise2", "PTailNoise8", "UniformBallNoise", "GaussianNoise"]
+      values: ["PTailNoise4", "Exp2PolyNoise4", "Exp2PolyNoise8"]
 

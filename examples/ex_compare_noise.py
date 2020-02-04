@@ -15,19 +15,19 @@ if __name__ == "__main__":
     argparser.add_argument("--sigma", type=float, default=0.25)
     args = argparser.parse_args()
 
-    noises = ["GaussianNoise", "LaplaceNoise", "UniformNoise"]
+    #noises = ["GaussianNoise", "LaplaceNoise", "UniformNoise"]
     #noises = ["GaussianNoise", "Exp2PolyNoise2048", "PTailNoise100"]
     #noises = ["GammaNoise3", "GammaNoise4", "GammaNoise5"]
     #noises = ["ExpInfNoise", "UniformNoise"]
-    #noises = ["GaussianNoise", "PTailNoise8", "PTailNoise100", "PTailNoise2"]
+#    noises = ["GaussianNoise", "PTailNoise8", "PTailNoise100", "PTailNoise2"]
     #noises = ["Exp1Noise1", "Exp1Noise10"]#, "Exp1Noise20"]
-    #noises = ["GaussianNoise", "PTailNoise8", "PTailNoise2", "PTailNoise4"]
+    noises = ["GaussianNoise", "PTailNoise8", "PTailNoise2", "UniformBallNoise"]
 
     sns.set_style("whitegrid")
     sns.set_palette("husl")
 
     plt.figure(figsize=(8, 8))
-    axis = np.linspace(0, 0.5, 400)
+    axis = np.linspace(0, 1, 400)
     linf_axis = np.linspace(0, 2.5, 400)
 
     for noise_str in noises:

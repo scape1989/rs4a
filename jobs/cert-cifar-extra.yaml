@@ -1,4 +1,4 @@
-description: Training CIFAR-10 Robustness [L2 matched]
+description: Certifying CIFAR-10 Robustness [L2 matched]
 
 target:
   vc: msrlabspvc9
@@ -12,6 +12,11 @@ environment:
   - pip install statsmodels --user
   - pip install tqdm --user
 
+storage:
+  imagenet:
+    storage_account_name: tonyduanstorage
+    container_name: imagenet
+
 code:
   local_dir: $CONFIG_DIR/../
 
@@ -21,30 +26,25 @@ data:
 
 search:
   job_template:
-    name: cifar
+    name: cert_cifar
     sku: G1
     command:
-    - python3 -m src.train
-      --noise={noise}
-      --sigma={sigma}
-      --experiment-name=cifar_{noise}_{sigma}
-      --p=2
     - python3 -m src.test
       --noise={noise}
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
-      --p=2
       --sample-size-pred=64
       --sample-size-cert=100000
       --noise-batch-size=512
-      --dataset-skip=4
+      --p=2
+      --save-path=/mnt/imagenet/cifar_l1/cifar_{noise}_{sigma}/model_ckpt.torch
   type: grid
-  max_trials: 5
+  max_trials: 24
   params:
     - name: sigma
       spec: discrete
-      values: [2.75, 3.0, 3.25, 3.5]
+      values: [2.25, 2.5, 2.75]
     - name: noise
       spec: discrete
-      values: ["UniformNoise"]
+      values: ["ExpInfNoise1", "ExpInfNoise2", "ExpInfNoise4", "ExpInfNoise8"]
 

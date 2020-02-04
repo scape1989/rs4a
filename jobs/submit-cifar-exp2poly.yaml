@@ -42,8 +42,8 @@ search:
   params:
     - name: sigma
       spec: discrete
-      values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25]
+      values: [1.5, 1.75, 2.0, 2.25, 2.5,2.75,3]
     - name: noise
       spec: discrete
-      values: ["Exp2PolyNoise1", "Exp2PolyNoise1024"]
+      values: ["Exp2PolyNoise1"]
 

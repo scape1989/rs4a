@@ -6,7 +6,7 @@ target:
 
 storage:
   imagenet:
-    storage_account_name: msrairesidentssa8
+    storage_account_name: tonyduan
     container_name: imagenet
 
 environment:

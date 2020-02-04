@@ -85,15 +85,10 @@ if __name__ == "__main__":
             if args.rotate:
                 x = rotate_noise.sample(x)
 
-            if args.adversarial and epoch > args.num_epochs // 2:
+            if args.adversarial:
                 x = pgd_attack_smooth(model, x, y, args.eps, noise, sample_size=4, p=2)
             elif not args.direct:
                 x = noise.sample(x.view(len(x), -1)).view(x.shape)
-
-                # for 6 channels
-#                x = torch.cat((x, 1 - x), dim=1)
-#                x[torch.isnan(x)] = 0
-#                x[torch.isnan(x)] = 0
                 # random rotation matrix
 #                W, _ = sp.linalg.qr(np.random.randn(784, 784))
 #                delta = noise.sample(x.shape)
@@ -127,6 +122,7 @@ if __name__ == "__main__":
 
         annealer.step()
 
+    pathlib.Path(f"{args.output_dir}/{args.experiment_name}").mkdir(parents=True, exist_ok=True)
     save_path = f"{args.output_dir}/{args.experiment_name}/model_ckpt.torch"
     torch.save(model.state_dict(), save_path)
     args_path = f"{args.output_dir}/{args.experiment_name}/args.pkl"

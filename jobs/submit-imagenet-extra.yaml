@@ -6,7 +6,7 @@ target:
 
 storage:
   imagenet:
-    storage_account_name: msrairesidentssa8
+    storage_account_name: tonyduanstorage
     container_name: imagenet
 
 environment:
@@ -42,9 +42,8 @@ search:
   params:
     - name: noise
       spec: discrete
-      values: ["LaplaceNoise", "UniformNoise"]
+      values: ["UniformNoise"]
     - name: sigma
       spec: discrete
-      values: [1.50, 1.75, 2.0, 0.15]
-#      values: [1.50, 1.75, 2.0, 2.25, 2.5]
+      values: [2.75, 3.0, 3.25]
 

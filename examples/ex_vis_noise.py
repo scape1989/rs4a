@@ -3,14 +3,14 @@ from argparse import ArgumentParser
 from torchvision import datasets, transforms
 from matplotlib import pyplot as plt
 from src.noises import *
-from src.datasets import get_dataset
+from src.datasets import get_dataset, get_dim
 
 
 def plot_image(x, dataset):
     if dataset == "cifar":
         plt.imshow(x[0].numpy().transpose(1, 2, 0))
     if dataset == "mnist":
-        plt.imshow(x[0,0].numpy())
+        plt.imshow(x[0].numpy())
 
 
 if __name__ == "__main__":
@@ -27,11 +27,13 @@ if __name__ == "__main__":
     plt.figure(figsize=(3 * args.n_samples, 9))
 
     x, y = dataset[args.idx]
-    x = x.unsqueeze(0)
+    x = x.unsqueeze(0) if dataset == "cifar" else x
+
+    dim = get_dim(dataset)
 
     for i in range(args.n_samples):
 
-        noise = LaplaceNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=2, dim=3 * 32 * 32)
+        noise = LaplaceNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=2, dim=dim)
         sample = (noise.sample(x)).clamp(0, 1)
         plt.subplot(4, args.n_samples, i + 1)
         plot_image(sample, args.dataset)
@@ -40,7 +42,7 @@ if __name__ == "__main__":
 
     for i in range(args.n_samples):
 
-        noise = GaussianNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=2, dim=3 * 32 * 32)
+        noise = GaussianNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=2, dim=dim)
         sample = (noise.sample(x)).clamp(0, 1)
         plt.subplot(4, args.n_samples, i + 1 + args.n_samples)
         plot_image(sample, args.dataset)
@@ -49,7 +51,7 @@ if __name__ == "__main__":
 
     for i in range(args.n_samples):
 
-        noise = PowerLawNoise(sigma=args.sigma + 0.1 * i, device="cpu", k=16, p=2, dim=3 * 32 * 32)
+        noise = PowerLawNoise(sigma=args.sigma + 0.1 * i, device="cpu", k=16, p=2, dim=dim)
         sample = (noise.sample(x)).clamp(0, 1)
         plt.subplot(4, args.n_samples, i + 1 + args.n_samples * 2)
         plot_image(sample, args.dataset)
@@ -58,7 +60,7 @@ if __name__ == "__main__":
 
     for i in range(args.n_samples):
 
-        noise = UniformNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=2, dim=3 * 32 * 32)
+        noise = UniformNoise(sigma=args.sigma + 0.1 * i, device="cpu", p=2, dim=dim)
         sample = (noise.sample(x)).clamp(0, 1)
         plt.subplot(4, args.n_samples, i + 1 + args.n_samples * 3)
         plot_image(sample, args.dataset)

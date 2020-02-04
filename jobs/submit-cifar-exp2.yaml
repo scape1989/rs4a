@@ -1,7 +1,7 @@
-description: Training CIFAR-10 Robustness [L2 matched, PTail]
+description: Training CIFAR-10 Robustness [L2 matched, Exp2]
 
 target:
-  vc: msrlabs
+  vc: msrlabspvc9
   cluster: eu1
 
 environment:
@@ -21,7 +21,7 @@ data:
 
 search:
   job_template:
-    name: cifar_ptail
+    name: cifar_exp2poly
     sku: G1
     command:
     - python3 -m src.train
@@ -34,13 +34,16 @@ search:
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
       --p=2
+      --sample-size-pred=64
+      --sample-size-cert=100000
+      --noise-batch-size=512
   type: grid
-  max_trials: 18
+  max_trials: 30
   params:
     - name: sigma
       spec: discrete
-      values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25]
+      values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5]
     - name: noise
       spec: discrete
-      values: ["Exp2Noise1", "Exp2Noise2", "Exp2Noise3"]
+      values: ["Exp2Noise1", "Exp2Noise2", "Exp2Noise4", "Exp2Noise8"]
 

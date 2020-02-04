@@ -102,6 +102,7 @@ class GaussianNoise(Noise):
     def certify(self, prob_lower_bound):
         return self.norm_dist.icdf(prob_lower_bound)
 
+
 class LaplaceNoise(Noise):
 
     def __init__(self, sigma, device, dim, p):
@@ -395,9 +396,6 @@ class MaskGaussianNoisePixel(Noise):
             noise[batch_no, idxs[batch_no]] = 0.4734
             noise[batch_no, idxs[batch_no] + 1024] = 0.4734
             noise[batch_no, idxs[batch_no] + 2048] = 0.4734
-#            noise[batch_no, idxs[batch_no]] = np.nan
-#            noise[batch_no, idxs[batch_no] + 1024] = np.nan
-#            noise[batch_no, idxs[batch_no] + 2048] = np.nan
         return noise.reshape(x.shape)
 
     def certify(self, prob_lower_bound):

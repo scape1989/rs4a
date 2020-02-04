@@ -1,7 +1,7 @@
 description: Training CIFAR-10 Robustness [L2 matched, Direct]
 
 target:
-  vc: msrlabs
+  vc: msrlabspvc9
   cluster: eu1
 
 environment:
@@ -21,7 +21,7 @@ data:
 
 search:
   job_template:
-    name: cifar_direct
+    name: cifar
     sku: G1
     command:
     - python3 -m src.train
@@ -36,12 +36,12 @@ search:
       --experiment-name=cifar_{noise}_{sigma}
       --p=2
   type: grid
-  max_trials: 24
+  max_trials: 30
   params:
     - name: sigma
       spec: discrete
       values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25]
     - name: noise
       spec: discrete
-      values: ["GaussianNoise", "LaplaceNoise", "UniformNoise", "LomaxNoise"]
+      values: ["UniformNoise", "LaplaceNoise", "GaussianNoise"]
 

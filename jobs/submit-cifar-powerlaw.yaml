@@ -34,12 +34,15 @@ search:
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
       --p=2
+      --dataset-skip=4
   type: grid
   max_trials: 24
   params:
     - name: sigma
       spec: discrete
-      values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25]
+#      values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25]
+#      values: [1.5, 1.75, 2, 2.25, 2.5, 2.75]
+      values: [3.0, 3.25, 3.5, 3.75]
     - name: noise
       spec: discrete
       values: ["PowerLawNoise4", "PowerLawNoise16", "PowerLawNoise32", "PowerLawNoise128"]
