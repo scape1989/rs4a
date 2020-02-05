@@ -1,4 +1,4 @@
-description: Training CIFAR-10 Robustness [L2 matched, Exp2]
+description: Training CIFAR-10 Robustness [Exp2]
 
 target:
   vc: msrlabspvc9
@@ -37,6 +37,7 @@ search:
       --sample-size-pred=64
       --sample-size-cert=100000
       --noise-batch-size=512
+      --dataset-skip=4
   type: grid
   max_trials: 30
   params:

@@ -1,4 +1,4 @@
-description: Training CIFAR-10 Robustness [L2 matched, ExpInf, Sweep]
+description: Training CIFAR-10 Robustness [ExpInf]
 
 target:
   vc: msrlabspvc9
@@ -43,7 +43,7 @@ search:
   params:
     - name: sigma
       spec: discrete
-      values: [2.25, 2.5, 2.75]
+      values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5]
     - name: noise
       spec: discrete
       values: ["ExpInfNoise1", "ExpInfNoise2", "ExpInfNoise4", "ExpInfNoise8"]

@@ -6,6 +6,9 @@ from statsmodels.stats.proportion import proportion_confint
 
 
 def direct_train_log_lik(model, x, y, noise, sample_size=16):
+    """
+    Log-likelihood for direct training (numerically stable with logusmexp trick).
+    """
     samples_shape = torch.Size([x.shape[0], sample_size]) + x.shape[1:]
     samples = x.unsqueeze(1).expand(samples_shape)
     samples = samples.reshape(torch.Size([-1]) + samples.shape[2:])
@@ -66,7 +69,7 @@ def smooth_predict_hard(model, x, noise, sample_size=64, noise_batch_size=512):
 
     return Categorical(probs=counts)
 
-def certify_smoothed(model, x, top_cats, alpha, noise, sample_size=100000, noise_batch_size=512):
+def certify_smoothed(model, x, top_cats, alpha, noise, p, sample_size=10**5, noise_batch_size=512):
     """
     Certify a smoothed model, given the top categories to certify for.
 
@@ -79,5 +82,5 @@ def certify_smoothed(model, x, top_cats, alpha, noise, sample_size=100000, noise
     top_probs = preds.probs.gather(dim=1, index=top_cats.unsqueeze(1)).detach().cpu()
     lower, _ = proportion_confint(top_probs * sample_size, sample_size, alpha=alpha, method="beta")
     lower = torch.tensor(lower.squeeze(), dtype=torch.float)
-    return lower, noise.certify(lower)
+    return lower, noise.certify(lower, p=p)
 

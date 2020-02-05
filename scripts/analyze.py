@@ -22,6 +22,7 @@ if __name__ == "__main__":
     dataset = args.dir.split("_")[0]
     experiment_names = list(filter(lambda x: x.startswith(dataset), os.listdir(args.dir)))
 
+    sns.set_context("notebook", rc={"lines.linewidth": 1.5})
     sns.set_style("whitegrid")
     sns.set_palette("husl")
 

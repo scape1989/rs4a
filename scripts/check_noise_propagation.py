@@ -65,7 +65,7 @@ if __name__ == "__main__":
         if args.load:
             break
 
-        sigma = 1.25 if noise_str == "UniformNoise" else 0.75
+        sigma = 1.0
 
         save_path = f"{args.dir}/cifar_{noise_str}_{sigma}/{epoch-1}/model_ckpt.torch"
         model = eval(args.model)(dataset=args.dataset, device=args.device)

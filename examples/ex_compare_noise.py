@@ -34,10 +34,10 @@ if __name__ == "__main__":
 
         k = get_trailing_number(noise_str)
         if k:
-            noise = eval(noise_str[:-len(str(k))])(sigma=args.sigma, device="cpu", p=2,
+            noise = eval(noise_str[:-len(str(k))])(sigma=args.sigma, device="cpu",
                                                    dim=args.dim, k=k)
         else:
-            noise = eval(noise_str)(sigma=args.sigma, device="cpu", p=2, dim=args.dim)
+            noise = eval(noise_str)(sigma=args.sigma, device="cpu", dim=args.dim)
         noise_str = noise_str.replace("Noise", "")
 
         rvs = noise.sample(torch.zeros(args.batch_size, args.dim))

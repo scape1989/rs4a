@@ -10,6 +10,8 @@ if __name__ == "__main__":
 
     origin = torch.tensor([0, 0])
 
+    plt.figure(figsize=(5, 5))
+
     plt.quiver(*origin, x[:, 0], x[:, 1], scale=1, scale_units="xy", angles="xy", color="red", alpha=0.5)
     plt.quiver(*origin, x_proj[:, 0], x_proj[:, 1], scale=1, scale_units="xy", angles="xy", color="blue", alpha=0.5)
     plt.ylim((-2, 2))

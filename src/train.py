@@ -65,14 +65,14 @@ if __name__ == "__main__":
 
     k = get_trailing_number(args.noise)
     if k:
-        noise = eval(args.noise[:-len(str(k))])(sigma=args.sigma, device=args.device, p=args.p,
+        noise = eval(args.noise[:-len(str(k))])(sigma=args.sigma, device=args.device,
                                                 dim=get_dim(args.dataset), k=k)
     else:
-        noise = eval(args.noise)(sigma=args.sigma, device=args.device, p=args.p,
+        noise = eval(args.noise)(sigma=args.sigma, device=args.device,
                                  dim=get_dim(args.dataset))
 
     if args.rotate:
-        rotate_noise = RotationNoise(0.0, args.device, dim=get_dim(args.dataset), p=None)
+        rotate_noise = RotationNoise(0.0, args.device, dim=get_dim(args.dataset))
 
     train_losses = []
 
@@ -86,15 +86,9 @@ if __name__ == "__main__":
                 x = rotate_noise.sample(x)
 
             if args.adversarial:
-                x = pgd_attack_smooth(model, x, y, args.eps, noise, sample_size=4, p=2)
+                x = pgd_attack_smooth(model, x, y, args.eps, noise, sample_size=4, p=args.p)
             elif not args.direct:
                 x = noise.sample(x.view(len(x), -1)).view(x.shape)
-                # random rotation matrix
-#                W, _ = sp.linalg.qr(np.random.randn(784, 784))
-#                delta = noise.sample(x.shape)
-#                delta = delta.reshape(x.shape[0], -1)
-#                delta = delta @ torch.tensor(W, device=args.device, dtype=torch.float)
-#                x = x + delta.view(x.shape)
 
             if args.direct:
                 loss = -direct_train_log_lik(model, x, y, noise, sample_size=16).mean()

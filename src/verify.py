@@ -38,11 +38,10 @@ if __name__ == "__main__":
 
     k = get_trailing_number(args.noise)
     if k:
-        noise = eval(args.noise[:-len(str(k))])(sigma=args.sigma, device=args.device, p=args.p,
+        noise = eval(args.noise[:-len(str(k))])(sigma=args.sigma, device=args.device,
                                                 dim=get_dim(args.dataset), k=k)
     else:
-        noise = eval(args.noise)(sigma=args.sigma, device=args.device, p=args.p,
-                                 dim=get_dim(args.dataset))
+        noise = eval(args.noise)(sigma=args.sigma, device=args.device, dim=get_dim(args.dataset))
 
     eps_range = (3.0, 2.0, 1.0, 0.5, 0.25)
 

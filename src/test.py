@@ -27,7 +27,7 @@ if __name__ == "__main__":
     argparser.add_argument("--noise-batch-size", default=512, type=int)
     argparser.add_argument("--sigma", default=0.0, type=float)
     argparser.add_argument("--noise", default="Clean", type=str)
-    argparser.add_argument("--p", default=2, type=int)
+    argparser.add_argument("--p", default=1, type=float)
     argparser.add_argument("--dataset-skip", default=1, type=int)
     argparser.add_argument("--experiment-name", default="cifar", type=str)
     argparser.add_argument("--dataset", default="cifar", type=str)
@@ -71,10 +71,10 @@ if __name__ == "__main__":
 
     k = get_trailing_number(args.noise)
     if k:
-        noise = eval(args.noise[:-len(str(k))])(sigma=args.sigma, device=args.device, p=args.p,
+        noise = eval(args.noise[:-len(str(k))])(sigma=args.sigma, device=args.device,
                                                 dim=get_dim(args.dataset), k=k)
     else:
-        noise = eval(args.noise)(sigma=args.sigma, device=args.device, p=args.p,
+        noise = eval(args.noise)(sigma=args.sigma, device=args.device,
                                  dim=get_dim(args.dataset))
 
     results = {
@@ -86,7 +86,7 @@ if __name__ == "__main__":
     }
 
     if args.rotate:
-        rotate_noise = RotationNoise(0.0, args.device, dim=get_dim(args.dataset), p=None)
+        rotate_noise = RotationNoise(0.0, args.device, dim=get_dim(args.dataset))
 
     for i, (x, y) in tqdm(enumerate(test_loader), total=len(test_loader)):
 
@@ -96,8 +96,8 @@ if __name__ == "__main__":
         preds_smooth = smooth_predict_hard(model, x, noise, args.sample_size_pred,
                                            noise_batch_size=args.noise_batch_size)
         top_cats = preds_smooth.probs.argmax(dim=1)
-        p_a, radii = certify_smoothed(model, x, top_cats, 0.001, noise, args.sample_size_cert,
-                                      noise_batch_size=args.noise_batch_size)
+        p_a, radii = certify_smoothed(model, x, top_cats, 0.001, noise, args.p,
+                                      args.sample_size_cert, noise_batch_size=args.noise_batch_size)
 
         lower, upper = i * args.batch_size, (i + 1) * args.batch_size
         results["preds_smooth"][lower:upper, :] = preds_smooth.probs.data.cpu().numpy()
