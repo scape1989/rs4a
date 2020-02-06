@@ -229,7 +229,8 @@ class Exp1Noise(Noise):
 
     def __init__(self, sigma, device, dim, k=1):
         super().__init__(sigma, device, dim, k)
-        self.lambd = sigma / (math.exp(math.lgamma((dim + 1) / k) - math.lgamma(dim / k))) * (0.5 * dim * (dim + 1)) ** 0.5
+        self.lambd = sigma / (math.exp(math.lgamma((dim + 1) / k) - math.lgamma(dim / k))) 
+        self.lambd *= (0.5 * dim * (dim + 1)) ** 0.5
         self.gamma_factor = math.exp(math.lgamma(dim / k) - math.lgamma((dim + k - 1) / k))
         self.dirichlet_dist = Dirichlet(concentration=torch.ones(dim, device=device))
         self.gamma_dist = Gamma(concentration=torch.tensor(dim / k, device=device),
@@ -257,7 +258,8 @@ class Exp2Noise(Noise):
 
     def __init__(self, sigma, device, dim, k=1):
         super().__init__(sigma, device, dim, k)
-        self.lambd = sigma * dim ** 0.5 / math.exp(math.lgamma((dim + 1) / k) - math.lgamma(dim / k))
+        self.lambd = sigma / math.exp(math.lgamma((dim + 1) / k) - math.lgamma(dim / k))
+        self.lambd *= dim ** 0.5
         self.beta_dist = sp.stats.beta(0.5 * (self.dim - 1), 0.5 * (self.dim - 1))
         self.gamma_dist = Gamma(concentration=torch.tensor(dim / k, device=device),
                                 rate=torch.tensor((1 / self.lambd) ** k, device=device))
@@ -284,7 +286,8 @@ class PowerLawNoise(Noise):
         self.lambd = 3 ** 0.5 * (k - 1) * sigma / dim
 
     def sample(self, x):
-        radius = torch.tensor(self.beta_dist.rvs((len(x), 1)), dtype=torch.float, device=self.device)
+        samples = self.beta_dist.rvs((len(x), 1))
+        radius = torch.tensor(samples, dtype=torch.float, device=self.device)
         noise = (2 * torch.rand(x.shape, device=self.device) - 1).reshape((len(x), -1))
         sel_dims = torch.randint(noise.shape[1], size=(len(x),))
         idxs = torch.arange(0, len(x), dtype=torch.long)
@@ -306,7 +309,8 @@ class PTailNoise(Noise):
         self.prob_lower_bounds, self.radii = np.load("./src/lib/radii_ptail.npy", allow_pickle=True)
 
     def sample(self, x):
-        radius = torch.tensor(self.beta_dist.rvs((len(x), 1)), dtype=torch.float, device=self.device) ** 0.5
+        samples = self.beta_dist.rvs((len(x), 1))
+        radius = torch.tensor(samples, dtype=torch.float, device=self.device) ** 0.5
         noise = torch.randn_like(x)
         noise = noise / torch.norm(noise, dim=1, p=2).unsqueeze(1)
         return noise * radius * self.lambd + x
@@ -459,8 +463,10 @@ class MaskGaussianNoisePatchSmall(Noise):
         noise = self.norm_dist.sample(x_copy.shape)
         sample = torch.zeros_like(x_copy)
         for _ in range(self.num_patches):
-            top_left_x = torch.randint(int((self.dim / 3)** 0.5) - self.patch_width + 1, (batch_size,))
-            top_left_y = torch.randint(int((self.dim / 3)** 0.5) - self.patch_width + 1, (batch_size,))
+            top_left_x = torch.randint(int((self.dim / 3)** 0.5) - self.patch_width + 1, 
+                                       (batch_size,))
+            top_left_y = torch.randint(int((self.dim / 3)** 0.5) - self.patch_width + 1, 
+                                       (batch_size,))
             for batch_no in range(batch_size):
                 i = top_left_x[batch_no]
                 j = top_left_y[batch_no]

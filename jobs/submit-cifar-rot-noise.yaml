@@ -1,4 +1,4 @@
-description: Training CIFAR-10 Robustness [L2 matched, RotNoise]
+description: Training CIFAR-10 Robustness [RotNoise]
 
 target:
   vc: msrlabspvc9

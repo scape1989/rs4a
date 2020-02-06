@@ -1,4 +1,4 @@
-description: Training CIFAR-10 Robustness [L2 matched, Direct]
+description: Training CIFAR-10 Robustness [Direct]
 
 target:
   vc: msrlabspvc9

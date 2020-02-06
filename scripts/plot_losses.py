@@ -1,3 +1,6 @@
+#
+# Plot the training loss for each model trained.
+#
 import numpy as np
 import pandas as pd
 import os

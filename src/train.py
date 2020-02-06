@@ -41,7 +41,7 @@ if __name__ == "__main__":
     argparser.add_argument('--output-dir', type=str, default=os.getenv("PT_OUTPUT_DIR"))
     args = argparser.parse_args()
 
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
     model = eval(args.model)(dataset=args.dataset, device=args.device)
@@ -101,10 +101,10 @@ if __name__ == "__main__":
             loss_meter.add(loss.cpu().data.numpy(), n=1)
 
             if i % args.print_every == 0:
-                logger.info(f"Epoch: {epoch}\t" +
-                            f"Itr: {i} / {len(train_loader)}\t" +
+                logger.info(f"Epoch: {epoch}\t"
+                            f"Itr: {i} / {len(train_loader)}\t"
                             f"Loss: {loss_meter.value()[0]:.2f}\t"
-                            f"Mins: {(time_meter.value() / 60):.2f}\t" +
+                            f"Mins: {(time_meter.value() / 60):.2f}\t"
                             f"Experiment: {args.experiment_name}")
                 train_losses.append(loss_meter.value()[0])
                 loss_meter.reset()

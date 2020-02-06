@@ -1,4 +1,4 @@
-description: Training CIFAR-10 Robustness [L2 matched, Exp2Poly]
+description: Training CIFAR-10 Robustness [Exp2Poly]
 
 target:
   vc: msrlabspvc9
@@ -41,8 +41,8 @@ search:
   params:
     - name: sigma
       spec: discrete
-      values: [1.5, 1.75, 2.0, 2.25, 2.5,2.75,3]
+      values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
     - name: noise
       spec: discrete
-      values: ["Exp2PolyNoise1"]
+      values: ["Exp2PolyNoise1", "Exp2PolyNoise4", "Exp2PolyNoise8", "Exp2PolyNoise1024"]
 

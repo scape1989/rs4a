@@ -1,4 +1,4 @@
-description: Training CIFAR-10 Robustness [L2 matched, AlexNet]
+description: Training CIFAR-10 Robustness [AlexNet]
 
 target:
   vc: msrlabs
@@ -34,8 +34,8 @@ search:
       --noise={noise}
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
-      --p=1
       --model=AlexNet
+      --p=1
   type: grid
   max_trials: 24
   params:

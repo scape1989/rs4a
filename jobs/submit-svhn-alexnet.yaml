@@ -1,4 +1,4 @@
-description: Training SVHN Robustness [L2 matched, AlexNet]
+description: Training SVHN Robustness [AlexNet]
 
 target:
   vc: msrlabs
@@ -37,10 +37,9 @@ search:
       --experiment-name=svhn_{noise}_{sigma}
       --dataset=svhn
       --model=AlexNet
-      --p=1
       --sample-size-cert=100000
       --noise-batch-size=512
-      --dataset-skip=4
+      --p=1
   type: grid
   max_trials: 24
   params:

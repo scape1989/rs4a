@@ -1,4 +1,4 @@
-description: Training CIFAR-10 Robustness [L2 matched, Lomax]
+description: Training CIFAR-10 Robustness [Lomax]
 
 target:
   vc: msrlabspvc9
@@ -34,7 +34,6 @@ search:
       --experiment-name=cifar_{noise}_{sigma}
       --sample-size-cert=100000
       --noise-batch-size=512
-      --dataset-skip=4
       --p=1
   type: grid
   max_trials: 20

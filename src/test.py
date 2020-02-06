@@ -23,7 +23,7 @@ if __name__ == "__main__":
     argparser.add_argument("--batch-size", default=2, type=int)
     argparser.add_argument("--num-workers", default=min(os.cpu_count(), 8), type=int)
     argparser.add_argument("--sample-size-pred", default=64, type=int)
-    argparser.add_argument("--sample-size-cert", default=1024, type=int)
+    argparser.add_argument("--sample-size-cert", default=100000, type=int)
     argparser.add_argument("--noise-batch-size", default=512, type=int)
     argparser.add_argument("--sigma", default=0.0, type=float)
     argparser.add_argument("--noise", default="Clean", type=str)

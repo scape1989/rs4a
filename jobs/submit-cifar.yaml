@@ -35,7 +35,6 @@ search:
       --p=1
       --sample-size-cert=100000
       --noise-batch-size=512
-      --dataset-skip=4
   type: grid
   max_trials: 24
   params:

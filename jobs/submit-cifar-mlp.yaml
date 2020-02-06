@@ -1,4 +1,4 @@
-description: Training CIFAR-10 Robustness [L2 matched, MLP]
+description: Training CIFAR-10 Robustness [MLP]
 
 target:
   vc: msrlabspvc9
@@ -44,10 +44,8 @@ search:
   params:
     - name: sigma
       spec: discrete
-#      values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25]
-      values: [1.5, 1.75, 2.0]
+      values: [0.15, 0.25, 0.5, 0.75, 1.0, 1.25]
     - name: noise
       spec: discrete
-#      values: ["GaussianNoise", "LaplaceNoise", "UniformNoise"]
-      values: ["UniformNoise"]
+      values: ["GaussianNoise", "LaplaceNoise", "UniformNoise"]
 

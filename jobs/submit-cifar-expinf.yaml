@@ -28,7 +28,6 @@ search:
       --noise={noise}
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
-      --p=2
     - python3 -m src.test
       --noise={noise}
       --sigma={sigma}
@@ -36,7 +35,6 @@ search:
       --sample-size-pred=64
       --sample-size-cert=100000
       --noise-batch-size=512
-      --dataset-skip=4
       --p=1
   type: grid
   max_trials: 30

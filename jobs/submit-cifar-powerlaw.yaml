@@ -1,4 +1,4 @@
-description: Training CIFAR-10 Robustness [L2 matched, PowerLaw]
+description: Training CIFAR-10 Robustness [PowerLaw]
 
 target:
   vc: msrlabs
@@ -32,11 +32,9 @@ search:
       --noise={noise}
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
-      --p=1
-      --dataset-skip=4
       --sample-size-cert=100000
       --noise-batch-size=512
-      --dataset-skip=4
+      --p=1
   type: grid
   max_trials: 24
   params:

@@ -8,7 +8,6 @@ from argparse import ArgumentParser
 from collections import defaultdict
 from dfply import *
 from matplotlib import pyplot as plt
-from src.utils import get_trailing_number
 
 
 if __name__ == "__main__":
@@ -18,14 +17,17 @@ if __name__ == "__main__":
     argparser.add_argument("--debug", action="store_true")
     argparser.add_argument("--show", action="store_true")
     argparser.add_argument("--eps-max", default=5.0, type=float)
+    argparser.add_argument("--fancy-markers", action="store_true")
     args = argparser.parse_args()
 
-    dataset = args.dir.split("_")[0]
-    experiment_names = list(filter(lambda x: x.startswith(dataset), os.listdir(args.dir)))
-
+    # plotting preamble
     sns.set_context("notebook", rc={"lines.linewidth": 2})
     sns.set_style("whitegrid")
     sns.set_palette("husl")
+
+    # load the dataset
+    dataset = args.dir.split("_")[0]
+    experiment_names = list(filter(lambda x: x.startswith(dataset), os.listdir(args.dir)))
 
     df = defaultdict(list)
     eps_range = np.linspace(0, args.eps_max, 81)
@@ -126,22 +128,22 @@ if __name__ == "__main__":
     plt.ylim((0, 1))
     plt.tight_layout()
     plt.savefig(f"{args.dir}/train_test_accuracies.pdf")
-#
+
 #   # plot certified accuracies
-#    selected = df >> mutate(certacc=X.top_1_acc_cert) >> mask(X.sigma <= 1.25) >> mask(X.noise != "ExpInf") >> mask(X.noise != "Lomax")
-#    sns.relplot(x="eps", y="certacc", hue="noise", kind="line", col="sigma", col_wrap=2,
-#                data=selected, height=2, aspect=1.5)
-#    plt.ylim((0, 1))
-#    plt.tight_layout()
-#    plt.savefig(f"{args.dir}/per_sigma.pdf")
-#
+    selected = df >> mutate(certacc=X.top_1_acc_cert) \
+                  >> mask(X.sigma <= 1.25, X.noise != "ExpInf", X.noise != "Lomax")
+    sns.relplot(x="eps", y="certacc", hue="noise", kind="line", col="sigma", col_wrap=2,
+                data=selected, height=2, aspect=1.5)
+    plt.ylim((0, 1))
+    plt.tight_layout()
+    plt.savefig(f"{args.dir}/per_sigma.pdf")
+
     # plot top certified accuracy per epsilon, per type of noise
     grouped = df >> mask(X.noise != "Clean", X.noise != "ExpInf", X.noise != "Lomax") \
                  >> group_by(X.eps, X.noise) \
                  >> arrange(X.top_1_acc_cert, ascending=False) \
                  >> summarize(top_1_acc_cert=first(X.top_1_acc_cert),
                               noise=first(X.noise))
-
     grouped = pd.concat((grouped >> mask(X.noise == "Gaussian"),
                          grouped >> mask(X.noise != "Gaussian")))
 

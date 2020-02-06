@@ -1,4 +1,4 @@
-description: Certifying ImageNet Robustness [L2 matched, 100k]
+description: Certifying ImageNet Robustness [100k]
 
 target:
   vc: msrlabspvc9

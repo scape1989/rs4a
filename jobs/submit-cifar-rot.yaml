@@ -1,4 +1,4 @@
-description: Training CIFAR-10 Robustness [L2 matched, Rot]
+description: Training CIFAR-10 Robustness [Rot]
 
 target:
   vc: msrlabspvc9
@@ -34,6 +34,7 @@ search:
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
       --rotate
+      --p=1
   type: grid
   max_trials: 18
   params:
