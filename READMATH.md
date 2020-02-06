@@ -69,6 +69,8 @@ Certification bounds depend on $\rho$, which we denote to be
 $$
 \rho \triangleq \mathrm{Pr}_\delta[\arg\max P_\theta(y|x+\delta) = c],
 $$
+
+
 where $c$ is the top predicted category by $F_\mathrm{hard}$. 
 
 We obtain a lower bound on $\rho$ from Monte Carlo samples of the forecasted modes $c_1,\dots,c_m$, at a confidence level $\alpha$ with,

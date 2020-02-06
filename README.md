@@ -59,6 +59,8 @@ In practice we need to resort to Monte Carlo samping to approximate <img alt="$F
 
 Certification bounds depend on <img alt="$\rho$" src="svgs/6dec54c48a0438a5fcde6053bdb9d712.svg" align="middle" width="8.49888434999999pt" height="14.15524440000002pt"/>, which we denote to be
 <p align="center"><img alt="$$&#10;\rho \triangleq \mathrm{Pr}_\delta[\arg\max P_\theta(y|x+\delta) = c],&#10;$$" src="svgs/7f3199cea50227a3dacef5613141636b.svg" align="middle" width="238.57029404999997pt" height="19.178118299999998pt"/></p>
+
+
 where <img alt="$c$" src="svgs/3e18a4a28fdee1744e5e3f79d13b9ff6.svg" align="middle" width="7.11380504999999pt" height="14.15524440000002pt"/> is the top predicted category by <img alt="$F_\mathrm{hard}$" src="svgs/f370369da8812afdb3f69806ea24b29f.svg" align="middle" width="36.780984899999986pt" height="22.465723500000017pt"/>. 
 
 We obtain a lower bound on <img alt="$\rho$" src="svgs/6dec54c48a0438a5fcde6053bdb9d712.svg" align="middle" width="8.49888434999999pt" height="14.15524440000002pt"/> from Monte Carlo samples of the forecasted modes <img alt="$c_1,\dots,c_m$" src="svgs/f09b71056793c2733ff7df921c93df4d.svg" align="middle" width="69.79633319999999pt" height="14.15524440000002pt"/>, at a confidence level <img alt="$\alpha$" src="svgs/c745b9b57c145ec5577b82542b2df546.svg" align="middle" width="10.57650494999999pt" height="14.15524440000002pt"/> with,
