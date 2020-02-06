@@ -30,7 +30,6 @@ search:
       --experiment-name=fashion_{noise}_{sigma}
       --dataset=fashion
       --model=MLP
-      --p=2
       --lr=0.01
     - python3 -m src.test
       --noise={noise}
@@ -38,7 +37,7 @@ search:
       --experiment-name=fashion_{noise}_{sigma}
       --dataset=fashion
       --model=MLP
-      --p=2
+      --p=1
   type: grid
   max_trials: 24
   params:
@@ -47,5 +46,5 @@ search:
       values: [0.15, 0.5, 1.0, 2.0, 3.0, 4.0]
     - name: noise
       spec: discrete
-      values: ["GaussianNoise", "UniformNoise", "LaplaceNoise", "LomaxNoise"]
+      values: ["GaussianNoise", "UniformNoise", "LaplaceNoise"]
 

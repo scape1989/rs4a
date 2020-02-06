@@ -28,12 +28,11 @@ search:
       --noise={noise}
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
-      --p=2
     - python3 -m src.test
       --noise={noise}
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
-      --p=2
+      --p=1
       --sample-size-pred=64
       --sample-size-cert=100000
       --noise-batch-size=512

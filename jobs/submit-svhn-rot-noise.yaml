@@ -29,14 +29,13 @@ search:
       --sigma={sigma}
       --experiment-name=svhn_{noise}_{sigma}
       --dataset=svhn
-      --p=2
       --lr=0.05
     - python3 -m src.test
       --noise={noise}
       --sigma={sigma}
       --experiment-name=svhn_{noise}_{sigma}
       --dataset=svhn
-      --p=2
+      --p=1
   type: grid
   max_trials: 24
   params:

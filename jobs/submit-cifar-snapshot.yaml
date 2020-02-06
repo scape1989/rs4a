@@ -28,7 +28,6 @@ search:
       --noise={noise}
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
-      --p=2
       --save-every=1
       --batch-size=16
       --num-epochs=30

@@ -24,6 +24,7 @@ if __name__ == "__main__":
     dataset = args.dir.split("_")[0]
     experiment_names = list(filter(lambda x: x.startswith(dataset), os.listdir(args.dir)))
 
+    sns.set_context("notebook", rc={"lines.linewidth": 2})
     sns.set_style("whitegrid")
     sns.set_palette("husl")
 
@@ -73,34 +74,8 @@ if __name__ == "__main__":
     df = pd.DataFrame(df)
     df.to_csv(f"{args.dir}/results_{dataset}.csv", index=False)
 
-
     if args.debug:
         breakpoint()
-
-    # plot clean training accuracy against certified accuracy at eps
-    tmp = df >> mask(abs(X.eps - 0.01 * 255) < 1e-4) >> arrange(X.noise)
-    plt.figure(figsize=(3, 3))
-    sns.scatterplot(x="top_1_acc_train", y="top_1_acc_cert", hue="noise", style="noise",
-                    size="sigma", data=tmp, legend=False)
-    plt.plot(np.linspace(0.0, 1.0), np.linspace(0.0, 1.0), "--", color="gray")
-    plt.ylim((0, 1))
-    plt.xlim((0.0, 1.0))
-    plt.xlabel("Top-1 training accuracy")
-    plt.ylabel("Top-1 certified accuracy, $\epsilon$ = 2.55/255")
-    plt.tight_layout()
-    plt.savefig(f"{args.dir}/train_vs_certified.eps")
-    plt.show()
-
-    # plot certified accuracies
-#    selected = df >> mask(X.noise != "Clean")
-#    sns.relplot(x="eps", y="top_1_acc_cert", hue="noise", kind="line", col="sigma",
-#                col_wrap=2, data=selected, height=2, aspect=1.5)
-#    plt.ylim((0, 1))
-#    plt.suptitle(args.dir)
-#    plt.tight_layout()
-#    plt.show()
-
-#    df = pd.concat((df >> mask(X.noise != "ExpInf"), df >> mask(X.noise == "ExpInf")))
 
     # plot top certified accuracy per epsilon, per type of noise
     grouped = df >> mask(X.noise != "Clean") \
@@ -111,12 +86,12 @@ if __name__ == "__main__":
 
     grouped = pd.concat((grouped >> mask(X.noise != "ExpInf"), df >> mask(X.noise == "ExpInf")))
 
-    plt.figure(figsize=(3, 3))
+    plt.figure(figsize=(3, 2.8))
     sns.lineplot(x="eps", y="top_1_acc_cert", data=grouped, hue="noise", style="noise")
     plt.ylim((0, 1))
-    plt.xlabel("$\epsilon \\times 255$")
+    plt.xlabel(r"$\ell_\infty$ radius $\times 255$")
     plt.ylabel("Top-1 certified accuracy")
     plt.tight_layout()
-    plt.savefig(f"{args.dir}/certified_accuracies_linf.eps")
+    plt.savefig(f"{args.dir}/certified_accuracies_linf.pdf")
     plt.show()
 

@@ -28,13 +28,11 @@ search:
       --noise={noise}
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
-      --p=2
       --rotate
     - python3 -m src.test
       --noise={noise}
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
-      --p=2
       --rotate
   type: grid
   max_trials: 18

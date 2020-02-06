@@ -29,7 +29,6 @@ search:
       --sigma={sigma}
       --experiment-name=svhn_{noise}_{sigma}
       --dataset=svhn
-      --p=2
       --rotate
       --lr=0.05
     - python3 -m src.test
@@ -37,7 +36,7 @@ search:
       --sigma={sigma}
       --experiment-name=svhn_{noise}_{sigma}
       --dataset=svhn
-      --p=2
+      --p=1
       --rotate
   type: grid
   max_trials: 24

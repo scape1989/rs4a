@@ -16,13 +16,14 @@ if __name__ == "__main__":
     argparser = ArgumentParser()
     argparser.add_argument("--dir", default="./ckpts", type=str)
     argparser.add_argument("--debug", action="store_true")
+    argparser.add_argument("--show", action="store_true")
     argparser.add_argument("--eps-max", default=5.0, type=float)
     args = argparser.parse_args()
 
     dataset = args.dir.split("_")[0]
     experiment_names = list(filter(lambda x: x.startswith(dataset), os.listdir(args.dir)))
 
-    sns.set_context("notebook", rc={"lines.linewidth": 1.5})
+    sns.set_context("notebook", rc={"lines.linewidth": 2})
     sns.set_style("whitegrid")
     sns.set_palette("husl")
 
@@ -32,7 +33,6 @@ if __name__ == "__main__":
     for experiment_name in experiment_names:
 
         save_path = f"{args.dir}/{experiment_name}"
-#        experiment_args = pickle.load(open(f"{args.dir}/{experiment_name}/args.pkl", "rb"))
         results = {}
 
         for k in  ("preds_smooth", "labels", "radius_smooth", "acc_train"):
@@ -43,10 +43,9 @@ if __name__ == "__main__":
 
         _, noise, sigma = experiment_name.split("_")
         sigma = float(sigma)
+        noise = noise.replace("Exp1Noise", "ExpOneNoise")
         noise = noise.replace("Noise", "")
-#
-#        if noise == "PTail2":
-#            continue
+
 #        if noise == "PTail8":
 #            noise = "PowerLaw $\ell_2$"
 #        if noise == "Exp2Poly1024":
@@ -55,13 +54,14 @@ if __name__ == "__main__":
 #            continue
 #        if noise == "UniformBall":
 #            noise = "Uniform $\ell_2$"
-#
+        if noise == "Lomax":
+            noise = "Pareto"
+
         for eps in eps_range:
 
             top_1_acc_cert = ((results["radius_smooth"] >= eps) & \
                               (top_1_preds_smooth == results["labels"])).mean()
             df["experiment_name"].append(experiment_name)
-#            df["sigma"].append(experiment_args.sigma / (3 * 32 * 32 / k) ** 0.5)
             df["sigma"].append(sigma)
             df["noise"].append(noise)
             df["eps"].append(eps)
@@ -70,7 +70,7 @@ if __name__ == "__main__":
             df["top_1_acc_pred"].append(top_1_acc_pred)
 
     # save the experiment results
-    df = pd.DataFrame(df) >> arrange(X.noise)
+    df = pd.DataFrame(df) >> arrange(X.noise) >> mask(X.noise != "ExpInf", X.noise != "Lomax")
     df.to_csv(f"{args.dir}/results_{dataset}.csv", index=False)
 
     # print top-1 certified accuracies
@@ -82,63 +82,58 @@ if __name__ == "__main__":
 
     # plot clean training accuracy against certified accuracy at eps
     tmp = df >> mask(X.eps == 0.25) >> arrange(X.noise)
-    plt.figure(figsize=(3, 3))
-    sns.scatterplot(x="top_1_acc_train", y="top_1_acc_cert", hue="noise", style="noise",
-                    size="sigma", data=tmp, legend=False)
+    plt.figure(figsize=(3, 2.8))
+    ax = sns.scatterplot(x="top_1_acc_train", y="top_1_acc_cert", hue="noise", style="noise",
+                         markers=["o", "D", "s"],  size="sigma", data=tmp, legend="full")
+    handles, labels = ax.get_legend_handles_labels()
+    i = [i for i, t in enumerate(ax.legend_.texts) if t.get_text() == "sigma"][0]
+    ax.legend(handles[:i], labels[:i])
     plt.plot(np.linspace(0.0, 1.0), np.linspace(0.0, 1.0), "--", color="gray")
     plt.ylim((0.2, 1.0))
     plt.xlim((0.2, 1.0))
     plt.xlabel("Top-1 training accuracy")
     plt.ylabel("Top-1 certified accuracy, $\epsilon$ = 0.25")
     plt.tight_layout()
-    plt.savefig(f"{args.dir}/train_vs_certified.eps")
-    plt.show()
+    plt.savefig(f"{args.dir}/train_vs_certified.pdf")
 #
 #    tmp = df >> mask(X.eps.isin((0.25, 0.5, 0.75, 1.0))) >> \
 #                mutate(tr=X.top_1_acc_train, cert=X.top_1_acc_cert)
 #    fig = sns.relplot(data=tmp, kind="scatter", x="tr", y="cert",
 #                      hue="noise", col="eps", col_wrap=2, aspect=1, height=3, size="sigma")
 #    fig.map_dataframe(plt.plot, (plt.xlim()[0], plt.xlim()[1]), (plt.xlim()[0], plt.xlim()[1]), 'k--').set_axis_labels("tr", "cert").add_legend()
-#    plt.show()
 #
     # plot clean training and testing accuracy
     grouped = df >> group_by(X.experiment_name) \
+                 >> mask(X.sigma <= 1.25) \
                  >> summarize(experiment_name=first(X.experiment_name),
                               noise=first(X.noise),
                               sigma=first(X.sigma),
                               top_1_acc_train=first(X.top_1_acc_train),
                               top_1_acc_pred=first(X.top_1_acc_pred))
 
-#    fig = sns.relplot(x="top_1_acc_train", y="top_1_acc_pred", hue="noise", col="sigma",
-#                      style="noise", col_wrap=2, height=2, aspect=1, data=grouped)
-#    fig.map_dataframe(plt.plot, (plt.xlim()[0], 1), (plt.xlim()[0],1), 'k--').set_axis_labels("Top-1 training accuracy", "Top-1 testing accuracy").add_legend()
-#    plt.show()
-
     plt.figure(figsize=(6.5, 2.5))
     plt.subplot(1, 2, 1)
-    sns.lineplot(x="sigma", y="top_1_acc_train", hue="noise", markers=True, dashes=False,
+    sns.lineplot(x="sigma", y="top_1_acc_train", hue="noise", markers=["o", "D", "s"], dashes=False,
                  style="noise", data=grouped, alpha=1)
     plt.xlabel("$\sigma$")
     plt.ylabel("Top-1 training accuracy")
     plt.ylim((0, 1))
     plt.subplot(1, 2, 2)
-    sns.lineplot(x="sigma", y="top_1_acc_pred", hue="noise", markers=True, dashes=False,
+    sns.lineplot(x="sigma", y="top_1_acc_pred", hue="noise", markers=["o", "D", "s"], dashes=False,
                  style="noise", data=grouped, alpha=1, legend=False)
     plt.xlabel("$\sigma$")
     plt.ylabel("Top-1 testing accuracy")
     plt.ylim((0, 1))
     plt.tight_layout()
-    plt.savefig(f"{args.dir}/train_test_accuracies.eps")
-    plt.show()
-
-    # plot certified accuracies
-    selected = df >> mutate(certacc=X.top_1_acc_cert)# >> mask(X.sigma <= 1.25) >> mask(X.noise != "ExpInf") >> mask(X.noise != "Lomax")
-    sns.relplot(x="eps", y="certacc", hue="noise", kind="line", col="sigma",
-                col_wrap=2, data=selected, height=2, aspect=1.5)
-    plt.ylim((0, 1))
-    plt.tight_layout()
-    plt.savefig(f"{args.dir}/per_sigma.eps")
-    plt.show()
+    plt.savefig(f"{args.dir}/train_test_accuracies.pdf")
+#
+#   # plot certified accuracies
+#    selected = df >> mutate(certacc=X.top_1_acc_cert) >> mask(X.sigma <= 1.25) >> mask(X.noise != "ExpInf") >> mask(X.noise != "Lomax")
+#    sns.relplot(x="eps", y="certacc", hue="noise", kind="line", col="sigma", col_wrap=2,
+#                data=selected, height=2, aspect=1.5)
+#    plt.ylim((0, 1))
+#    plt.tight_layout()
+#    plt.savefig(f"{args.dir}/per_sigma.pdf")
 #
     # plot top certified accuracy per epsilon, per type of noise
     grouped = df >> mask(X.noise != "Clean", X.noise != "ExpInf", X.noise != "Lomax") \
@@ -147,14 +142,17 @@ if __name__ == "__main__":
                  >> summarize(top_1_acc_cert=first(X.top_1_acc_cert),
                               noise=first(X.noise))
 
-    grouped = pd.concat((grouped >> mask(X.noise == "Gaussian"), grouped >> mask(X.noise != "Gaussian")))
+    grouped = pd.concat((grouped >> mask(X.noise == "Gaussian"),
+                         grouped >> mask(X.noise != "Gaussian")))
 
-    plt.figure(figsize=(3, 3))
+    plt.figure(figsize=(3.0, 2.8))
     sns.lineplot(x="eps", y="top_1_acc_cert", data=grouped, hue="noise", style="noise")
     plt.ylim((0, 1))
-    plt.xlabel("$\epsilon$")
+    plt.xlabel(r"$\ell_1$ radius")
     plt.ylabel("Top-1 certified accuracy")
     plt.tight_layout()
-    plt.savefig(f"{args.dir}/certified_accuracies_l1.eps")
-    plt.show()
+    plt.savefig(f"{args.dir}/certified_accuracies_l1.pdf")
+
+    if args.show:
+        plt.show()
 

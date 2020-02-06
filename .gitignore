@@ -5,6 +5,7 @@
 *.csv
 *.eps
 *.swp
+*.pdf
 stdout.txt
 data/
 mnist*/

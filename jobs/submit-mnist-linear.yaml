@@ -28,7 +28,6 @@ search:
       --noise={noise}
       --sigma={sigma}
       --experiment-name=mnist_{noise}_{sigma}
-      --p=2
       --dataset=mnist
       --model=LinearModel
       --lr=0.01
@@ -36,7 +35,7 @@ search:
       --noise={noise}
       --sigma={sigma}
       --experiment-name=mnist_{noise}_{sigma}
-      --p=2
+      --p=1
       --dataset=mnist
       --model=LinearModel
   type: grid

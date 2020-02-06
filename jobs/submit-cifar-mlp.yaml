@@ -28,18 +28,17 @@ search:
       --noise={noise}
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
-      --p=2
       --model=MLP
       --lr=0.01
     - python3 -m src.test
       --noise={noise}
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
-      --p=2
       --model=MLP
       --sample-size-pred=64
       --sample-size-cert=100000
       --noise-batch-size=512
+      --p=1
   type: grid
   max_trials: 18
   params:

@@ -1,4 +1,4 @@
-description: Training CIFAR-10 Robustness [L2 matched, Gamma]
+description: Training CIFAR-10 Robustness [Gamma]
 
 target:
   vc: msrlabs
@@ -28,12 +28,11 @@ search:
       --noise={noise}
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
-      --p=2
     - python3 -m src.test
       --noise={noise}
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
-      --p=2
+      --p=1
   type: grid
   max_trials: 25
   params:

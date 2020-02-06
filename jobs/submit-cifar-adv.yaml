@@ -1,4 +1,4 @@
-description: Training CIFAR-10 Robustness [L2 matched, Adversarial]
+description: Training CIFAR-10 Robustness [Adversarial]
 
 target:
   vc: msrlabspvc9
@@ -35,7 +35,7 @@ search:
       --noise={noise}
       --sigma={sigma}
       --experiment-name=cifar_adv_{noise}_{sigma}_{eps}
-      --p=2
+      --p=1
   type: grid
   max_trials: 30
   params:
@@ -47,5 +47,5 @@ search:
       values: ["UniformNoise"]
     - name: eps
       spec: discrete
-      values: [0.1, 0.2, 0.4, 0.7, 1.0]
+      values: [0.01, 0.05, 0.1, 0.2, 0.3]
 

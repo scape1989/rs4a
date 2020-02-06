@@ -28,14 +28,13 @@ search:
       --noise={noise}
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
-      --p=2
       --model=AlexNet
       --lr=0.01
     - python3 -m src.test
       --noise={noise}
       --sigma={sigma}
       --experiment-name=cifar_{noise}_{sigma}
-      --p=2
+      --p=1
       --model=AlexNet
   type: grid
   max_trials: 24

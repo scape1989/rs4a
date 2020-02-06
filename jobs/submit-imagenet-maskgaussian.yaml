@@ -34,7 +34,6 @@ search:
       --sigma={sigma}
       --experiment-name=imagenet_{noise}_{sigma}
       --dataset=imagenet
-      --p=2
       --batch-size=64
       --num-epochs=30
   type: grid

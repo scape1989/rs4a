@@ -103,6 +103,6 @@ if __name__ == "__main__":
     plt.xlabel("$\epsilon$")
     plt.ylabel("Top-1 certified accuracy")
     plt.tight_layout()
-    plt.savefig(f"{args.dir}/certified_accuracies_l1.eps")
+    plt.savefig(f"{args.dir}/certified_accuracies_l1.pdf")
     plt.show()
 

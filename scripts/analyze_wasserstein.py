@@ -77,7 +77,7 @@ if __name__ == "__main__":
     plt.ylabel("Top-1 testing accuracy")
     plt.ylim((0, 1))
     plt.tight_layout()
-    plt.savefig(f"{args.dir}/train_test_accuracies.eps")
+    plt.savefig(f"{args.dir}/train_test_accuracies.pdf")
     plt.show()
 
     tmp = df >> mask(X.eps.isin((0.015, 0.02, 0.025, 0.03))) >> \
@@ -124,6 +124,6 @@ if __name__ == "__main__":
     plt.xlabel("$\epsilon$")
     plt.ylabel("Top-1 certified accuracy")
     plt.tight_layout()
-    plt.savefig(f"{args.dir}/certified_accuracies_l1.eps")
+    plt.savefig(f"{args.dir}/certified_accuracies_l1.pdf")
     plt.show()
 

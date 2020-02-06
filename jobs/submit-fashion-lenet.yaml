@@ -30,16 +30,14 @@ search:
       --experiment-name=fashion_{noise}_{sigma}
       --dataset=fashion
       --model=LeNet
-      --p=2
       --lr=0.01
-      --num-epochs=200
     - python3 -m src.test
       --noise={noise}
       --sigma={sigma}
       --experiment-name=fashion_{noise}_{sigma}
       --dataset=fashion
       --model=LeNet
-      --p=2
+      --p=1
   type: grid
   max_trials: 24
   params:

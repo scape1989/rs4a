@@ -30,7 +30,6 @@ search:
       --experiment-name=svhn_{noise}_{sigma}
       --dataset=svhn
       --model=MLP
-      --p=2
       --lr=0.01
     - python3 -m src.test
       --noise={noise}
@@ -38,7 +37,10 @@ search:
       --experiment-name=svhn_{noise}_{sigma}
       --dataset=svhn
       --model=MLP
-      --p=2
+      --p=1
+      --sample-size-cert=100000
+      --noise-batch-size=512
+      --dataset-skip=4
   type: grid
   max_trials: 24
   params:

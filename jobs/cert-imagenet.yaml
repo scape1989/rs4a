@@ -37,9 +37,9 @@ search:
       --sample-size-pred=64
       --sample-size-cert=100000
       --noise-batch-size=32
-      --p=2
       --dataset-skip=20
       --save-path=/mnt/imagenet/imagenet_l1/imagenet_{noise}_{sigma}/model_ckpt.torch
+      --p=1
   type: grid
   max_trials: 20
   params:

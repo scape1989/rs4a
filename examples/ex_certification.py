@@ -16,9 +16,9 @@ if __name__ == "__main__":
     argparser.add_argument("--sigma", type=float, default=0.25)
     args = argparser.parse_args()
 
-    #noises = ["GaussianNoise", "LaplaceNoise", "UniformNoise"]#, "LomaxNoise"]
-    noises = ["LaplaceNoise", "LomaxNoise3", "LomaxNoise10", "LomaxNoise100"]
+    noises = ["GaussianNoise", "LaplaceNoise", "UniformNoise"]
 
+    sns.set_context("notebook", rc={"lines.linewidth": 2})
     sns.set_style("whitegrid")
     sns.set_palette("husl")
 
@@ -47,6 +47,6 @@ if __name__ == "__main__":
     plt.ylabel("Certified radius")
     plt.ylim((0, 3))
     plt.tight_layout()
-    plt.savefig("./figs/ex_certification.eps")
+    plt.savefig("./figs/ex_certification.pdf")
     plt.show()
 
