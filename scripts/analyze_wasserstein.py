@@ -79,14 +79,14 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig(f"{args.dir}/train_test_accuracies.pdf")
     plt.show()
-
-    tmp = df >> mask(X.eps.isin((0.015, 0.02, 0.025, 0.03))) >> \
-                mutate(top1accpred=X.top_1_acc_pred, top1acccert=X.top_1_acc_cert)
-    fig = sns.relplot(data=tmp, kind="scatter", x="top1accpred", y="top1acccert",
-                      hue="noise", col="eps", col_wrap=2, aspect=1, height=3, size="sigma")
-    fig.map_dataframe(plt.plot, (plt.xlim()[0], plt.xlim()[1]), (plt.xlim()[0], plt.xlim()[1]), 'k--').set_axis_labels("top1acctrain", "top1acccert").add_legend()
-    plt.show()
-
+#
+#    tmp = df >> mask(X.eps.isin((0.015, 0.02, 0.025, 0.03))) >> \
+#                mutate(top1accpred=X.top_1_acc_pred, top1acccert=X.top_1_acc_cert)
+#    fig = sns.relplot(data=tmp, kind="scatter", x="top1accpred", y="top1acccert",
+#                      hue="noise", col="eps", col_wrap=2, aspect=1, height=3, size="sigma")
+#    fig.map_dataframe(plt.plot, (plt.xlim()[0], plt.xlim()[1]), (plt.xlim()[0], plt.xlim()[1]), 'k--').set_axis_labels("top1acctrain", "top1acccert").add_legend()
+#    plt.show()
+#
     # plot clean training accuracy against certified accuracy at eps
 #    tmp = df >> mask(X.eps == 0.025) >> arrange(X.noise)
 #    plt.figure(figsize=(3, 3))
@@ -104,12 +104,11 @@ if __name__ == "__main__":
     # plot certified accuracies
     selected = df >> mutate(certacc=X.top_1_acc_cert)
     sns.relplot(x="eps", y="certacc", hue="noise", kind="line", col="sigma",
-                col_wrap=2, data=selected, height=2, aspect=1.5)
+                col_wrap=4, data=selected, height=2, aspect=1.5)
     plt.ylim((0, 1))
     plt.legend()
     plt.tight_layout()
-    plt.show()
-
+#
     # plot top certified accuracy per epsilon, per type of noise
     grouped = df >> mask(X.noise != "expinf") \
                  >> mask(X.sigma < 0.1) \
