@@ -49,24 +49,25 @@ if __name__ == "__main__":
         save_path = args.save_path
 
     model = eval(args.model)(dataset=args.dataset, device=args.device)
-    saved_dict = torch.load(save_path)
-    try: # janky change for backwards compatibility
-        model.load_state_dict(saved_dict)
-    except:
-        norm_dim = get_normalization_shape(args.dataset)
-        norm_stats = get_normalization_stats(args.dataset)
-        mu = torch.tensor(norm_stats["mu"], device=args.device).reshape(norm_dim)
-        log_sig = torch.log(torch.tensor(norm_stats["sigma"], device=args.device).reshape(norm_dim))
-        try:
-            saved_dict["norm.mu"] = mu
-            saved_dict["norm.log_sig"] = log_sig
+    if args.model != "Madry":
+        saved_dict = torch.load(save_path)
+        try: # janky change for backwards compatibility
             model.load_state_dict(saved_dict)
         except:
-            del saved_dict["norm.mu"]
-            del saved_dict["norm.log_sig"]
-            saved_dict["norm.module.mu"] = mu
-            saved_dict["norm.module.log_sig"] = log_sig
-            model.load_state_dict(saved_dict)
+            norm_dim = get_normalization_shape(args.dataset)
+            norm_stats = get_normalization_stats(args.dataset)
+            mu = torch.tensor(norm_stats["mu"], device=args.device).reshape(norm_dim)
+            log_sig = torch.log(torch.tensor(norm_stats["sigma"], device=args.device).reshape(norm_dim))
+            try:
+                saved_dict["norm.mu"] = mu
+                saved_dict["norm.log_sig"] = log_sig
+                model.load_state_dict(saved_dict)
+            except:
+                del saved_dict["norm.mu"]
+                del saved_dict["norm.log_sig"]
+                saved_dict["norm.module.mu"] = mu
+                saved_dict["norm.module.log_sig"] = log_sig
+                model.load_state_dict(saved_dict)
     model.eval()
 
     k = get_trailing_number(args.noise)

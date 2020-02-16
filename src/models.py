@@ -7,6 +7,8 @@ from src.datasets import *
 from src.lib.wide_resnet import WideResNet as WideResNetBase
 from src.lib.alexnet import AlexNet as AlexNetBase
 from src.lib.lenet import LeNet as LeNetBase
+from robustness.model_utils import make_and_restore_model
+from robustness.datasets import CIFAR
 
 
 class Forecaster(nn.Module):
@@ -19,6 +21,24 @@ class Forecaster(nn.Module):
 
     def forward(self, x):
         raise NotImplementedError
+
+    def forecast(self, theta):
+        return Categorical(logits=theta)
+
+    def loss(self, x, y):
+        forecast = self.forecast(self.forward(x))
+        return -forecast.log_prob(y)
+
+
+class Madry(Forecaster):
+
+    def __init__(self, dataset, device):
+        super().__init__(dataset, device)
+        self.model, _ = make_and_restore_model(arch="resnet50", dataset=CIFAR("./data/cifar_10"),
+                                               resume_path="/mnt/imagenet/madry/cifar_linf_8.pt")
+
+    def forward(self, x):
+        return self.model(x)[0]
 
     def forecast(self, theta):
         return Categorical(logits=theta)
