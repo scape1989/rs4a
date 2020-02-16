@@ -229,7 +229,7 @@ class Exp1Noise(Noise):
 
     def __init__(self, sigma, device, dim, k=1):
         super().__init__(sigma, device, dim, k)
-        self.lambd = sigma / (math.exp(math.lgamma((dim + 1) / k) - math.lgamma(dim / k))) 
+        self.lambd = sigma / (math.exp(math.lgamma((dim + 1) / k) - math.lgamma(dim / k)))
         self.lambd *= (0.5 * dim * (dim + 1)) ** 0.5
         self.gamma_factor = math.exp(math.lgamma(dim / k) - math.lgamma((dim + k - 1) / k))
         self.dirichlet_dist = Dirichlet(concentration=torch.ones(dim, device=device))
@@ -463,9 +463,9 @@ class MaskGaussianNoisePatchSmall(Noise):
         noise = self.norm_dist.sample(x_copy.shape)
         sample = torch.zeros_like(x_copy)
         for _ in range(self.num_patches):
-            top_left_x = torch.randint(int((self.dim / 3)** 0.5) - self.patch_width + 1, 
+            top_left_x = torch.randint(int((self.dim / 3)** 0.5) - self.patch_width + 1,
                                        (batch_size,))
-            top_left_y = torch.randint(int((self.dim / 3)** 0.5) - self.patch_width + 1, 
+            top_left_y = torch.randint(int((self.dim / 3)** 0.5) - self.patch_width + 1,
                                        (batch_size,))
             for batch_no in range(batch_size):
                 i = top_left_x[batch_no]

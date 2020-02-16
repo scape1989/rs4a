@@ -20,6 +20,8 @@ if __name__ == "__main__":
     argparser.add_argument("--fancy-markers", action="store_true")
     args = argparser.parse_args()
 
+    markers = ["o", "D", "s"] if args.fancy_markers else True
+
     # plotting preamble
     sns.set_context("notebook", rc={"lines.linewidth": 2})
     sns.set_style("whitegrid")
@@ -48,14 +50,14 @@ if __name__ == "__main__":
         noise = noise.replace("Exp1Noise", "ExpOneNoise")
         noise = noise.replace("Noise", "")
 
-#        if noise == "PTail8":
-#            noise = "PowerLaw $\ell_2$"
-#        if noise == "Exp2Poly1024":
-#            noise = "Exponential $\ell_2$"
-#        if noise == "Exp2Poly1":
-#            continue
-#        if noise == "UniformBall":
-#            noise = "Uniform $\ell_2$"
+        if noise == "PTail8":
+            noise = "PowerLaw $\ell_2$"
+        if noise == "Exp2Poly1024":
+            noise = "Exponential $\ell_2$"
+        if noise == "Exp2Poly1":
+            continue
+        if noise == "UniformBall":
+            noise = "Uniform $\ell_2$"
         if noise == "Lomax":
             noise = "Pareto"
 
@@ -72,7 +74,7 @@ if __name__ == "__main__":
             df["top_1_acc_pred"].append(top_1_acc_pred)
 
     # save the experiment results
-    df = pd.DataFrame(df) >> arrange(X.noise) >> mask(X.noise != "ExpInf", X.noise != "Lomax")
+    df = pd.DataFrame(df) >> arrange(X.noise) >> mask(X.noise != "ExpInf", X.noise != "Pareto")
     df.to_csv(f"{args.dir}/results_{dataset}.csv", index=False)
 
     # print top-1 certified accuracies
@@ -86,7 +88,7 @@ if __name__ == "__main__":
     tmp = df >> mask(X.eps == 0.25) >> arrange(X.noise)
     plt.figure(figsize=(3, 2.8))
     ax = sns.scatterplot(x="top_1_acc_train", y="top_1_acc_cert", hue="noise", style="noise",
-                         markers=["o", "D", "s"],  size="sigma", data=tmp, legend="full")
+                         markers=markers,  size="sigma", data=tmp, legend="full")
     handles, labels = ax.get_legend_handles_labels()
     i = [i for i, t in enumerate(ax.legend_.texts) if t.get_text() == "sigma"][0]
     ax.legend(handles[:i], labels[:i])
@@ -115,13 +117,13 @@ if __name__ == "__main__":
 
     plt.figure(figsize=(6.5, 2.5))
     plt.subplot(1, 2, 1)
-    sns.lineplot(x="sigma", y="top_1_acc_train", hue="noise", markers=["o", "D", "s"], dashes=False,
+    sns.lineplot(x="sigma", y="top_1_acc_train", hue="noise", markers=markers, dashes=False,
                  style="noise", data=grouped, alpha=1)
     plt.xlabel("$\sigma$")
     plt.ylabel("Top-1 training accuracy")
     plt.ylim((0, 1))
     plt.subplot(1, 2, 2)
-    sns.lineplot(x="sigma", y="top_1_acc_pred", hue="noise", markers=["o", "D", "s"], dashes=False,
+    sns.lineplot(x="sigma", y="top_1_acc_pred", hue="noise", markers=markers, dashes=False,
                  style="noise", data=grouped, alpha=1, legend=False)
     plt.xlabel("$\sigma$")
     plt.ylabel("Top-1 testing accuracy")
@@ -150,10 +152,10 @@ if __name__ == "__main__":
     plt.figure(figsize=(3.0, 2.8))
     sns.lineplot(x="eps", y="top_1_acc_cert", data=grouped, hue="noise", style="noise")
     plt.ylim((0, 1))
-    plt.xlabel(r"$\ell_1$ radius")
+    plt.xlabel(r"$\ell_2$ radius")
     plt.ylabel("Top-1 certified accuracy")
     plt.tight_layout()
-    plt.savefig(f"{args.dir}/certified_accuracies_l1.pdf")
+    plt.savefig(f"{args.dir}/certified_accuracies_l1.pdf", bbox_inches="tight")
 
     if args.show:
         plt.show()

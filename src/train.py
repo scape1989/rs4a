@@ -36,6 +36,7 @@ if __name__ == "__main__":
     argparser.add_argument("--model", default="ResNet", type=str)
     argparser.add_argument("--dataset", default="cifar", type=str)
     argparser.add_argument("--adversarial", action="store_true")
+    argparser.add_argument("--stability", action="store_true")
     argparser.add_argument("--direct", action="store_true")
     argparser.add_argument("--rotate", action="store_true")
     argparser.add_argument('--output-dir', type=str, default=os.getenv("PT_OUTPUT_DIR"))
@@ -87,11 +88,18 @@ if __name__ == "__main__":
 
             if args.adversarial:
                 x = pgd_attack_smooth(model, x, y, args.eps, noise, sample_size=4, p=args.p)
+            elif args.stability:
+                x_tilde = noise.sample(x.view(len(x), -1)).view(x.shape)
             elif not args.direct:
                 x = noise.sample(x.view(len(x), -1)).view(x.shape)
 
             if args.direct:
                 loss = -direct_train_log_lik(model, x, y, noise, sample_size=16).mean()
+            elif args.stability:
+                pred_x = model.forecast(model.forward(x_tilde))
+                pred_x_tilde = model.forecast(model.forward(x_tilde))
+                loss = -pred_x.log_prob(y) + torch.distributions.kl_divergence(pred_x, pred_x_tilde)
+                loss = loss.mean()
             else:
                 loss = model.loss(x, y).mean()
 
