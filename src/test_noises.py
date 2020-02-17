@@ -26,20 +26,20 @@ class TestSigma(unittest.TestCase):
                 configs.append(
                     dict(noise=noises.ExpInfNoise, k=k, j=j)
                 )
-        for a in [10, 100, 1000]:
-            configs.append(
-                dict(noise=noises.PowerInfNoise, a=a+dim)
-            )
+#        for a in [10, 100, 1000]:
+#            configs.append(
+#                dict(noise=noises.PowerInfNoise, a=a+dim)
+#            )
         for c in tqdm.tqdm(configs):
             c['device'] = dev
             c['dim'] = dim
-            c['sigma'] = 1
+            c['sigma'] = 2
             with self.subTest(config=dict(c)):
                 noisecls = c.pop('noise')
                 noise = noisecls(**c)
                 emp_sigma = noise.sample(torch.zeros(nsamples, dim)).std()
                 self.assertAlmostEqual(emp_sigma, noise.sigma,
-                                        delta=rel_tol * emp_sigma)
+                                       delta=rel_tol * emp_sigma)
 
 class TestRadii(unittest.TestCase):
 
