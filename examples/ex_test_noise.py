@@ -28,6 +28,7 @@ if __name__ == "__main__":
     x = torch.zeros((args.batch_size, args.dim))
     rvs = noise.sample(x)
     print("== L2 Match")
-    print((rvs.norm(p=2, dim=1).pow(2) / args.dim).mean() ** 0.5)
+    print("Root L2 norm (divided by dimension):", (rvs.norm(p=2, dim=1).pow(2) / args.dim).mean() ** 0.5)
+    print("Linf norm:", (rvs.norm(p=float("inf"), dim=1)).mean())
     print(noise.certify(lower_bounds, p=1))
 
