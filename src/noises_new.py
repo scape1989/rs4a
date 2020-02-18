@@ -192,7 +192,7 @@ class UniformBallNoise(Noise):
         radius = torch.rand((len(x), 1), device=self.device) ** (1 / self.dim)
         radius *= self.lambd
         noise = torch.randn(x.shape, device=self.device).reshape(len(x), -1)
-        noise = noise / torch.norm(noise, dim=1, p=2).unsqueeze(1) * radius
+        noise = noise / torch.norm(noise, dim=1, p=2, keepdim=True) * radius
         return noise + x
 
     def certify(self, prob_lower_bound, adv):
@@ -202,6 +202,7 @@ class UniformBallNoise(Noise):
         radius = self.lambd * (
             2 - 4 * self.beta_dist.ppf(0.75 - 0.5 * prob_lower_bound.numpy()))
         return torch.tensor(radius, dtype=torch.float) / ppen
+
 
 class ExpInfNoise(Noise):
 
@@ -241,12 +242,47 @@ class ExpInfNoise(Noise):
             else:
                 raise NotImplementedError()
         if adv > 1:
-            raise ValueError(f"Unable to certify ExpInfNoise for adv={adv}.")
+                raise ValueError(f"Unable to certify ExpInfNoise for adv={adv}.")
         return 2 * self.lambd * self.dim / (self.dim - 1) * \
                 self.gamma_factor * (prob_lower_bound - 0.5)
+
+
+class Exp1Noise(Noise):
+
+    def __init__(self, device, dim, sigma=None, lambd=None, k=1):
+        self.k = k
+        super().__init__(device, dim, sigma, lambd)
+        self.gamma_factor = math.exp(math.lgamma(dim / k) - math.lgamma((dim + k - 1) / k))
+        self.dirichlet_dist = Dirichlet(concentration=torch.ones(dim, device=device))
+        self.gamma_dist = Gamma(concentration=torch.tensor(dim / k, device=device),
+                                rate=torch.tensor((1 / self.lambd) ** k, device=device))
+
+    def _sigma(self):
+        k = self.k
+        dim = self.dim 
+        return np.sqrt(2 / (dim + 1) / dim) * (
+            math.exp(math.lgamma((dim + 1) / k) - math.lgamma(dim / k)))
+
+    def sample(self, x):
+        radius = (self.gamma_dist.sample((len(x), 1))) ** (1 / self.k)
+        noise = self.dirichlet_dist.sample((len(x),))
+        signs = torch.sign(torch.rand_like(noise) - 0.5)
+        return noise * signs * radius + x
+
+    def certify(self, prob_lower_bound, adv, num_pts=1000, eps=1e-4):
+        if adv > 1:
+            raise ValueError(f"Unable to certify Exp1Noise for adv={adv}.")
+        x = np.linspace(eps, 0.5, num_pts)
+        y = sp.stats.gamma.ppf(1 - 2 * x, self.dim / self.k)
+        y = 1 / (1 - sp.stats.gamma.cdf(y, (self.dim + self.k - 1) / self.k))
+        y = np.repeat(y[np.newaxis,:], len(prob_lower_bound), axis=0)
+        y[x < 1 - prob_lower_bound.numpy()[:, np.newaxis]] = 0
+        integral = torch.tensor(np.trapz(y, dx=0.5 / num_pts), dtype=torch.float)
+        return 2 * self.lambd * self.gamma_factor / self.k * integral
 
 
 if __name__ == '__main__':
     dim = 4
     noise = ExpInfNoise('cpu', dim, lambd=1, k=2, j=2)
     print(noise.certify(0.8, p=1))
+
