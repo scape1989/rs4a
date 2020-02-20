@@ -63,7 +63,7 @@ class Noise(object):
         return self.certify(prob_lb, adv=2)
 
     def certifylinf(self, prob_lb):
-        return self.certify(prob_lb, adv='inf')
+        return self.certify(prob_lb, adv=float('inf'))
 
 class Clean(Noise):
 

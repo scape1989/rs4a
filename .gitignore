@@ -7,6 +7,6 @@
 *.swp
 *.pdf
 stdout.txt
-data/
 misc/
 jobs/
+data/*/*
