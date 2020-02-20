@@ -8,4 +8,5 @@
 *.pdf
 stdout.txt
 data/
-mnist*/
+misc/
+jobs/
