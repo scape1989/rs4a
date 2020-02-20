@@ -44,8 +44,8 @@ python3 -m src.train
 --noise=ExpInfNoise
 --k=10
 --j=100
---sigma={sigma}
---experiment-name=cifar_UniformNoise_{sigma}
+--sigma=0.5
+--experiment-name=cifar_ExpInfNoise_0.5
 ```
 
 #### Trained Models
