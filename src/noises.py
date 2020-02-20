@@ -442,7 +442,7 @@ def sample_l2_sphere(device, shape):
     Outputs:
         matrix of shape `shape` such that each row is a sample.
     '''
-    noises = torch.randn(shape)
+    noises = torch.randn(shape, device=device)
     noises /= noises.norm(dim=1, keepdim=True)
     return noises
 
