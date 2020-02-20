@@ -10,9 +10,9 @@ Code to accompany our paper.
 
 To reproduce our SOTA $\ell_1$ results on CIFAR-10, we need to train models over 
 $$
-\sigma \in \{0.15, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0\}.
+\sigma \in \{0.15, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75,2.0,2.25, 2.5,2.75, 3.0,3.25,3.5\}.
 $$
-For each, run the following:
+For each value, run the following:
 
 ```
 python3 -m src.train
@@ -24,20 +24,26 @@ python3 -m src.test
 --noise=UniformNoise
 --sigma={sigma}
 --experiment-name=cifar_UniformNoise_{sigma}
---p=1
 --sample-size-cert=100000
 --sample-size-pred=64
 --noise-batch-size=512
-
 ```
 
-Results will be saved to the `ckpts/` directory. Then to reproduce plots, run:
+Results will be saved to the `ckpts/` directory. Then to plot the  figures, run:
 
 ```
 python3 scripts/analyze.py --dir=ckpts --show
 ```
 
 Further examples of training/testing scripts can be found in the `jobs/` directory.
+
+#### Trained Models
+
+Our pre-trained models will be released shortly.
+
+#### Repository
+
+
 
 #### Randomized Smoothing Preliminaries
 
@@ -81,33 +87,21 @@ We note that this one-sided Clopper-Pearson confidence interval is generally con
 
 Of course, we need to estimate $c$ as well, which is done with more Monte Carlo sampling.
 
-#### Noise distributions
+#### Examples
 
-In this repository we implement the following noises. Note that we want the expected $\ell_2$ distance of perturbations to be approximately the same for purposes of comparison, i.e. fix $\frac{1}{d}\mathbb{E}[||x||_2^2] = \sigma^2$. We derive the appropriate correspondences between distributions below.
-
-$$
-\begin{align*}
-p(x) & = \mathrm{Normal}(0,\lambda^2 I) & \mathbb{E}[||x||^2_2] &= \lambda^2 d & \lambda & = \sigma\\
-p(x) & = \mathrm{Laplace}(0, \lambda) & \mathbb{E}[||x||_2^2]& = 2\lambda^2d& \lambda &= \frac{1}{\sqrt 2}\sigma\\
-p(x) & = \mathrm{Uniform(-\lambda,\lambda)}& \mathbb{E}[||x||_2^2] & = \frac{1}{3}\lambda^2d & \lambda & = \sqrt 3 \sigma\\
-p(x)& = \mathrm{ExpInf}(\lambda,k)& \mathbb{E}[||x||_2^2] & \approx \frac{1}{3}d\lambda^2\gamma^2 & \lambda & = \frac{\sqrt 3}{\gamma}\sigma\approx \frac{\sqrt 3}{d}\sigma\\
-p(x) & = \mathrm{Exp1}(\lambda,k) & \mathbb{E}[||x||^2_2] & \approx \frac{2}{d+1}\lambda^2\gamma^2 & \lambda & = \sqrt\frac{d(d+1)}{2}\frac{\sigma}{\gamma}\\
-p(x) & = \mathrm{Exp2}(\lambda,k) & \mathbb{E}[||x||_2^2] & = \lambda^2\gamma^2 & \lambda & = \sqrt{d}\ \frac{\sigma}{\gamma} \\
-p(x) & = \mathrm{Lomax}(\lambda,k)&\mathbb{E}[||x||^2_2] & = \frac{2\lambda^2d}{(k-1)(k-2)} & \lambda & = \sqrt{\frac{(k-1)(k-2)}{2}} \sigma
-\end{align*}
-$$
-
-Here $\gamma = \Gamma\left(\frac{d+1}{k}\right)/\Gamma\left(\frac{d}{k}\right)$. Example:
+Below we show an example of how to use our implemented noises.
 
 ```python
 from src.noises import UniformNoise
-noise = UniformNoise(1.0, device="cpu", dim=3072)
+
+# instantiation
+noise = UniformNoise(device="cpu", dim=3072, sigma=0.5)
 
 # training code, to generate samples
 noisy_x = noise.sample(x)
 
 # testing code, for L1 adversary
-prob_lower_bound = noise.certify(prob_lower_bound, p=1)
+prob_lower_bound = noise.certify(prob_lower_bound, adv=1)
 ```
 
 #### References
