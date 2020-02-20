@@ -37,6 +37,17 @@ To draw a comparison to the benchmark noises, replace `UniformNoise` above with 
 python3 -m scripts.analyze --dir=ckpts --show --adv=1
 ```
 
+Note that other noises will need to be instantiated with the appropriate arguments. For example:
+
+```
+python3 -m src.train
+--noise=ExpInfNoise
+--k=10
+--j=100
+--sigma={sigma}
+--experiment-name=cifar_UniformNoise_{sigma}
+```
+
 #### Trained Models
 
 Our pre-trained models will be released shortly.
