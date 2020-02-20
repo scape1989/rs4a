@@ -32,7 +32,7 @@ python3 -m src.test
 Results will be saved to the `ckpts/` directory. Then to plot the  figures, run:
 
 ```
-python3 scripts/analyze.py --dir=ckpts --show
+python3 -m scripts.analyze --dir=ckpts --show --adv=1
 ```
 
 Further examples of training/testing scripts can be found in the `jobs/` directory.
@@ -43,11 +43,25 @@ Our pre-trained models will be released shortly.
 
 #### Repository
 
+1. `ckpts/` is used to store experiment checkpoints and results.
+2. `data/` is used to store image datasets.
+3. `examples/` contains toy visualizations of noisy data and sanity checks.
+4. `tables/` contains caches of pre-calculated tables of certified radii.
+5. `src/` contains the main souce code.
+6. `scripts/` contains the analysis and plotting code.
 
+Within the `src/` directory, the most salient files are:
+
+1. `train.py` is used to train models and save to `ckpts/`.
+2. `test.py` is used to test and compute robust certificates for $\ell_1,\ell_2,\ell_\infty$ adversaries.
+3. `noises.py` is a library of noises derived for randomized smoothing.
+4. `test_noises.py` is a unit test for the noises we include. 
 
 #### Randomized Smoothing Preliminaries
 
-Let $P_\theta(y|x)$ denote the categorical forecast, parameterized by neural network $\theta \in \Theta$. Let $\arg\max P_\theta(y|x)$ denote the mode of the forecast and $\max P_\theta(y|x)$ denote its corresponding predicted probability.
+Let $P_\theta(y|x)$ denote the categorical forecast, parameterized by neural network $\theta \in \Theta$. 
+
+Note $\arg\max P_\theta(y|x)$ denotes the mode of the forecast.
 
 A soft smoothed classifier is the mixture model of forecasts smoothed by noise on the inputs,
 $$
@@ -56,16 +70,16 @@ $$
 
 It turns out this classifier has smoothness properties that yield robustness [1].
 
-Now consider the zero-one loss (note that while this is a proper scoring rule, it is not *strictly* proper).
+Now consider the zero-one loss.
 $$
 \mathcal{S}(P_\theta, y) = 1\{ \arg\max P_\theta(y|x) = y\}.
 $$
 
-We'd like to obtain guarantees on this loss. To do so we'll need to use the:
+We'd like to obtain guarantees on this loss. To do so we'll need to use:
 
 A hard smoothed classifier is the mixture model of forecast modes smoothed by noise on the inputs, 
 $$
-F_\mathrm{hard}(x) \triangleq \mathbb{E}_{\epsilon}[\arg\max P_\theta(y|x + \delta)]\quad\quad\delta\sim q
+F_\mathrm{hard}(x) \triangleq \mathbb{E}_{\delta}[\arg\max P_\theta(y|x + \delta)]\quad\quad\delta\sim q
 $$
 By interpreting this hard smoothed classifier as a soft smooth classifier, we can get guarantees on the modes that are predicted by the hard smoothed classifier. 
 
@@ -85,7 +99,7 @@ $$
 $$
 We note that this one-sided Clopper-Pearson confidence interval is generally conservative.
 
-Of course, we need to estimate $c$ as well, which is done with more Monte Carlo sampling.
+Of course, we need to estimate $c$ as well, which is done with additional Monte Carlo sampling.
 
 #### Examples
 

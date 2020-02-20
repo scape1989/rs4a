@@ -30,7 +30,7 @@ python3 -m src.test
 Results will be saved to the `ckpts/` directory. Then to plot the  figures, run:
 
 ```
-python3 scripts/analyze.py --dir=ckpts --show
+python3 -m scripts.analyze --dir=ckpts --show --adv=1
 ```
 
 Further examples of training/testing scripts can be found in the `jobs/` directory.
@@ -41,24 +41,38 @@ Our pre-trained models will be released shortly.
 
 #### Repository
 
+1. `ckpts/` is used to store experiment checkpoints and results.
+2. `data/` is used to store image datasets.
+3. `examples/` contains toy visualizations of noisy data and sanity checks.
+4. `tables/` contains caches of pre-calculated tables of certified radii.
+5. `src/` contains the main souce code.
+6. `scripts/` contains the analysis and plotting code.
 
+Within the `src/` directory, the most salient files are:
+
+1. `train.py` is used to train models and save to `ckpts/`.
+2. `test.py` is used to test and compute robust certificates for <img alt="$\ell_1,\ell_2,\ell_\infty$" src="svgs/8d2d1eabb21bb41807292151fe468472.svg" align="middle" width="63.01387124999998pt" height="22.831056599999986pt"/> adversaries.
+3. `noises.py` is a library of noises derived for randomized smoothing.
+4. `test_noises.py` is a unit test for the noises we include. 
 
 #### Randomized Smoothing Preliminaries
 
-Let <img alt="$P_\theta(y|x)$" src="svgs/ba3062180eb2cf7d620b00a9aaea814c.svg" align="middle" width="53.38666574999999pt" height="24.65753399999998pt"/> denote the categorical forecast, parameterized by neural network <img alt="$\theta \in \Theta$" src="svgs/1694fa79d012a58f8baabdf8e4974216.svg" align="middle" width="41.05009919999999pt" height="22.831056599999986pt"/>. Let <img alt="$\arg\max P_\theta(y|x)$" src="svgs/de5bf9581ffc4e81f1f60bb66f9fef02.svg" align="middle" width="112.56474899999998pt" height="24.65753399999998pt"/> denote the mode of the forecast and <img alt="$\max P_\theta(y|x)$" src="svgs/6cbe611d60edc2b341743a89d999631f.svg" align="middle" width="86.72003835pt" height="24.65753399999998pt"/> denote its corresponding predicted probability.
+Let <img alt="$P_\theta(y|x)$" src="svgs/ba3062180eb2cf7d620b00a9aaea814c.svg" align="middle" width="53.38666574999999pt" height="24.65753399999998pt"/> denote the categorical forecast, parameterized by neural network <img alt="$\theta \in \Theta$" src="svgs/1694fa79d012a58f8baabdf8e4974216.svg" align="middle" width="41.05009919999999pt" height="22.831056599999986pt"/>. 
+
+Note <img alt="$\arg\max P_\theta(y|x)$" src="svgs/de5bf9581ffc4e81f1f60bb66f9fef02.svg" align="middle" width="112.56474899999998pt" height="24.65753399999998pt"/> denotes the mode of the forecast.
 
 A soft smoothed classifier is the mixture model of forecasts smoothed by noise on the inputs,
 <p align="center"><img alt="$$&#10;F_\mathrm{soft}(x) \triangleq \mathbb{E}_{\delta}[P_\theta(y|x + \delta)]\quad\quad\delta\sim q&#10;$$" src="svgs/4e71ca05b5e1ebb3579d11fed7cb6620.svg" align="middle" width="255.82543634999996pt" height="19.178118299999998pt"/></p>
 
 It turns out this classifier has smoothness properties that yield robustness [1].
 
-Now consider the zero-one loss (note that while this is a proper scoring rule, it is not *strictly* proper).
+Now consider the zero-one loss.
 <p align="center"><img alt="$$&#10;\mathcal{S}(P_\theta, y) = 1\{ \arg\max P_\theta(y|x) = y\}.&#10;$$" src="svgs/35afab4a47af77d24c4952d215843383.svg" align="middle" width="252.19156710000001pt" height="16.438356pt"/></p>
 
-We'd like to obtain guarantees on this loss. To do so we'll need to use the:
+We'd like to obtain guarantees on this loss. To do so we'll need to use:
 
 A hard smoothed classifier is the mixture model of forecast modes smoothed by noise on the inputs, 
-<p align="center"><img alt="$$&#10;F_\mathrm{hard}(x) \triangleq \mathbb{E}_{\epsilon}[\arg\max P_\theta(y|x + \delta)]\quad\quad\delta\sim q&#10;$$" src="svgs/8a90d19a936a95690ecab61f2df2ca32.svg" align="middle" width="319.32771585pt" height="19.178118299999998pt"/></p>
+<p align="center"><img alt="$$&#10;F_\mathrm{hard}(x) \triangleq \mathbb{E}_{\delta}[\arg\max P_\theta(y|x + \delta)]\quad\quad\delta\sim q&#10;$$" src="svgs/0a3dd67dc9105afe59dabdf94d1c39e1.svg" align="middle" width="320.24096115pt" height="19.178118299999998pt"/></p>
 By interpreting this hard smoothed classifier as a soft smooth classifier, we can get guarantees on the modes that are predicted by the hard smoothed classifier. 
 
 In practice we need to resort to Monte Carlo samping to approximate <img alt="$F_\mathrm{hard}$" src="svgs/f370369da8812afdb3f69806ea24b29f.svg" align="middle" width="36.780984899999986pt" height="22.465723500000017pt"/>. 
@@ -73,7 +87,7 @@ We obtain a lower bound on <img alt="$\rho$" src="svgs/6dec54c48a0438a5fcde6053b
 <p align="center"><img alt="$$&#10;\hat \rho_\mathrm{lower} =\inf \left\{\rho :\mathrm{Pr}\left[\mathrm{Binomial}(m, \rho) \geq \frac{1}{m}\sum_{i=1}^mc_i\right]\geq \alpha\right\}&#10;$$" src="svgs/2852180f02b7693c4af1dd8058dee6d8.svg" align="middle" width="394.3703412pt" height="49.315569599999996pt"/></p>
 We note that this one-sided Clopper-Pearson confidence interval is generally conservative.
 
-Of course, we need to estimate <img alt="$c$" src="svgs/3e18a4a28fdee1744e5e3f79d13b9ff6.svg" align="middle" width="7.11380504999999pt" height="14.15524440000002pt"/> as well, which is done with more Monte Carlo sampling.
+Of course, we need to estimate <img alt="$c$" src="svgs/3e18a4a28fdee1744e5e3f79d13b9ff6.svg" align="middle" width="7.11380504999999pt" height="14.15524440000002pt"/> as well, which is done with additional Monte Carlo sampling.
 
 #### Examples
 
