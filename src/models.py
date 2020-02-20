@@ -34,18 +34,28 @@ class ResNet(Forecaster):
         super().__init__(dataset, device)
         if dataset == "imagenet":
             self.model = nn.DataParallel(base_models.resnet50(num_classes=1000))
-            self.norm = nn.DataParallel(self.norm)
         else:
             self.model = nn.DataParallel(base_models.resnet18(num_classes=10))
-            self.norm = nn.DataParallel(self.norm)
-#            self.model = WideResNetBase(depth=40, widen_factor=2,
-#                                        num_classes=get_num_labels(dataset))
+        self.norm = nn.DataParallel(self.norm)
         self.norm = self.norm.to(device)
         self.model = self.model.to(device)
 
     def forward(self, x):
         x = self.norm(x)
         return self.model(x)
+
+
+class WideResNet(Forecaster):
+    
+    def __init__(self, dataset, device):
+        super().__init__(dataset, device)
+        self.model = nn.DataParallel(WideResNetBase(depth=40, widen_factor=2,
+                                                    num_classes=get_num_labels(dataset)))
+        self.norm = nn.DataParallel(self.norm)
+        self.norm = self.norm.to(device)
+        self.model = self.model.to(device)
+
+    def forward
 
 
 class LinearModel(Forecaster):
