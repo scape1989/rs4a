@@ -9,8 +9,8 @@ Code to accompany our paper.
 #### Experiments
 
 To reproduce our SOTA <img alt="$\ell_1$" src="svgs/839a0dc412c4f8670dd1064e0d6d412f.svg" align="middle" width="13.40191379999999pt" height="22.831056599999986pt"/> results on CIFAR-10, we need to train models over 
-<p align="center"><img alt="$$&#10;\sigma \in \{0.15, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0\}.&#10;$$" src="svgs/005f5f4214b48a2ddaac2f7971ec8602.svg" align="middle" width="339.66355995pt" height="16.438356pt"/></p>
-For each, run the following:
+<p align="center"><img alt="$$&#10;\sigma \in \{0.15, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75,2.0,2.25, 2.5,2.75, 3.0,3.25,3.5\}.&#10;$$" src="svgs/18053fc5b24769ed4866010457b3b9fd.svg" align="middle" width="534.1843451999999pt" height="16.438356pt"/></p>
+For each value, run the following:
 
 ```
 python3 -m src.train
@@ -22,20 +22,26 @@ python3 -m src.test
 --noise=UniformNoise
 --sigma={sigma}
 --experiment-name=cifar_UniformNoise_{sigma}
---p=1
 --sample-size-cert=100000
 --sample-size-pred=64
 --noise-batch-size=512
-
 ```
 
-Results will be saved to the `ckpts/` directory. Then to reproduce plots, run:
+Results will be saved to the `ckpts/` directory. Then to plot the  figures, run:
 
 ```
 python3 scripts/analyze.py --dir=ckpts --show
 ```
 
 Further examples of training/testing scripts can be found in the `jobs/` directory.
+
+#### Trained Models
+
+Our pre-trained models will be released shortly.
+
+#### Repository
+
+
 
 #### Randomized Smoothing Preliminaries
 
@@ -69,23 +75,21 @@ We note that this one-sided Clopper-Pearson confidence interval is generally con
 
 Of course, we need to estimate <img alt="$c$" src="svgs/3e18a4a28fdee1744e5e3f79d13b9ff6.svg" align="middle" width="7.11380504999999pt" height="14.15524440000002pt"/> as well, which is done with more Monte Carlo sampling.
 
-#### Noise distributions
+#### Examples
 
-In this repository we implement the following noises. Note that we want the expected <img alt="$\ell_2$" src="svgs/336fefe2418749fabf50594e52f7b776.svg" align="middle" width="13.40191379999999pt" height="22.831056599999986pt"/> distance of perturbations to be approximately the same for purposes of comparison, i.e. fix <img alt="$\frac{1}{d}\mathbb{E}[||x||_2^2] = \sigma^2$" src="svgs/8cfd7c775dc1c9365532c8edeeb94b28.svg" align="middle" width="102.39446745pt" height="27.77565449999998pt"/>. We derive the appropriate correspondences between distributions below.
-
-<p align="center"><img alt="$$&#10;\begin{align*}&#10;p(x) &amp; = \mathrm{Normal}(0,\lambda^2 I) &amp; \mathbb{E}[||x||^2_2] &amp;= \lambda^2 d &amp; \lambda &amp; = \sigma\\&#10;p(x) &amp; = \mathrm{Laplace}(0, \lambda) &amp; \mathbb{E}[||x||_2^2]&amp; = 2\lambda^2d&amp; \lambda &amp;= \frac{1}{\sqrt 2}\sigma\\&#10;p(x) &amp; = \mathrm{Uniform(-\lambda,\lambda)}&amp; \mathbb{E}[||x||_2^2] &amp; = \frac{1}{3}\lambda^2d &amp; \lambda &amp; = \sqrt 3 \sigma\\&#10;p(x)&amp; = \mathrm{ExpInf}(\lambda,k)&amp; \mathbb{E}[||x||_2^2] &amp; \approx \frac{1}{3}d\lambda^2\gamma^2 &amp; \lambda &amp; = \frac{\sqrt 3}{\gamma}\sigma\approx \frac{\sqrt 3}{d}\sigma\\&#10;p(x) &amp; = \mathrm{Exp1}(\lambda,k) &amp; \mathbb{E}[||x||^2_2] &amp; \approx \frac{2}{d+1}\lambda^2\gamma^2 &amp; \lambda &amp; = \sqrt\frac{d(d+1)}{2}\frac{\sigma}{\gamma}\\&#10;p(x) &amp; = \mathrm{Exp2}(\lambda,k) &amp; \mathbb{E}[||x||_2^2] &amp; = \lambda^2\gamma^2 &amp; \lambda &amp; = \sqrt{d}\ \frac{\sigma}{\gamma} \\&#10;p(x) &amp; = \mathrm{Lomax}(\lambda,k)&amp;\mathbb{E}[||x||^2_2] &amp; = \frac{2\lambda^2d}{(k-1)(k-2)} &amp; \lambda &amp; = \sqrt{\frac{(k-1)(k-2)}{2}} \sigma&#10;\end{align*}&#10;$$" src="svgs/b2824c303e2d31ae63b496f0022e657e.svg" align="middle" width="540.2531590499999pt" height="288.62438879999996pt"/></p>
-
-Here <img alt="$\gamma = \Gamma\left(\frac{d+1}{k}\right)/\Gamma\left(\frac{d}{k}\right)$" src="svgs/af5c8e5da313bc6a05bb574b122c8651.svg" align="middle" width="137.10824655pt" height="28.92634470000001pt"/>. Example:
+Below we show an example of how to use our implemented noises.
 
 ```python
 from src.noises import UniformNoise
-noise = UniformNoise(1.0, device="cpu", dim=3072)
+
+# instantiation
+noise = UniformNoise(device="cpu", dim=3072, sigma=0.5)
 
 # training code, to generate samples
 noisy_x = noise.sample(x)
 
 # testing code, for L1 adversary
-prob_lower_bound = noise.certify(prob_lower_bound, p=1)
+prob_lower_bound = noise.certify(prob_lower_bound, adv=1)
 ```
 
 #### References

@@ -9,13 +9,15 @@ import seaborn as sns
 from argparse import ArgumentParser
 from dfply import *
 from matplotlib import pyplot as plt
-
+from src.utils import parse_noise_from_args
+from src.datasets import get_dim
 
 if __name__ == "__main__":
 
     argparser = ArgumentParser()
     argparser.add_argument("--dir", default="./ckpts", type=str)
     argparser.add_argument("--target", default="prob_correct", type=str)
+    argparser.add_argument("--adv", default=1, type=float)
     argparser.add_argument("--use-pdf", action="store_true")
     args = argparser.parse_args()
 
@@ -33,11 +35,14 @@ if __name__ == "__main__":
         experiment_args = pickle.load(open(f"{args.dir}/{experiment_name}/args.pkl", "rb"))
         results = {}
 
-        for k in ("prob_lower_bound", "preds_smooth", "labels", "radius_smooth"):
+        noise = parse_noise_from_args(experiment_args, device-"cpu",
+                                      dim=get_dim(experiment_args.dataset))
+
+        for k in ("prob_lower_bound", "preds", "labels", f"radius_l{str(args.adv)}"):
             results[k] = np.load(f"{save_path}/{k}.npy")
 
-        p_correct = results["preds_smooth"][np.arange(len(results["preds_smooth"])),
-                                            results["labels"].astype(int)]
+        p_correct = results["preds"][np.arange(len(results["preds"])),
+                                     results["labels"].astype(int)]
         p_top = results["prob_lower_bound"]
 
         if args.target == "prob_lower_bound":
@@ -46,8 +51,8 @@ if __name__ == "__main__":
         elif args.target == "prob_correct":
             tgt = p_correct
             axis = np.linspace(0, 1, 500)
-        elif args.target == "radius_smooth":
-            tgt = results["radius_smooth"]
+        elif args.target == "radius":
+            tgt = results[f"radius_l{str(args.adv)}"]
             tgt = tgt[~np.isnan(tgt)]
             axis = np.linspace(0, 4.0, 500)
         else:
@@ -60,7 +65,7 @@ if __name__ == "__main__":
 
         losses_df >>= bind_rows(pd.DataFrame({
             "experiment_name": experiment_name,
-            "noise": experiment_args.noise,
+            "noise": str(noise),
             "sigma": experiment_args.sigma,
             "cdf": cdf,
             "axis": axis}))
