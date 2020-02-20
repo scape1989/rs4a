@@ -566,6 +566,12 @@ class Exp2Noise(Noise):
         noise = sample_l2_sphere(self.device, x.shape)
         return self.lambd * (noise * radius).view(x.shape) + x
 
+    def certify(self, prob_lb, adv, mode='levelset'):
+        ppen = 1
+        if adv > 2:
+            ppen = self.dim ** (0.5 - 1/adv)
+        return self.certifyl2(prob_lb, mode=mode) / ppen
+
     def certifyl2(self, prob_lb, mode='levelset',
                 inc=0.01, upper=3, save=True):
         if self.k == 1 and self.j == 0:
@@ -764,6 +770,12 @@ class Power2Noise(Noise):
         return np.exp(0.5 * (
                 g((d+2)/k) + g(a - (d+2)/k) - g(d/k) - g(a - d/k) - np.log(d)
             ))
+
+    def certify(self, prob_lb, adv):
+        ppen = 1
+        if adv > 2:
+            ppen = self.dim ** (0.5 - 1/adv)
+        return self.certifyl2(prob_lb) / ppen
 
     def certifyl2(self, prob_lb, inc=0.01, upper=3, save=True):
         return self.certifyl2_levelset(prob_lb, inc, upper, save)
