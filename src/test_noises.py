@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import tqdm
 import torch
-import noises_new as noises
+import noises
 
 class TestSigma(unittest.TestCase):
 
@@ -26,14 +26,24 @@ class TestSigma(unittest.TestCase):
                 configs.append(
                     dict(noise=noises.ExpInfNoise, k=k, j=j)
                 )
-        for k in [1, 2, 10, 50]:
+        for k in [1, 2, 10, 20]:
+            for j in [0, 1, 10, 100, 1000]:
+                configs.append(
+                    dict(noise=noises.Exp2Noise, k=k, j=j)
+                )
+        for k in [1, 2, 10, 20]:
             configs.append(
                 dict(noise=noises.Exp1Noise, k=k)
             )
-#        for a in [10, 100, 1000]:
-#            configs.append(
-#                dict(noise=noises.PowerInfNoise, a=a+dim)
-#            )
+        for a in [10, 100, 1000]:
+            configs.append(
+                dict(noise=noises.PowerInfNoise, a=a+dim)
+            )
+        for k in [1, 2, 5]:
+            for a in [dim + 4, dim + 8, dim + 32, dim + 64]:
+                configs.append(
+                    dict(noise=noises.Power2Noise, k=k, a=a)
+                )
         for c in tqdm.tqdm(configs):
             c['device'] = dev
             c['dim'] = dim
