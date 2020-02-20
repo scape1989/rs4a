@@ -67,7 +67,7 @@ if __name__ == "__main__":
     loss_meter = meter.AverageValueMeter()
     time_meter = meter.TimeMeter(unit=False)
 
-    parse_noise_from_args(args, device=args.device, dim=get_dim(args.dataset))
+    noise = parse_noise_from_args(args, device=args.device, dim=get_dim(args.dataset))
 
     train_losses = []
 

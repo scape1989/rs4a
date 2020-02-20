@@ -55,7 +55,9 @@ class WideResNet(Forecaster):
         self.norm = self.norm.to(device)
         self.model = self.model.to(device)
 
-    def forward
+    def forward(self, x):
+		x = self.norm(x)
+		return self.model(x)
 
 
 class LinearModel(Forecaster):
