@@ -23,6 +23,7 @@ if __name__ == "__main__":
     argparser.add_argument("--eps-max", default=5.0, type=float)
     argparser.add_argument("--fancy-markers", action="store_true")
     args = argparser.parse_args()
+    args.adv = round(args.adv)
 
     markers = ["o", "D", "s"] if args.fancy_markers else True
 
