@@ -398,7 +398,7 @@ class ExpInfNoise(Noise):
             if self.k == 1 and self.j == 0:
                 return self.lambd * torch.log(0.5 / (1 - prob_lb))
             else:
-                raise NotImplementedError()
+                return torch.zeros_like(prob_lb)
         if adv > 1:
             return torch.zeros_like(prob_lb)
         return 2 * self.lambd * \
@@ -582,7 +582,7 @@ class Exp2Noise(Noise):
                 atanh(1 - 2 * self.beta_dist.ppf(1 - prob_lb.numpy()))
             return torch.tensor(radius, dtype=torch.float)
         elif self.k == 2 and self.j == 0:
-            raise NotImplementedError()
+            raise torch.zeros_like(prob_lb)
         elif mode == 'levelset':
             return self.certifyl2_levelset(prob_lb, inc, upper, save)
 
