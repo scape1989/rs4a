@@ -10,7 +10,7 @@ Code to accompany our paper.
 
 To reproduce our SOTA $\ell_1$ results on CIFAR-10, we need to train models over 
 $$
-\sigma \in \{0.15, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75,2.0,2.25, 2.5,2.75, 3.0,3.25,3.5\}.
+\sigma \in \{0.15, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75,2.0,2.25, 2.5,2.75, 3.0,3.25,3.5\},
 $$
 For each value, run the following:
 
@@ -29,13 +29,13 @@ python3 -m src.test
 --noise-batch-size=512
 ```
 
-Results will be saved to the `ckpts/` directory. Then to plot the  figures, run:
+Results will be saved to the `ckpts/` directory. 
+
+To draw a comparison to the benchmark noises, replace `UniformNoise` above with `GaussianNoise` and `LaplaceNoise`. Then to plot the  figures, run:
 
 ```
 python3 -m scripts.analyze --dir=ckpts --show --adv=1
 ```
-
-Further examples of training/testing scripts can be found in the `jobs/` directory.
 
 #### Trained Models
 

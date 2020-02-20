@@ -9,7 +9,7 @@ Code to accompany our paper.
 #### Experiments
 
 To reproduce our SOTA <img alt="$\ell_1$" src="svgs/839a0dc412c4f8670dd1064e0d6d412f.svg" align="middle" width="13.40191379999999pt" height="22.831056599999986pt"/> results on CIFAR-10, we need to train models over 
-<p align="center"><img alt="$$&#10;\sigma \in \{0.15, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75,2.0,2.25, 2.5,2.75, 3.0,3.25,3.5\}.&#10;$$" src="svgs/18053fc5b24769ed4866010457b3b9fd.svg" align="middle" width="534.1843451999999pt" height="16.438356pt"/></p>
+<p align="center"><img alt="$$&#10;\sigma \in \{0.15, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75,2.0,2.25, 2.5,2.75, 3.0,3.25,3.5\},&#10;$$" src="svgs/8244067f9118b85361c6645cc9f1c526.svg" align="middle" width="534.1843451999999pt" height="16.438356pt"/></p>
 For each value, run the following:
 
 ```
@@ -27,13 +27,13 @@ python3 -m src.test
 --noise-batch-size=512
 ```
 
-Results will be saved to the `ckpts/` directory. Then to plot the  figures, run:
+Results will be saved to the `ckpts/` directory. 
+
+To draw a comparison to the benchmark noises, replace `UniformNoise` above with `GaussianNoise` and `LaplaceNoise`. Then to plot the  figures, run:
 
 ```
 python3 -m scripts.analyze --dir=ckpts --show --adv=1
 ```
-
-Further examples of training/testing scripts can be found in the `jobs/` directory.
 
 #### Trained Models
 
