@@ -37,7 +37,7 @@ To draw a comparison to the benchmark noises, replace `UniformNoise` above with 
 python3 -m scripts.analyze --dir=ckpts --show --adv=1
 ```
 
-Note that other noises will need to be instantiated with the appropriate arguments. For example:
+Note that other noises will need to be instantiated with the appropriate arguments when the appropriate training/testing code is invoked. For example:
 
 ```
 python3 -m src.train
@@ -50,7 +50,52 @@ python3 -m src.train
 
 #### Trained Models
 
-Our pre-trained models will be released shortly.
+Our pre-trained models are available. 
+
+ImageNet (ResNet-50):
+
+- [[Uniform, Sigma=0.25]](http://www.tonyduan.com/resources/2020_rs4a_ckpts/imagenet_uniform_025.pt)
+- [[Uniform, Sigma=0.5]](http://www.tonyduan.com/resources/2020_rs4a_ckpts/imagenet_uniform_050.pt)
+- [[Uniform, Sigma=0.75]](http://www.tonyduan.com/resources/2020_rs4a_ckpts/imagenet_uniform_075.pt)
+- [[Uniform, Sigma=1.0]](http://www.tonyduan.com/resources/2020_rs4a_ckpts/imagenet_uniform_100.pt)
+- [[Uniform, Sigma=1.25]](http://www.tonyduan.com/resources/2020_rs4a_ckpts/imagenet_uniform_125.pt)
+- [[Uniform, Sigma=1.5]](http://www.tonyduan.com/resources/2020_rs4a_ckpts/imagenet_uniform_155.pt)
+- [[Uniform, Sigma=1.75]](http://www.tonyduan.com/resources/2020_rs4a_ckpts/imagenet_uniform_175.pt)
+- [[Uniform, Sigma=2.0]](http://www.tonyduan.com/resources/2020_rs4a_ckpts/imagenet_uniform_200.pt)
+- [[Uniform, Sigma=2.25]](http://www.tonyduan.com/resources/2020_rs4a_ckpts/imagenet_uniform_225.pt)
+- [[Uniform, Sigma=2.5]](http://www.tonyduan.com/resources/2020_rs4a_ckpts/imagenet_uniform_250.pt)
+- [[Uniform, Sigma=2.75]](http://www.tonyduan.com/resources/2020_rs4a_ckpts/imagenet_uniform_275.pt)
+- [[Uniform, Sigma=3.0]](http://www.tonyduan.com/resources/2020_rs4a_ckpts/imagenet_uniform_300.pt)
+- [[Uniform, Sigma=3.25]](http://www.tonyduan.com/resources/2020_rs4a_ckpts/imagenet_uniform_325.pt)
+- [[Uniform, Sigma=3.50]](http://www.tonyduan.com/resources/2020_rs4a_ckpts/imagenet_uniform_350.pt)
+
+CIFAR-10 (ResNet-18): coming soon.
+
+An example of usage:
+
+```python
+from src.models import ResNet
+from src.noises import UniformNoise
+from src.smooth import *
+
+# load the model
+model = ResNet(dataset="imagenet", device="cuda")
+saved_dict = torch.load("imagenet_uniform_05.pt")
+model.load_state_dict(saved_dict)
+model.eval()
+
+# instantiation of noise
+noise = UniformNoise(device="cpu", dim=3072, sigma=0.5)
+
+# training code, to generate samples
+noisy_x = noise.sample(x)
+
+# testing code, certify for L1 adversary
+preds = smooth_predict_hard(model, x, 64)
+top_cats = preds.probs.argumax(dim=1)
+prob_lb = certify_prob_lb(model, x, top_cats, 0.001, noise, 100000)
+radius = noise.certify(prob_lb, adv=1)
+```
 
 #### Repository
 
@@ -111,23 +156,6 @@ $$
 We note that this one-sided Clopper-Pearson confidence interval is generally conservative.
 
 Of course, we need to estimate $c$ as well, which is done with additional Monte Carlo sampling.
-
-#### Examples
-
-Below we show an example of how to use our implemented noises.
-
-```python
-from src.noises import UniformNoise
-
-# instantiation
-noise = UniformNoise(device="cpu", dim=3072, sigma=0.5)
-
-# training code, to generate samples
-noisy_x = noise.sample(x)
-
-# testing code, for L1 adversary
-prob_lower_bound = noise.certify(prob_lower_bound, adv=1)
-```
 
 #### References
 
