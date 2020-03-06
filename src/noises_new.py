@@ -191,24 +191,26 @@ class UniformBallNoise(Noise):
         radius = self.lambd * (2 - 4 * self.beta_dist.ppf(0.75 - 0.5 * prob_lower_bound.numpy()))
         return torch.tensor(radius, dtype=torch.float)
 
-
 class ExpInfNoise(Noise):
 
-    def __init__(self, device, dim, sigma=None, lambd=None, k=1):
+    def __init__(self, device, dim, sigma=None, lambd=None, k=1, j=0):
         self.k = k
+        self.j = j
         super().__init__(device, dim, sigma, lambd)
         self.gamma_factor = math.exp(
-            math.lgamma((dim + k) / k) - math.lgamma((dim + k - 1) / k))
+            math.lgamma((dim - j) / k) - math.lgamma((dim - j - 1) / k))
         self.gamma_dist = Gamma(
-            concentration=torch.tensor(dim / k, device=device),
+            concentration=torch.tensor((dim - j) / k, device=device),
             rate=torch.tensor((1 / self.lambd) ** k, device=device))
 
     def _sigma(self):
         k = self.k
+        j = self.j
         dim = self.dim
         r2 = (dim - 1) / 3 + 1
         return np.sqrt(r2 / dim * (
-            math.exp(math.lgamma((dim + 2) / k) - math.lgamma(dim / k))))
+            math.exp(math.lgamma((dim + 2 - j) / k)
+            - math.lgamma((dim - j) / k))))
 
     def sample(self, x):
         radius = (self.gamma_dist.sample((len(x), 1))) ** (1 / self.k)
@@ -225,9 +227,10 @@ class ExpInfNoise(Noise):
            return self.lambd * torch.log(0.5 / (1 - prob_lower_bound))
         if p > 1:
             raise ValueError(f"Unable to certify ExpInfNoise for p={p}.")
-        return 2 * self.lambd * self.gamma_factor * (prob_lower_bound - 0.5)
+        return 2 * self.lambd * self.dim / (self.dim - 1) * \
+                self.gamma_factor * (prob_lower_bound - 0.5)
 
 if __name__ == '__main__':
-    dim = 10
-    noise = ExpInfNoise('cpu', dim, lambd=1)
+    dim = 4
+    noise = ExpInfNoise('cpu', dim, lambd=1, k=2, j=2)
     print(noise.sample(torch.zeros(1000000, dim)).std(), noise.sigma)
