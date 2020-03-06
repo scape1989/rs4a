@@ -205,8 +205,10 @@ class ExpInfNoise(Noise):
 
     def _sigma(self):
         k = self.k
-        return 3 ** -0.5 * (
-            math.exp(math.lgamma((dim + 1) / k) - math.lgamma(dim / k)))
+        dim = self.dim
+        r2 = (dim - 1) / 3 + 1
+        return np.sqrt(r2 / dim * (
+            math.exp(math.lgamma((dim + 2) / k) - math.lgamma(dim / k))))
 
     def sample(self, x):
         radius = (self.gamma_dist.sample((len(x), 1))) ** (1 / self.k)
@@ -224,3 +226,8 @@ class ExpInfNoise(Noise):
         if p > 1:
             raise ValueError(f"Unable to certify ExpInfNoise for p={p}.")
         return 2 * self.lambd * self.gamma_factor * (prob_lower_bound - 0.5)
+
+if __name__ == '__main__':
+    dim = 10
+    noise = ExpInfNoise('cpu', dim, lambd=1)
+    print(noise.sample(torch.zeros(1000000, dim)).std(), noise.sigma)
