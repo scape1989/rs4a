@@ -213,7 +213,7 @@ class LaplaceNoise(Noise):
             self.table_radii = np.load(radii_fname)
             self.table = dict(zip(self.table_rho, self.table_radii))
             print('Found and loaded saved table: '
-                f'Laplace, Linf adv, dim {dim}, inc {inc}, grid {grid_type}'
+                f'Laplace, Linf adv, dim {self.dim}, inc {inc}, grid {grid_type}'
                 + f', upper {upper}' if grid_type == 'radius' else '')
         except FileNotFoundError:
             print('Making robust radii table: Laplace, Linf adv')

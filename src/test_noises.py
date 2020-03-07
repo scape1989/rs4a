@@ -41,6 +41,13 @@ class TestSigma(unittest.TestCase):
                 self.assertAlmostEqual(emp_sigma, noise.sigma,
                                         delta=rel_tol * emp_sigma)
 
+class TestRadii(unittest.TestCase):
+
+    def test_laplace_linf_radii(self):
+        noise = noises.LaplaceNoise('cpu', 3*32*32, sigma=1)
+        cert1 = noise.certifylinf(torch.arange(0.5, 1, 0.01))
+        cert2 = noise.certifylinf(torch.arange(0.5, 1, 0.01), 'integrate')
+        self.assertTrue(np.allclose(cert1, cert2, rtol=1e-2))
 
 if __name__ == '__main__':
     unittest.main()
