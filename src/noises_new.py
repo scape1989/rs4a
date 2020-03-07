@@ -5,6 +5,7 @@ import scipy as sp
 import scipy.special
 import scipy.stats
 import torch
+from scipy.stats import beta, binom, gamma, norm
 from torch.distributions import (Beta, Dirichlet, Gamma, Laplace, Normal,
                                  Pareto, Uniform)
 
@@ -125,6 +126,7 @@ class LaplaceNoise(Noise):
         super().__init__(device, dim, sigma, lambd)
         self.laplace_dist = Laplace(loc=torch.tensor(0.0, device=device),
                                     scale=torch.tensor(self.lambd, device=device))
+        self.table = self.table_radii = self.table_rho = self._table_info = None
 
     def _sigma(self):
         return 2 ** 0.5
@@ -132,16 +134,116 @@ class LaplaceNoise(Noise):
     def sample(self, x):
         return self.laplace_dist.sample(x.shape) + x
 
-    def certify(self, prob_lower_bound, p):
+    def certify(self, prob_lower_bound, p, mode='approx'):
         if p == float("inf"):
             # TODO(Greg): fix
-            return self.lambd * Normal(0, 1).icdf(prob_lower_bound) / self.dim ** 0.5
+            return self.certifylinf(self, prob_lower_bound, mode='approx')
         if p > 1:
             raise ValueError(f"Unable to certify LaplaceNoise for p={p}.")
         a = 0.5 * self.lambd * torch.log(prob_lower_bound / (1 - prob_lower_bound))
         b = -self.lambd * (torch.log(2 * (1 - prob_lower_bound)))
         return torch.max(a, b)
 
+    def certifylinf(self, prob_lower_bound, mode='approx',
+                    inc=0.001, grid_type='radius', upper=3, save=True):
+        if mode == 'approx':
+            return self.lambd * Normal(0, 1).icdf(prob_lower_bound) / self.dim ** 0.5
+        elif mode == 'integrate':
+            table_info = dict(inc=inc, grid_type=grid_type, upper=upper)
+            if self.table_rho is None or self._table_info != table_info:
+                self.make_linf_table(inc, grid_type, upper, save)
+                self._table_info = table_info
+            prob_lower_bound = prob_lower_bound.numpy()
+            idxs = np.searchsorted(self.table_rho, prob_lower_bound, 'right') - 1
+            return torch.tensor(self.lambd * self.table_radii[idxs],
+                                dtype=torch.float)
+        else:
+            raise ValueError(f'Unrecognized mode "{mode}"')
+    
+    def Phi(self, prob):
+        def phi(c, d):
+            return binom(d, 0.5).sf((c+d)/2)
+        def phiinv(p, d):
+            return 2 * binom(d, 0.5).isf(p) - d
+        d = self.dim
+        c = phiinv(prob, d)
+        pp = phi(c, d)
+    #     print(c, p, pp)
+        return c * (prob - pp) + d * phi(c - 1/2, d-1) - d * phi(c, d)
+
+    def _certifylinf_integrate(self, rho):
+        return sp.integrate.quad(lambda p: 1/self.Phi(p),
+                                1 - rho, 1/2)[0]
+
+    def make_linf_table(self, inc=0.001, grid_type='radius', upper=3, save=True):
+        '''Calculate or load a table of robust radii for linf adversary.
+        First try to load a table under `./tables/` with the corresponding
+        parameters. If this fails, calculate the table.
+        Inputs:
+            inc: grid increment (default: 0.05)
+            grid_type: 'radius' | 'prob' (default: 'radius')
+                In a `radius` grid, the probabilities rho are calculated as
+                GaussianCDF([0, inc, 2 * inc, ..., upper - inc, upper]).
+                In a `prob` grid, the probabilities rho are spaced out evenly
+                in increments of `inc`
+            upper: if `grid_type == 'radius'`, then the upper limit to the
+                radius grid. (default: 3)
+            save: whether to save the table computed
+        Outputs:
+            None, but `self.table`, `self.table_rho`, `self.table_radii`
+            are now defined.
+        '''
+        from os.path import join
+        if grid_type == 'radius':
+            rho_fname = join('tables',
+                    f'laplace_linf_d{self.dim}_inc{inc}'
+                    f'_grid{grid_type}_upper{upper}_rho.npy')
+            radii_fname = join('tables', 
+                    f'laplace_linf_d{self.dim}_inc{inc}'
+                    f'_grid{grid_type}_upper{upper}_radii.npy')
+        else:
+            rho_fname = join('tables',
+                    f'laplace_linf_d{self.dim}_inc{inc}'
+                    f'_grid{grid_type}_rho.npy')
+            radii_fname = join('tables', 
+                    f'laplace_linf_d{self.dim}_inc{inc}'
+                    f'_grid{grid_type}_radii.npy')
+        try:
+            self.table_rho = np.load(rho_fname)
+            self.table_radii = np.load(radii_fname)
+            self.table = dict(zip(self.table_rho, self.table_radii))
+            print('Found and loaded saved table: '
+                f'Laplace, Linf adv, dim {dim}, inc {inc}, grid {grid_type}'
+                + f', upper {upper}' if grid_type == 'radius' else '')
+        except FileNotFoundError:
+            print('Making robust radii table: Laplace, Linf adv')
+            self.table = self._make_linf_table(inc, grid_type, upper)
+            self.table_rho = np.array(list(self.table.keys()))
+            self.table_radii = np.array(list(self.table.values()))
+            if save:
+                import os
+                print('Saving robust radii table')
+                os.makedirs('tables', exist_ok=True)
+                np.save(rho_fname, self.table_rho)
+                np.save(radii_fname, self.table_radii)
+    
+    def _make_linf_table(self, inc=0.001, grid_type='radius', upper=3):
+        import tqdm
+        table = {1/2: 0}
+        lastrho = 1/2
+        if grid_type == 'radius':
+            rgrid = np.arange(inc, upper+inc, inc)
+            grid = norm.cdf(rgrid)
+        elif grid_type == 'prob':
+            grid = np.arange(1/2+inc, 1, inc)
+        else:
+            raise ValueError(f'Unknow grid_type {grid_type}')
+        for rho in tqdm.tqdm(grid):
+            delta = sp.integrate.quad(lambda p: 1/self.Phi(p),
+                                1 - rho, 1 - lastrho)[0]
+            table[rho] = table[lastrho] + delta
+            lastrho = rho
+        return table
 
 
 class ParetoNoise(Noise):
@@ -246,6 +348,17 @@ class ExpInfNoise(Noise):
 
 
 if __name__ == '__main__':
-    dim = 4
-    noise = ExpInfNoise('cpu', dim, lambd=1, k=2, j=2)
-    print(noise.certify(0.8, p=1))
+    import time
+    dim = 3072
+    noise = LaplaceNoise('cpu', dim, lambd=1)
+    before = time.time()
+    # noise.make_linf_table(0.05)
+    cert1 = noise.certifylinf(torch.arange(0.5, 1, 0.01))
+    cert2 = noise.certifylinf(torch.arange(0.5, 1, 0.01), 'integrate')
+    print(cert1)
+    print(cert2)
+    print((cert1 - cert2).std())
+    after = time.time()
+    # print(noise.table)
+    print('{:.3}'.format(after - before))
+    # print(noise._certifylinf_integrate(0.8))
