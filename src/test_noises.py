@@ -49,6 +49,8 @@ class TestSigma(unittest.TestCase):
 class TestRadii(unittest.TestCase):
 
     def test_laplace_linf_radii(self):
+        '''Test that the "approx" and "integrate" modes of linf certification
+        for Laplace agree with each other.'''
         noise = noises.LaplaceNoise('cpu', 3*32*32, sigma=1)
         cert1 = noise.certifylinf(torch.arange(0.5, 1, 0.01))
         cert2 = noise.certifylinf(torch.arange(0.5, 1, 0.01), 'integrate')
