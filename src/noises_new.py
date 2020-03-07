@@ -250,17 +250,17 @@ class ParetoNoise(Noise):
     '''Pareto (i.e. power law) noise in each coordinate, iid.
     '''
 
-    def __init__(self, device, dim, sigma=None, lambd=None, k=3):
-        self.k = k
+    def __init__(self, device, dim, sigma=None, lambd=None, a=3):
+        self.a = a
         super().__init__(device, dim, sigma, lambd)
         self.pareto_dist = Pareto(
             scale=torch.tensor(self.lambd, device=device, dtype=torch.float),
-            alpha=torch.tensor(self.k, device=device, dtype=torch.float))
+            alpha=torch.tensor(self.a, device=device, dtype=torch.float))
 
     def _sigma(self):
-        k = self.k
-        if k > 2:
-            return (0.5 * (k - 1) * (k - 2)) ** -0.5
+        a = self.a
+        if a > 2:
+            return (0.5 * (a - 1) * (a - 2)) ** -0.5
         else:
             return np.float('inf')
 
@@ -273,10 +273,11 @@ class ParetoNoise(Noise):
         if p > 1:
             raise ValueError(f"Unable to certify LomaxNoise for p={p}.")
         prob_lb = prob_lb.numpy()
+        a = self.a
         radius = sp.special.hyp2f1(
-                    1, self.k / (self.k + 1), self.k / (self.k + 1) + 1,
-                    (2 * prob_lb - 1) ** (1 + 1 / self.k)) * \
-                self.lambd * (2 * prob_lb - 1) / self.k
+                    1, a / (a + 1), a / (a + 1) + 1,
+                    (2 * prob_lb - 1) ** (1 + 1 / a)
+                ) * self.lambd * (2 * prob_lb - 1) / a
         return torch.tensor(radius, dtype=torch.float)
 
 
@@ -287,7 +288,7 @@ class UniformBallNoise(Noise):
         self.beta_dist = sp.stats.beta(0.5 * (self.dim + 1), 0.5 * (self.dim + 1))
 
     def _sigma(self):
-        return (dim + 2) ** -0.5
+        return (self.dim + 2) ** -0.5
 
     def sample(self, x):
         radius = torch.rand((len(x), 1), device=self.device) ** (1 / self.dim)
@@ -394,7 +395,7 @@ class PowerInfNoise(Noise):
 if __name__ == '__main__':
     import time
     dim = 3072
-    noise = PowerInfNoise('cpu', dim, lambd=1, a=dim+100)
+    noise = PowerInfNoise('cpu', dim, lambd=1, a=dim+3)
     before = time.time()
     # noise.make_linf_table(0.05)
     # cert1 = noise.certifylinf(torch.arange(0.5, 1, 0.01))
