@@ -50,17 +50,17 @@ class Noise(object):
         '''Apply noise to x'''
         raise NotImplementedError()
 
-    def certify(self, prob_lower_bound, p=None):
+    def certify(self, prob_lb, p=None):
         raise NotImplementedError()
 
-    def certifyl1(self, prob_lower_bound):
-        return self.certify(prob_lower_bound, p=1)
+    def certifyl1(self, prob_lb):
+        return self.certify(prob_lb, p=1)
 
-    def certifyl2(self, prob_lower_bound):
-        return self.certify(prob_lower_bound, p=2)
+    def certifyl2(self, prob_lb):
+        return self.certify(prob_lb, p=2)
 
-    def certifylinf(self, prob_lower_bound):
-        return self.certify(prob_lower_bound, p='inf')
+    def certifylinf(self, prob_lb):
+        return self.certify(prob_lb, p='inf')
 
 class Clean(Noise):
 
@@ -87,12 +87,12 @@ class UniformNoise(Noise):
     def sample(self, x):
         return (torch.rand_like(x, device=self.device) - 0.5) * 2 * self.lambd + x
 
-    def certify(self, prob_lower_bound, p):
+    def certify(self, prob_lb, p):
         if p == float("inf"):
-            return 2 * self.lambd * (1 - (1.5 - prob_lower_bound) ** (1 / self.dim))
+            return 2 * self.lambd * (1 - (1.5 - prob_lb) ** (1 / self.dim))
         if p > 1:
             raise ValueError(f"Unable to certify UniformNoise for p={p}.")
-        return 2 * self.lambd * (prob_lower_bound - 0.5)
+        return 2 * self.lambd * (prob_lb - 0.5)
 
 
 class GaussianNoise(Noise):
@@ -110,11 +110,11 @@ class GaussianNoise(Noise):
     def sample(self, x):
         return torch.randn_like(x) * self.lambd + x
 
-    def certify(self, prob_lower_bound, p):
+    def certify(self, prob_lb, p):
         ppen = 1
         if p > 2:
             ppen = self.dim ** (0.5 - 1/p)
-        return self.norm_dist.icdf(prob_lower_bound) / ppen
+        return self.norm_dist.icdf(prob_lb) / ppen
 
 
 
@@ -134,27 +134,27 @@ class LaplaceNoise(Noise):
     def sample(self, x):
         return self.laplace_dist.sample(x.shape) + x
 
-    def certify(self, prob_lower_bound, p, mode='approx'):
+    def certify(self, prob_lb, p, mode='approx'):
         if p == float("inf"):
             # TODO(Greg): fix
-            return self.certifylinf(self, prob_lower_bound, mode='approx')
+            return self.certifylinf(self, prob_lb, mode='approx')
         if p > 1:
             raise ValueError(f"Unable to certify LaplaceNoise for p={p}.")
-        a = 0.5 * self.lambd * torch.log(prob_lower_bound / (1 - prob_lower_bound))
-        b = -self.lambd * (torch.log(2 * (1 - prob_lower_bound)))
+        a = 0.5 * self.lambd * torch.log(prob_lb / (1 - prob_lb))
+        b = -self.lambd * (torch.log(2 * (1 - prob_lb)))
         return torch.max(a, b)
 
-    def certifylinf(self, prob_lower_bound, mode='approx',
+    def certifylinf(self, prob_lb, mode='approx',
                     inc=0.001, grid_type='radius', upper=3, save=True):
         if mode == 'approx':
-            return self.lambd * Normal(0, 1).icdf(prob_lower_bound) / self.dim ** 0.5
+            return self.lambd * Normal(0, 1).icdf(prob_lb) / self.dim ** 0.5
         elif mode == 'integrate':
             table_info = dict(inc=inc, grid_type=grid_type, upper=upper)
             if self.table_rho is None or self._table_info != table_info:
                 self.make_linf_table(inc, grid_type, upper, save)
                 self._table_info = table_info
-            prob_lower_bound = prob_lower_bound.numpy()
-            idxs = np.searchsorted(self.table_rho, prob_lower_bound, 'right') - 1
+            prob_lb = prob_lb.numpy()
+            idxs = np.searchsorted(self.table_rho, prob_lb, 'right') - 1
             return torch.tensor(self.lambd * self.table_radii[idxs],
                                 dtype=torch.float)
         else:
@@ -269,14 +269,14 @@ class ParetoNoise(Noise):
         signs = torch.sign(torch.rand_like(x) - 0.5)
         return samples * signs + x
 
-    def certify(self, prob_lower_bound, p):
+    def certify(self, prob_lb, p):
         if p > 1:
             raise ValueError(f"Unable to certify LomaxNoise for p={p}.")
-        prob_lower_bound = prob_lower_bound.numpy()
+        prob_lb = prob_lb.numpy()
         radius = sp.special.hyp2f1(
                     1, self.k / (self.k + 1), self.k / (self.k + 1) + 1,
-                    (2 * prob_lower_bound - 1) ** (1 + 1 / self.k)) * \
-                self.lambd * (2 * prob_lower_bound - 1) / self.k
+                    (2 * prob_lb - 1) ** (1 + 1 / self.k)) * \
+                self.lambd * (2 * prob_lb - 1) / self.k
         return torch.tensor(radius, dtype=torch.float)
 
 
@@ -296,22 +296,40 @@ class UniformBallNoise(Noise):
         noise = noise / torch.norm(noise, dim=1, p=2).unsqueeze(1) * radius
         return noise + x
 
-    def certify(self, prob_lower_bound, p):
+    def certify(self, prob_lb, p):
         ppen = 1
         if p > 2:
             ppen = self.dim ** (0.5 - 1/p)
         radius = self.lambd * (
-            2 - 4 * self.beta_dist.ppf(0.75 - 0.5 * prob_lower_bound.numpy()))
+            2 - 4 * self.beta_dist.ppf(0.75 - 0.5 * prob_lb.numpy()))
         return torch.tensor(radius, dtype=torch.float) / ppen
 
+def sample_linf_sphere(device, shape):
+    noise = (2 * torch.rand(shape, device=device) - 1
+            ).reshape((shape[0], -1))
+    sel_dims = torch.randint(noise.shape[1], size=(noise.shape[0],))
+    idxs = torch.arange(0, noise.shape[0], dtype=torch.long)
+    noise[idxs, sel_dims] = torch.sign(
+        torch.rand(shape[0], device=device) - 0.5)
+    return noise
+
 class ExpInfNoise(Noise):
+    r'''Noise of the form \|x\|_\infty^{-j} e^{-\|x/\lambda\|_\infty^k}
+    '''
 
     def __init__(self, device, dim, sigma=None, lambd=None, k=1, j=0):
         self.k = k
         self.j = j
         super().__init__(device, dim, sigma, lambd)
-        self.gamma_factor = math.exp(
-            math.lgamma((dim - j) / k) - math.lgamma((dim - j - 1) / k))
+        if dim > 1:
+            self.gamma_factor = dim / (dim - 1) * math.exp(
+                math.lgamma((dim - j) / k) - math.lgamma((dim - j - 1) / k))
+        elif j == 0:
+            self.gamma_factor = math.exp(
+                math.lgamma((dim + k) / k) - math.lgamma((dim + k - 1) / k))
+        else:
+            raise ValueError(
+                f'ExpInfNoise(dim={dim}, k={k}, j={j}) is not a distribution.')
         self.gamma_dist = Gamma(
             concentration=torch.tensor((dim - j) / k, device=device),
             rate=torch.tensor((1 / self.lambd) ** k, device=device))
@@ -327,38 +345,64 @@ class ExpInfNoise(Noise):
 
     def sample(self, x):
         radius = (self.gamma_dist.sample((len(x), 1))) ** (1 / self.k)
-        noise = (2 * torch.rand(x.shape, device=self.device) - 1
-                ).reshape((len(x), -1))
-        sel_dims = torch.randint(noise.shape[1], size=(noise.shape[0],))
-        idxs = torch.arange(0, noise.shape[0], dtype=torch.long)
-        noise[idxs, sel_dims] = torch.sign(
-            torch.rand(len(x), device=self.device) - 0.5)
+        noise = sample_linf_sphere(self.device, x.shape)
         return (noise * radius).view(x.shape) + x
 
-    def certify(self, prob_lower_bound, p):
+    def certify(self, prob_lb, p):
+        '''
+        Note that if `prob_lb > 1 - 1/self.dim`, then better radii
+        are available (see paper), but when `self.dim` is large, like in CIFAR10
+        or ImageNet, this almost never happens.
+        '''
         if p == float("inf"):
             if self.k == 1 and self.j == 0:
-                return self.lambd * torch.log(0.5 / (1 - prob_lower_bound))
+                return self.lambd * torch.log(0.5 / (1 - prob_lb))
             else:
                 raise NotImplementedError()
         if p > 1:
             raise ValueError(f"Unable to certify ExpInfNoise for p={p}.")
-        return 2 * self.lambd * self.dim / (self.dim - 1) * \
-                self.gamma_factor * (prob_lower_bound - 0.5)
+        return 2 * self.lambd * \
+                self.gamma_factor * (prob_lb - 0.5)
+
+class PowerInfNoise(Noise):
+
+    def __init__(self, device, dim, sigma=None, lambd=None, a=None):
+        self.a = a
+        if a is None:
+            raise ValueError('Parameter `a` is required.')
+        super().__init__(device, dim, sigma, lambd)
+        self.beta_dist = sp.stats.betaprime(dim, a - self.dim)
+
+    def _sigma(self):
+        d = self.dim
+        a = self.a
+        r2 = (d - 1) / 3 + 1
+        return np.sqrt(r2 * (d + 1) / (a - d - 1) / (a - d - 2))
+
+    def sample(self, x):
+        samples = self.beta_dist.rvs((len(x), 1))
+        radius = torch.tensor(samples, dtype=torch.float, device=self.device)
+        noise = sample_linf_sphere(self.device, x.shape)
+        return (noise * radius * self.lambd).view(x.shape) + x
+
+    def certify(self, prob_lb, p):
+        if p > 1:
+            raise ValueError(f"Unable to certify PowerLawNoise for p={p}.")
+        return self.lambd * 2 * self.dim / (self.a - self.dim) * (prob_lb - 0.5)
 
 
 if __name__ == '__main__':
     import time
     dim = 3072
-    noise = LaplaceNoise('cpu', dim, lambd=1)
+    noise = PowerInfNoise('cpu', dim, lambd=1, a=dim+100)
     before = time.time()
     # noise.make_linf_table(0.05)
-    cert1 = noise.certifylinf(torch.arange(0.5, 1, 0.01))
-    cert2 = noise.certifylinf(torch.arange(0.5, 1, 0.01), 'integrate')
-    print(cert1)
-    print(cert2)
-    print((cert1 - cert2).std())
+    # cert1 = noise.certifylinf(torch.arange(0.5, 1, 0.01))
+    # cert2 = noise.certifylinf(torch.arange(0.5, 1, 0.01), 'integrate')
+    # print(cert1)
+    # print(cert2)
+    # print((cert1 - cert2).std())
     after = time.time()
     # print(noise.table)
+    print(noise.sample(torch.zeros(10000, dim)).std(), noise.sigma)
     print('{:.3}'.format(after - before))
-    # print(noise._certifylinf_integrate(0.8))
