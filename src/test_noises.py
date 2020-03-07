@@ -30,6 +30,11 @@ class TestSigma(unittest.TestCase):
             configs.append(
                 dict(noise=noises.PowerInfNoise, a=a+dim)
             )
+        for k in [1, 2, 10, 100]:
+            for j in [0, 1, 10, 100, 1000]:
+                configs.append(
+                    dict(noise=noises.Exp2Noise, k=k, j=j)
+                )
         for c in tqdm.tqdm(configs):
             c['device'] = dev
             c['dim'] = dim

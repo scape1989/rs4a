@@ -157,7 +157,7 @@ class LaplaceNoise(Noise):
             
             lambda * GaussianCDF(prob_lb) / d**0.5
         
-        We verify the quality of this approximation in the `test_noises.py`.
+        We verify the quality of this approximation in `test_noises.py`.
         By default, "approx" mode is used.
         '''
         if mode == 'approx':
@@ -296,6 +296,7 @@ class ParetoNoise(Noise):
 
 
 class UniformBallNoise(Noise):
+    '''Uniform distribution over the l2 ball'''
 
     def __init__(self, device, dim, sigma=None, lambd=None):
         super().__init__(device, dim, sigma, lambd)
@@ -347,21 +348,21 @@ class ExpInfNoise(Noise):
                 f'ExpInfNoise(dim={dim}, k={k}, j={j}) is not a distribution.')
         self.gamma_dist = Gamma(
             concentration=torch.tensor((dim - j) / k, device=device),
-            rate=torch.tensor((1 / self.lambd) ** k, device=device))
+            rate=1)
 
     def _sigma(self):
         k = self.k
         j = self.j
-        dim = self.dim
-        r2 = (dim - 1) / 3 + 1
-        return np.sqrt(r2 / dim * (
-            math.exp(math.lgamma((dim + 2 - j) / k)
-            - math.lgamma((dim - j) / k))))
+        d = self.dim
+        r2 = (d - 1) / 3 + 1
+        return np.sqrt(r2 / d * (
+            math.exp(math.lgamma((d + 2 - j) / k)
+            - math.lgamma((d - j) / k))))
 
     def sample(self, x):
         radius = (self.gamma_dist.sample((len(x), 1))) ** (1 / self.k)
         noise = sample_linf_sphere(self.device, x.shape)
-        return (noise * radius).view(x.shape) + x
+        return self.lambd * (noise * radius).view(x.shape) + x
 
     def certify(self, prob_lb, p):
         '''
@@ -380,6 +381,7 @@ class ExpInfNoise(Noise):
                 self.gamma_factor * (prob_lb - 0.5)
 
 class PowerInfNoise(Noise):
+    r'''Linf-based power law, with density of the form (1 + \|x\|_\infty)^{-a}'''
 
     def __init__(self, device, dim, sigma=None, lambd=None, a=None):
         self.a = a
@@ -405,11 +407,43 @@ class PowerInfNoise(Noise):
             raise ValueError(f"Unable to certify PowerLawNoise for p={p}.")
         return self.lambd * 2 * self.dim / (self.a - self.dim) * (prob_lb - 0.5)
 
+def sample_l2_sphere(device, shape):
+    noises = torch.randn(shape)
+    # noises = noises / (noises ** 2).sum(dim=1, keepdim=True) ** 0.5
+    noises /= noises.norm(dim=1, keepdim=True)
+    return noises
+
+class Exp2Noise(Noise):
+    r'''L2-based distribution of the form \|x\|_2^{-j} e^{\|x/\lambda\|_2^k}'''
+
+    def __init__(self, device, dim, sigma=None, lambd=None, k=1, j=0):
+        self.k = k
+        self.j = j
+        super().__init__(device, dim, sigma, lambd)
+        self.gamma_dist = Gamma(
+            concentration=torch.tensor((dim - j) / k, device=device),
+            rate=1)
+
+    def _sigma(self):
+        k = self.k
+        j = self.j
+        d = self.dim
+        return np.sqrt(1 / d * (
+            math.exp(math.lgamma((d + 2 - j) / k)
+            - math.lgamma((d - j) / k))))        
+
+    def sample(self, x):
+        # import pdb
+        # pdb.set_trace()
+        radius = (self.gamma_dist.sample((len(x), 1))) ** (1 / self.k)
+        radius *= self.lambd
+        noises = sample_l2_sphere(self.device, x.shape)
+        return noises * radius + x
 
 if __name__ == '__main__':
     import time
     dim = 3072
-    noise = PowerInfNoise('cpu', dim, lambd=1, a=dim+3)
+    noise = Exp2Noise('cpu', dim, sigma=1, k=1000, j=0)
     before = time.time()
     # noise.make_linf_table(0.05)
     # cert1 = noise.certifylinf(torch.arange(0.5, 1, 0.01))
