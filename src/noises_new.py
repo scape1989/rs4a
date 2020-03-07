@@ -136,7 +136,6 @@ class LaplaceNoise(Noise):
 
     def certify(self, prob_lb, p, mode='approx'):
         if p == float("inf"):
-            # TODO(Greg): fix
             return self.certifylinf(self, prob_lb, mode='approx')
         if p > 1:
             raise ValueError(f"Unable to certify LaplaceNoise for p={p}.")
@@ -146,6 +145,21 @@ class LaplaceNoise(Noise):
 
     def certifylinf(self, prob_lb, mode='approx',
                     inc=0.001, grid_type='radius', upper=3, save=True):
+        '''Certify Laplace smoothing against linf adversary.
+        There are two modes of certification: "approx" or "integrate".
+        The latter computes a table of robust radii from the differential
+        method and performs lookup during certification, and is guaranteed
+        to be correct. But this table calculation takes a bit of overhead 
+        (though it's only done once, and the table will be saved for loading
+        in the future).
+        The former uses the following approximation which is highly accurate
+        in high dimension:
+            
+            lambda * GaussianCDF(prob_lb) / d**0.5
+        
+        We verify the quality of this approximation in the `test_noises.py`.
+        By default, "approx" mode is used.
+        '''
         if mode == 'approx':
             return self.lambd * Normal(0, 1).icdf(prob_lb) / self.dim ** 0.5
         elif mode == 'integrate':
