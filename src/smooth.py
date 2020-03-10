@@ -69,18 +69,32 @@ def smooth_predict_hard(model, x, noise, sample_size=64, noise_batch_size=512):
 
     return Categorical(probs=counts)
 
-def certify_smoothed(model, x, top_cats, alpha, noise, p, sample_size=10**5, noise_batch_size=512):
+def certify_prob_lb(model, x, top_cats, alpha, noise, sample_size=10**5, noise_batch_size=512):
     """
-    Certify a smoothed model, given the top categories to certify for.
+    Certify a probability lower bound (rho).
 
     Returns
     -------
-    lower: n-length tensor of floats, the probability lower bounds
-    radius: n-length tensor
+    prob_lb: n-length tensor of floats
     """
     preds = smooth_predict_hard(model, x, noise, sample_size, noise_batch_size)
     top_probs = preds.probs.gather(dim=1, index=top_cats.unsqueeze(1)).detach().cpu()
     lower, _ = proportion_confint(top_probs * sample_size, sample_size, alpha=alpha, method="beta")
     lower = torch.tensor(lower.squeeze(), dtype=torch.float)
-    return lower, noise.certify(lower, p=p)
+    return lower
 
+#def certify_smoothed(model, x, top_cats, alpha, noise, adv, sample_size=10**5, noise_batch_size=512):
+#    """
+#    Certify a smoothed model, given the top categories to certify for.
+#
+#    Returns
+#    -------
+#    lower: n-length tensor of floats, the probability lower bounds
+#    radius: n-length tensor
+#    """
+#    preds = smooth_predict_hard(model, x, noise, sample_size, noise_batch_size)
+#    top_probs = preds.probs.gather(dim=1, index=top_cats.unsqueeze(1)).detach().cpu()
+#    lower, _ = proportion_confint(top_probs * sample_size, sample_size, alpha=alpha, method="beta")
+#    lower = torch.tensor(lower.squeeze(), dtype=torch.float)
+#    return lower, noise.certify(lower, adv=adv)
+#

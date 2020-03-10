@@ -7,7 +7,7 @@ from src.attacks import *
 from src.noises import *
 from src.models import *
 from src.datasets import get_dataset, get_num_labels
-from src.utils import get_trailing_number
+from src.utils import parse_noise_from_args
 
 
 if __name__ == "__main__":
@@ -20,7 +20,11 @@ if __name__ == "__main__":
     argparser.add_argument("--noise-batch-size", default=512, type=int)
     argparser.add_argument("--sigma", default=0.0, type=float)
     argparser.add_argument("--noise", default="Clean", type=str)
-    argparser.add_argument("--p", default=2, type=int)
+    argparser.add_argument("--k", default=None, type=float)
+    argparser.add_argument("--j", default=None, type=float)
+    argparser.add_argument("--a", default=None, type=float)
+    argparser.add_argument("--lambd", default=None, type=float)
+    argparser.add_argument("--adv", default=2, type=int)
     argparser.add_argument("--experiment-name", default="cifar", type=str)
     argparser.add_argument("--dataset", default="cifar", type=str)
     argparser.add_argument("--model", default="ResNet", type=str)
@@ -36,12 +40,7 @@ if __name__ == "__main__":
     model.load_state_dict(torch.load(save_path))
     model.eval()
 
-    k = get_trailing_number(args.noise)
-    if k:
-        noise = eval(args.noise[:-len(str(k))])(sigma=args.sigma, device=args.device,
-                                                dim=get_dim(args.dataset), k=k)
-    else:
-        noise = eval(args.noise)(sigma=args.sigma, device=args.device, dim=get_dim(args.dataset))
+    noise = parse_noise_from_args(args, device=args.device, dim=get_dim(args.dataset))
 
     eps_range = (3.0, 2.0, 1.0, 0.5, 0.25)
 
@@ -53,12 +52,12 @@ if __name__ == "__main__":
         lower, upper = i * args.batch_size, (i + 1) * args.batch_size
 
         for eps in eps_range:
-            x_adv = pgd_attack_smooth(model, x, y, eps=eps, noise=noise, sample_size=128,
-                                      steps=20, p=1, clamp=(0, 1))
+            x_adv, _ = pgd_attack_smooth(model, x, y, eps=eps, noise=noise, sample_size=128,
+                                         steps=20, p=args.adv, clamp=(0, 1))
             preds_adv = smooth_predict_hard(model, x_adv, noise, args.sample_size_pred,
                                             args.noise_batch_size)
             results[f"preds_adv_{eps}"][lower:upper, :] = preds_adv.probs.data.cpu().numpy()
-            assert ((x - x_adv).reshape(x.shape[0], -1).norm(dim=1, p=1) <= eps + 1e-2).all()
+            assert ((x - x_adv).reshape(x.shape[0], -1).norm(dim=1, p=args.adv) <= eps + 1e-2).all()
 
     save_path = f"{args.output_dir}/{args.experiment_name}"
     for k, v in results.items():

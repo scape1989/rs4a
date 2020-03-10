@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     dataset = get_dataset(args.dataset, "test")
 
-    plt.figure(figsize=(2.5 * args.n_samples, 7))
+    plt.figure(figsize=(2 * args.n_samples, 7))
 
     x, y = dataset[args.idx]
     x = x.unsqueeze(0) if dataset == "cifar" else x
@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
     for i in range(args.n_samples):
 
-        noise = PowerLawNoise(sigma=args.sigma + 0.1 * i, device="cpu", dim=dim, k=16)
+        noise = PowerInfNoise(sigma=args.sigma + 0.1 * i, device="cpu", dim=dim, a=3200)
         sample = (noise.sample(x.reshape(1, -1)).reshape(x.shape)).clamp(0, 1)
         plt.subplot(4, args.n_samples, i + 1 + args.n_samples * 2)
         plot_image(sample, args.dataset)
@@ -67,5 +67,6 @@ if __name__ == "__main__":
         plt.axis("off")
         plt.title(f"Uniform {args.sigma + 0.1 * i:.1f}")
 
+    plt.tight_layout()
     plt.show()
 

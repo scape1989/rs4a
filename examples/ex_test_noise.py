@@ -29,6 +29,5 @@ if __name__ == "__main__":
     rvs = noise.sample(x)
     print("== L2 Match")
     print("Root L2 norm (divided by dimension):", (rvs.norm(p=2, dim=1).pow(2) / args.dim).mean() ** 0.5)
-    print("Linf norm:", (rvs.norm(p=float("inf"), dim=1)).mean())
     print(noise.certify(lower_bounds, p=1))
 

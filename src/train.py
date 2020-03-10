@@ -15,7 +15,7 @@ from src.noises import *
 from src.smooth import *
 from src.attacks import pgd_attack_smooth
 from src.datasets import get_dataset, get_dim
-from src.utils import get_trailing_number
+from src.utils import parse_noise_from_args
 
 
 if __name__ == "__main__":
@@ -30,15 +30,18 @@ if __name__ == "__main__":
     argparser.add_argument("--save-every", default=50, type=int)
     argparser.add_argument("--experiment-name", default="cifar", type=str)
     argparser.add_argument("--noise", default="Clean", type=str)
-    argparser.add_argument("--sigma", default=0.0, type=float)
-    argparser.add_argument("--p", default=2, type=int)
+    argparser.add_argument("--sigma", default=None, type=float)
+    argparser.add_argument("--adv", default=2, type=int)
     argparser.add_argument("--eps", default=0.0, type=float)
+    argparser.add_argument("--k", default=None, type=float)
+    argparser.add_argument("--j", default=None, type=float)
+    argparser.add_argument("--a", default=None, type=float)
+    argparser.add_argument("--lambd", default=None, type=float)
     argparser.add_argument("--model", default="ResNet", type=str)
     argparser.add_argument("--dataset", default="cifar", type=str)
     argparser.add_argument("--adversarial", action="store_true")
     argparser.add_argument("--stability", action="store_true")
     argparser.add_argument("--direct", action="store_true")
-    argparser.add_argument("--rotate", action="store_true")
     argparser.add_argument('--output-dir', type=str, default=os.getenv("PT_OUTPUT_DIR"))
     args = argparser.parse_args()
 
@@ -64,16 +67,7 @@ if __name__ == "__main__":
     loss_meter = meter.AverageValueMeter()
     time_meter = meter.TimeMeter(unit=False)
 
-    k = get_trailing_number(args.noise)
-    if k:
-        noise = eval(args.noise[:-len(str(k))])(sigma=args.sigma, device=args.device,
-                                                dim=get_dim(args.dataset), k=k)
-    else:
-        noise = eval(args.noise)(sigma=args.sigma, device=args.device,
-                                 dim=get_dim(args.dataset))
-
-    if args.rotate:
-        rotate_noise = RotationNoise(0.0, args.device, dim=get_dim(args.dataset))
+    parse_noise_from_args(args, device=args.device, dim=get_dim(args.dataset))
 
     train_losses = []
 
@@ -83,11 +77,10 @@ if __name__ == "__main__":
 
             x, y = x.to(args.device), y.to(args.device)
 
-            if args.rotate:
-                x = rotate_noise.sample(x)
-
             if args.adversarial:
-                x = pgd_attack_smooth(model, x, y, args.eps, noise, sample_size=4, p=args.p)
+                model.eval()
+                x, loss = pgd_attack_smooth(model, x, y, args.eps, noise, sample_size=4, adv=args.adv)
+                model.train()
             elif args.stability:
                 x_tilde = noise.sample(x.view(len(x), -1)).view(x.shape)
             elif not args.direct:
@@ -98,9 +91,9 @@ if __name__ == "__main__":
             elif args.stability:
                 pred_x = model.forecast(model.forward(x_tilde))
                 pred_x_tilde = model.forecast(model.forward(x_tilde))
-                loss = -pred_x.log_prob(y) + torch.distributions.kl_divergence(pred_x, pred_x_tilde)
+                loss = -pred_x.log_prob(y) + 6.0 * torch.distributions.kl_divergence(pred_x, pred_x_tilde)
                 loss = loss.mean()
-            else:
+            elif not args.adversarial:
                 loss = model.loss(x, y).mean()
 
             optimizer.zero_grad()

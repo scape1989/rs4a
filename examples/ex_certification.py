@@ -29,14 +29,8 @@ if __name__ == "__main__":
 
     for noise_str in noises:
 
-        k = get_trailing_number(noise_str)
-        if k:
-            noise = eval(noise_str[:-len(str(k))])(sigma=args.sigma, device="cpu",
-                                                   dim=args.dim, k=k)
-        else:
-            noise = eval(noise_str)(sigma=args.sigma, device="cpu", dim=args.dim)
-
-        radii = noise.certify(torch.tensor(axis), p=1).numpy()
+        noise = eval(noise_str)(sigma=args.sigma, device="cpu", dim=args.dim)
+        radii = noise.certify(torch.tensor(axis), adv=1).numpy()
         df["radius"] += radii.tolist()
         df["axis"] += axis.tolist()
         df["noise"] += [noise_str.replace("Noise", "")] * len(axis)
