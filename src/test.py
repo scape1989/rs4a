@@ -85,9 +85,9 @@ if __name__ == "__main__":
         results["preds"][lower:upper, :] = preds.probs.data.cpu().numpy()
         results["labels"][lower:upper] = y.data.cpu().numpy()
         results["prob_lb"][lower:upper] = prob_lb.cpu().numpy()
-        results["radius_l1"][lower:upper] = noise.certify(prob_lb, adv=1).cpu().numpy()
-        results["radius_l2"][lower:upper] = noise.certify(prob_lb, adv=2).cpu().numpy()
-        results["radius_linf"][lower:upper] = noise.certify(prob_lb, adv=float("inf")).cpu().numpy()
+        results["radius_l1"][lower:upper] = noise.certifyl1(prob_lb).cpu().numpy()
+        results["radius_l2"][lower:upper] = noise.certifyl2(prob_lb).cpu().numpy()
+        results["radius_linf"][lower:upper] = noise.certifylinf(prob_lb).cpu().numpy()
         results["preds_nll"][lower:upper] = -preds.log_prob(y).cpu().numpy()
 
     save_path = f"{args.output_dir}/{args.experiment_name}"
