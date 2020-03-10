@@ -35,6 +35,12 @@ class TestSigma(unittest.TestCase):
                 configs.append(
                     dict(noise=noises.Exp2Noise, k=k, j=j)
                 )
+        for k in [1, 2, 10, 100]:
+            for a in [10, 100, 1000]:
+                a = (dim + a) / k
+                configs.append(
+                    dict(noise=noises.Power2Noise, k=k, a=a)
+                )
         for c in tqdm.tqdm(configs):
             c['device'] = dev
             c['dim'] = dim
@@ -54,6 +60,15 @@ class TestRadii(unittest.TestCase):
         noise = noises.LaplaceNoise('cpu', 3*32*32, sigma=1)
         cert1 = noise.certifylinf(torch.arange(0.5, 1, 0.01))
         cert2 = noise.certifylinf(torch.arange(0.5, 1, 0.01), 'integrate')
+        self.assertTrue(np.allclose(cert1, cert2, rtol=1e-2))
+
+    def test_exp2_l2_radii(self):
+        '''Test that for exp(-\|x\|_2), the differential and level set methods
+        obtain similar robust radii.'''
+        rs = torch.arange(0.5, 1, 0.01)
+        noise = noises.Exp2Noise('cpu', 3*32*32, sigma=1)
+        cert1 = noise.certifyl2(rs)
+        cert2 = noise.certifyl2_levelset(rs)
         self.assertTrue(np.allclose(cert1, cert2, rtol=1e-2))
 
 if __name__ == '__main__':
