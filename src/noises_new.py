@@ -557,10 +557,6 @@ class Exp2Noise(Noise):
             self._table_info = table_info
         return self.lambd * get_radii_from_convex_table(
                         self.table_rho, self.table_radii, prob_lb)
-        # prob_lb = prob_lb.numpy()
-        # idxs = np.searchsorted(self.table_rho, prob_lb, 'right') - 1
-        # return torch.tensor(self.lambd * self.table_radii[idxs],
-        #                     dtype=torch.float)
 
 
     def _pbig(self, t, e, mode='integrate', nsamples=1000):
@@ -735,6 +731,17 @@ class Power2Noise(Noise):
         return np.exp(0.5 * (
                 g((d+2)/k) + g(a - (d+2)/k) - g(d/k) - g(a - d/k) - np.log(d)
             ))
+
+    def certifyl2(self, prob_lb, inc=0.01, upper=3, save=True):
+        return self.certifyl2_levelset(prob_lb, inc, upper, save)
+
+    def certifyl2_levelset(self, prob_lb, inc=0.01, upper=3, save=True):
+        table_info = dict(inc=inc, upper=upper)
+        if self.table_rho is None or self._table_info != table_info:
+            self.make_l2_table(inc, upper, save)
+            self._table_info = table_info
+        return self.lambd * get_radii_from_convex_table(
+                        self.table_rho, self.table_radii, prob_lb)
         
     def sample(self, x):
         samples = self.beta_dist.rvs((len(x), 1))
@@ -757,10 +764,13 @@ class Power2Noise(Noise):
         k = self.k
         a = self.a
         def s(rpow):
-            return ((1 + rpow) * np.exp(-t/a) - 1)**(1/k)
+            return relu((1 + rpow) * np.exp(-t/a) - 1)**(1/k)
+        def integrand(rpow):
+            return wfun(rpow**(1/k), s(rpow), e, d)
         if mode == 'integrate':
-            return self.beta_dist.expect(s,
-                points=[self.beta_mode], lb=0, ub=10*self.beta_mode)
+            # return self.beta_dist.expect(integrand,
+            #     points=[self.beta_mode], lb=0, ub=10*self.beta_mode)
+            return self.beta_dist.expect(integrand)
         elif mode == 'mc':
             rpow = self.beta_dist.rvs(size=nsamples)
             return np.mean(wfun(rpow**(1/k), s(rpow), e, d))
@@ -782,16 +792,80 @@ class Power2Noise(Noise):
         k = self.k
         a = self.a
         def s(rpow):
-            return ((1 + rpow) * np.exp(t/a) - 1)**(1/k)
+            return relu((1 + rpow) * np.exp(t/a) - 1)**(1/k)
+        def integrand(rpow):
+            return 1 - wfun(rpow**(1/k), s(rpow), e, d)
         if mode == 'integrate':
-            return self.beta_dist.expect(s,
-                points=[self.beta_mode], lb=0, ub=10*self.beta_mode)
+            # return self.beta_dist.expect(integrand,
+            #     points=[self.beta_mode], lb=0, ub=10*self.beta_mode)
+            return self.beta_dist.expect(integrand)
         elif mode == 'mc':
             rpow = self.beta_dist.rvs(size=nsamples)
-            return np.mean(wfun(rpow**(1/k), s(rpow), e, d))
+            return np.mean(integrand(rpow))
         else:
             raise ValueError(f'Unrecognized mode: {mode}')
+
+    def _find_NP_log_ratio(self, u, x0=0, bracket=(-100, 100)):
+        return sp.optimize.root_scalar(
+            lambda t: self._pbig(t, u) - 0.5, x0=x0, bracket=bracket)
+
+    def _make_l2_table(self, inc=0.01, upper=3):
+        from tqdm import tqdm
+        table = {0: {'radius': 0, 'rho': 1/2}}
+        prv_root = 0
+        for eps in tqdm(np.arange(inc, upper + inc, inc)):
+            e = eps * self._sigma()
+            t = self._find_NP_log_ratio(e, prv_root)
+            table[eps] = {
+                't': t.root,
+                'radius': e,
+                'normalized_radius': eps,
+                'converged': t.converged,
+                'info': t
+            }
+            if t.converged:
+                table[eps]['rho'] = 1 - self._psmall(t.root, e)
+                prv_root = t.root
+        return table
        
+    def make_l2_table(self, inc=0.01, upper=3, save=True):
+        '''Calculate or load a table of robust radii for l2 adversary.
+        First try to load a table under `./tables/` with the corresponding
+        parameters. If this fails, calculate the table using level set method.
+        Inputs:
+            inc: grid increment (default: 0.01)
+            upper: if `grid_type == 'radius'`, then the upper limit to the
+                radius grid. (default: 3)
+            save: whether to save the table computed
+        Outputs:
+            None, but `self.table`, `self.table_rho`, `self.table_radii`
+            are now defined.
+        '''
+        from os.path import join
+        basename = (f'pow2_l2_d{self.dim}_k{self.k}_a{self.a}' 
+                    f'_inc{inc}_upper{upper}')
+        rho_fname = join('tables', basename + '_rho.npy')
+        radii_fname = join('tables', basename + '_radii.npy')
+        try:
+            self.table_rho = np.load(rho_fname)
+            self.table_radii = np.load(radii_fname)
+            self.table = dict(zip(self.table_rho, self.table_radii))
+            print('Found and loaded saved table: '
+                f'Pow2, L2 adv, dim={self.dim}, k={self.k}, a={self.a}, '
+                f'inc={inc}, upper={upper}')
+        except FileNotFoundError:
+            print('Making robust radii table: Pow2, L2 adv')
+            table = self._make_l2_table(inc, upper)
+            self.table_radii = np.array([x['radius'] for x in table.values()])
+            self.table_rho = np.array([x['rho'] for x in table.values()])
+            self.table = dict(zip(self.table_rho, self.table_radii))
+            if save:
+                import os
+                print('Saving robust radii table')
+                os.makedirs('tables', exist_ok=True)
+                np.save(rho_fname, self.table_rho)
+                np.save(radii_fname, self.table_radii)
+
 class Exp1Noise(Noise):
     r'''L1-based distribution of the form \|x\|_1^{-j} e^{\|x/\lambda\|_1^k}'''
 
@@ -825,14 +899,14 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     dim = 3072
     for j in [3071]:# [1, 2, 4, 8]:# [2048, 3064, 3068, 3071]:
-        k=100
+        k=2
         noise = Power2Noise('cpu', dim, sigma=1, k=k, a=dim/k+100)
         before = time.time()
         # noise.make_linf_table(0.05)
-        # rs = torch.arange(0.5, 1, 0.01)
-        # cert1 = noise.certifyl2(rs, inc=1)
+        rs = torch.arange(0.5, 1, 0.01)
+        cert1 = noise.certifyl2(rs, inc=0.5)
         # cert2 = noise.certifyl2_levelset(rs, inc=1)
-        # print(cert1)
+        print(cert1)
         # print(cert2)
         # print((cert1 - cert2).std())
         # print(noise.table_rho)
@@ -841,5 +915,5 @@ if __name__ == '__main__':
         # # plt.show()
         # after = time.time()
         # print(noise.table)
-        print(noise.sample(torch.zeros(1000, dim)).std(), noise.sigma)
+        # print(noise.sample(torch.zeros(1000, dim)).std(), noise.sigma)
         # print('{:.3}'.format(after - before))
