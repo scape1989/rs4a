@@ -63,7 +63,7 @@ class Noise(object):
         return self.certify(prob_lb, adv=2)
 
     def certifylinf(self, prob_lb):
-        return self.certify(prob_lb, adv='inf')
+        return self.certify(prob_lb, adv=float('inf'))
 
 class Clean(Noise):
 
@@ -145,7 +145,7 @@ class LaplaceNoise(Noise):
 
     def _sigma(self):
         return 2 ** 0.5
-        
+
     def sample(self, x):
         return self.laplace_dist.sample(x.shape) + x
 
@@ -164,14 +164,14 @@ class LaplaceNoise(Noise):
         There are two modes of certification: "approx" or "integrate".
         The latter computes a table of robust radii from the differential
         method and performs lookup during certification, and is guaranteed
-        to be correct. But this table calculation takes a bit of overhead 
+        to be correct. But this table calculation takes a bit of overhead
         (though it's only done once, and the table will be saved for loading
         in the future).
         The former uses the following approximation which is highly accurate
         in high dimension:
-            
+
             lambda * GaussianCDF(prob_lb) / d**0.5
-        
+
         We verify the quality of this approximation in `test_noises.py`.
         By default, "approx" mode is used.
         '''
@@ -188,7 +188,7 @@ class LaplaceNoise(Noise):
                                 dtype=torch.float)
         else:
             raise ValueError(f'Unrecognized mode "{mode}"')
-    
+
     def Phi(self, prob):
         def phi(c, d):
             return binom(d, 0.5).sf((c+d)/2)
@@ -227,14 +227,14 @@ class LaplaceNoise(Noise):
             rho_fname = join('tables',
                     f'laplace_linf_d{self.dim}_inc{inc}'
                     f'_grid{grid_type}_upper{upper}_rho.npy')
-            radii_fname = join('tables', 
+            radii_fname = join('tables',
                     f'laplace_linf_d{self.dim}_inc{inc}'
                     f'_grid{grid_type}_upper{upper}_radii.npy')
         else:
             rho_fname = join('tables',
                     f'laplace_linf_d{self.dim}_inc{inc}'
                     f'_grid{grid_type}_rho.npy')
-            radii_fname = join('tables', 
+            radii_fname = join('tables',
                     f'laplace_linf_d{self.dim}_inc{inc}'
                     f'_grid{grid_type}_radii.npy')
         try:
@@ -255,7 +255,7 @@ class LaplaceNoise(Noise):
                 os.makedirs('tables', exist_ok=True)
                 np.save(rho_fname, self.table_rho)
                 np.save(radii_fname, self.table_radii)
-    
+
     def _make_linf_table(self, inc=0.001, grid_type='radius', upper=3):
         import tqdm
         table = {1/2: 0}
@@ -555,7 +555,7 @@ class Exp2Noise(Noise):
         k = self.k
         j = self.j
         d = self.dim
-        return np.sqrt(1 / d * 
+        return np.sqrt(1 / d *
                     math.exp(math.lgamma((d + 2 - j) / k)
                             - math.lgamma((d - j) / k)
                         )
@@ -566,10 +566,16 @@ class Exp2Noise(Noise):
         noise = sample_l2_sphere(self.device, x.shape)
         return self.lambd * (noise * radius).view(x.shape) + x
 
+    def certify(self, prob_lb, adv, mode='levelset'):
+        ppen = 1
+        if adv > 2:
+            ppen = self.dim ** (0.5 - 1/adv)
+        return self.certifyl2(prob_lb, mode=mode) / ppen
+
     def certifyl2(self, prob_lb, mode='levelset',
                 inc=0.01, upper=3, save=True):
         if self.k == 1 and self.j == 0:
-            if not hasattr(self, 'beta_dist'):                
+            if not hasattr(self, 'beta_dist'):
                 self.beta_dist = sp.stats.beta(0.5 * (self.dim - 1),
                                                0.5 * (self.dim - 1))
             radius = self.lambd * (self.dim - 1) * \
@@ -632,7 +638,7 @@ class Exp2Noise(Noise):
             else:
                 raise ValueError(f'Unrecognized mode: {mode}')
 
-        
+
     def _psmall(self, t, e, mode='integrate', nsamples=1000):
         '''Compute the small measure of a Neyman-Pearson set with ratio e^t.
         This function assumes `self.lambd == 1`.
@@ -675,7 +681,7 @@ class Exp2Noise(Noise):
                 return np.mean(1 - wfun(rpow**(1/k), s(rpow), e, d))
             else:
                 raise ValueError(f'Unrecognized mode: {mode}')
-    
+
     def _find_NP_log_ratio(self, u, x0=0, bracket=(-100, 100)):
         return sp.optimize.root_scalar(
             lambda t: self._pbig(t, u) - 0.5, x0=x0, bracket=bracket)
@@ -715,7 +721,7 @@ class Exp2Noise(Noise):
             are now defined.
         '''
         from os.path import join
-        basename = (f'exp2_l2_d{self.dim}_k{self.k}_j{self.j}' 
+        basename = (f'exp2_l2_d{self.dim}_k{self.k}_j{self.j}'
                     f'_inc{inc}_upper{upper}')
         rho_fname = join('tables', basename + '_rho.npy')
         radii_fname = join('tables', basename + '_radii.npy')
@@ -741,7 +747,7 @@ class Exp2Noise(Noise):
 
 class Power2Noise(Noise):
     r'''L2-based distribution of the form (1 + \|x\|_2^k)^{-a}'''
-    
+
     def __init__(self, device, dim, sigma=None, lambd=None, k=1, a=None):
         self.k = k
         if a is None:
@@ -765,6 +771,12 @@ class Power2Noise(Noise):
                 g((d+2)/k) + g(a - (d+2)/k) - g(d/k) - g(a - d/k) - np.log(d)
             ))
 
+    def certify(self, prob_lb, adv):
+        ppen = 1
+        if adv > 2:
+            ppen = self.dim ** (0.5 - 1/adv)
+        return self.certifyl2(prob_lb) / ppen
+
     def certifyl2(self, prob_lb, inc=0.01, upper=3, save=True):
         return self.certifyl2_levelset(prob_lb, inc, upper, save)
 
@@ -775,7 +787,7 @@ class Power2Noise(Noise):
             self._table_info = table_info
         return self.lambd * get_radii_from_convex_table(
                         self.table_rho, self.table_radii, prob_lb)
-        
+
     def sample(self, x):
         samples = self.beta_dist.rvs((len(x), 1))
         radius = torch.tensor(samples**(1/self.k),
@@ -860,7 +872,7 @@ class Power2Noise(Noise):
                 table[eps]['rho'] = 1 - self._psmall(t.root, e)
                 prv_root = t.root
         return table
-       
+
     def make_l2_table(self, inc=0.01, upper=3, save=True):
         '''Calculate or load a table of robust radii for l2 adversary.
         First try to load a table under `./tables/` with the corresponding
@@ -875,7 +887,7 @@ class Power2Noise(Noise):
             are now defined.
         '''
         from os.path import join
-        basename = (f'pow2_l2_d{self.dim}_k{self.k}_a{self.a}' 
+        basename = (f'pow2_l2_d{self.dim}_k{self.k}_a{self.a}'
                     f'_inc{inc}_upper{upper}')
         rho_fname = join('tables', basename + '_rho.npy')
         radii_fname = join('tables', basename + '_radii.npy')
@@ -914,7 +926,7 @@ class Exp1Noise(Noise):
         k = self.k
         j = self.j
         d = self.dim
-        return np.sqrt(2 / d / (d+1) * 
+        return np.sqrt(2 / d / (d+1) *
                     math.exp(math.lgamma((d + 2 - j) / k)
                             - math.lgamma((d - j) / k)
                         )
@@ -925,7 +937,20 @@ class Exp1Noise(Noise):
         radius *= self.lambd
         noises = sample_l1_sphere(self.device, x.shape)
         return noises * radius + x
-    
+
+    def certify(self, prob_lb, adv, num_pts=1000, eps=1e-4):
+        # todo: replace
+        if adv > 1 or j != 0:
+            return torch.zeros_like(prob_lb)
+        x = np.linspace(eps, 0.5, num_pts)
+        y = sp.stats.gamma.ppf(1 - 2 * x, self.dim / self.k)
+        y = 1 / (1 - sp.stats.gamma.cdf(y, (self.dim + self.k - 1) / self.k))
+        y = np.repeat(y[np.newaxis,:], len(prob_lb), axis=0)
+        y[x < 1 - prob_lb.numpy()[:, np.newaxis]] = 0
+        integral = torch.tensor(np.trapz(y, dx=0.5 / num_pts), dtype=torch.float)
+        return 2 * self.lambd * integral / self.k * math.exp(
+            math.lgamma(self.dim / self.k) - math.lgamma((self.dim + self.k - 1) / self.k))
+
 
 if __name__ == '__main__':
     import time

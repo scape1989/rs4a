@@ -7,5 +7,6 @@
 *.swp
 *.pdf
 stdout.txt
-data/
-mnist*/
+misc/
+jobs/
+data/*/*

@@ -12,6 +12,7 @@ from dfply import *
 from matplotlib import pyplot as plt
 from src.noises import *
 from src.datasets import get_dim
+from src.utils import parse_noise_from_args
 
 
 if __name__ == "__main__":
@@ -21,7 +22,7 @@ if __name__ == "__main__":
     args = argparser.parse_args()
 
     dataset = args.dir.split("_")[0]
-    experiment_names = list(filter(lambda s: os.path.isdir(args.dir + "/" + s), 
+    experiment_names = list(filter(lambda s: os.path.isdir(args.dir + "/" + s),
                                    os.listdir(args.dir)))
 
     sns.set_style("white")
@@ -38,15 +39,8 @@ if __name__ == "__main__":
         for k in ("losses_train",):
             results[k] = np.load(f"{save_path}/{k}.npy")
 
-        kwargs = {
-            "sigma": experiment_args.sigma,
-            "lambd": experiment_args.lambd,
-            "k": experiment_args.k,
-            "j": experiment_args.j,
-            "a": experiment_args.a
-        }
-        kwargs = {k: v for k, v in kwargs.items() if v is not None}
-        noise = eval(experiment_args.noise)(device="cpu", dim=get_dim(experiment_args.dataset), **kwargs)
+        noise = parse_noise_from_args(experiment_args, device-"cpu",
+                                      dim=get_dim(experiment_args.dataset))
 
         losses_df >>= bind_rows(pd.DataFrame({
             "experiment_name": experiment_name,

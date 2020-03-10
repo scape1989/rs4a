@@ -10,7 +10,7 @@ from dfply import *
 from matplotlib import pyplot as plt
 from src.noises import *
 from src.datasets import get_dim
-from utils import parse_noise_from_args
+from src.utils import parse_noise_from_args
 
 
 if __name__ == "__main__":
@@ -23,6 +23,7 @@ if __name__ == "__main__":
     argparser.add_argument("--eps-max", default=5.0, type=float)
     argparser.add_argument("--fancy-markers", action="store_true")
     args = argparser.parse_args()
+    args.adv = round(args.adv)
 
     markers = ["o", "D", "s"] if args.fancy_markers else True
 
@@ -46,7 +47,7 @@ if __name__ == "__main__":
         for k in ("preds", "labels", f"radius_l{str(args.adv)}", "acc_train"):
             results[k] = np.load(f"{save_path}/{k}.npy")
 
-        noise = parse_noise_from_args(experiment_args, device-"cpu", 
+        noise = parse_noise_from_args(experiment_args, device="cpu", 
                                       dim=get_dim(experiment_args.dataset))
         top_1_preds = np.argmax(results["preds"], axis=1)
         top_1_acc_pred = (top_1_preds == results["labels"]).mean()
